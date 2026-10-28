@@ -91,7 +91,21 @@ a{color:var(--brand)}
 .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px}
 .brand b{display:block;font-size:15px;letter-spacing:.02em}
 .brand span{display:block;font-size:11px;color:var(--text-2)}
-.cal-nav{display:inline-flex;gap:6px;align-items:center}.cal-nav .btn{display:inline-flex;align-items:center;gap:2px;font-weight:700;min-height:36px}.cal-nav .btn svg{width:16px;height:16px}
+.cal-bar.cal-bar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:10px}
+.cal-l{min-width:0}.cal-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;min-width:0}
+.cal-title{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:4px 8px;margin-left:-8px;border-radius:10px;color:inherit;cursor:pointer}
+.cal-title:hover{background:var(--fill)}.cal-title .caret{font-size:13px;color:var(--text-2)}
+.cal-nav{display:inline-flex;gap:8px;align-items:center;justify-self:center}
+.cal-nav .btn{display:inline-flex;align-items:center;gap:4px;font-weight:700;font-size:15px;min-height:42px;padding:0 16px;border-radius:12px}
+.cal-nav .btn svg{width:18px;height:18px}
+.cal-title h2{white-space:nowrap}
+@media (max-width:900px){.cal-bar.cal-bar{grid-template-columns:auto minmax(0,1fr)}.cal-r{gap:6px}.cal-nav{grid-column:1/-1;grid-row:2;width:100%;justify-content:center}.cal-nav .btn{flex:1;justify-content:center;max-width:140px}}
+.ym-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ym-cell{display:flex;flex-direction:column;align-items:stretch;text-align:left;gap:4px;min-height:96px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;cursor:pointer}
+.ym-cell:hover{border-color:var(--brand)}.ym-cell.cur{border:2px solid var(--brand);background:var(--brand-soft)}
+.ym-m{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px}.ym-m i{font-style:normal;font-size:10px;font-weight:700;color:var(--brand-ink);background:var(--brand);border-radius:99px;padding:1px 6px}
+.ym-cell ul{list-style:none;margin:0;padding:0;font-size:11.5px;line-height:1.5;color:var(--text-2)}.ym-cell li b{display:inline-block;min-width:18px;color:var(--shu);font-weight:700}
+@media (max-width:600px){.ym-grid{grid-template-columns:repeat(3,1fr)}.ym-cell{min-height:80px;padding:8px}}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -182,7 +196,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .home{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:18px;align-items:start}
 .cal-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
 .cal-bar h2{font-size:22px;font-weight:700;min-width:150px}
-.layers{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.layers{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.layers.layers-below{margin:12px 0 4px}
 .cal{background:var(--card);border:1px solid var(--hair);border-radius:var(--r-lg);box-shadow:var(--shadow);overflow:hidden}
 .cal-head{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--hair)}
 .cal-head div{font-size:11.5px;font-weight:700;color:var(--text-2);text-align:center;padding:8px 0}
@@ -934,7 +948,7 @@ function seed() {
   const tm2 = key(addDays(TODAY, 2));
   st.visits.push({ id: 'veve', date: tm2, start: '19:00', dur: 120, who: '町会（仮）', purpose: '会合（神社で開催・仮）', host: 'guji' });   // 夜の予定は神社で行う来訪者・祭典が基本
   /* 祭典・行事（繰り返し）。月次祭は本人確認済み（所要時間は仮） */
-  st.rituals = [{ id: 'rt1', name: '月次祭', repeat: 'monthly', day: 1, start: '11:00', dur: 30 }];   // 毎月1日11時・30分（本人確認済み）
+  st.rituals = [{ id: 'rt1', name: '月次祭', repeat: 'monthly', day: 1, start: '11:00', dur: 30, skip: [1] }];   // 毎月1日11時・30分。1月は歳旦祭のためなし（本人確認済み）
 
   /* 日報（過去2年分の見本） */
   st.diary = {};
@@ -1076,8 +1090,8 @@ function seasonOf(k) {
 const resOn = k => S.res.filter(r => r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
 /* 毎年○月○日にいちばん近い○曜日（例：4/20に近い日曜日） */
 function nearDay(y, r) { const t = new Date(y, r.month - 1, r.day); let diff = (r.wd - t.getDay() + 7) % 7; if (diff > 3) diff -= 7; return key(addDays(t, diff)); }
-function ritualWhen(r) { return r.repeat === 'monthly' ? `毎月${r.day}日` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : r.repeat === 'near' ? `毎年${r.month}月${r.day}日に近い${WD[r.wd]}曜日` : r.repeat === 'yearly' ? `毎年${r.month}月${r.day}日` : mdw(parse(r.date)); }
-function ritualsOn(k) { const d = parse(k); return S.rituals.filter(r => r.repeat === 'monthly' ? d.getDate() === r.day : r.repeat === 'yearly' ? (d.getMonth() + 1 === r.month && d.getDate() === r.day) : r.repeat === 'nth' ? (d.getMonth() + 1 === r.month && d.getDay() === r.wd && Math.ceil(d.getDate() / 7) === r.nth) : r.repeat === 'near' ? nearDay(d.getFullYear(), r) === k : r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start)); }
+function ritualWhen(r) { return r.repeat === 'monthly' ? `毎月${r.day}日${(r.skip || []).length ? `（${r.skip.join('・')}月はなし）` : ''}` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : r.repeat === 'near' ? `毎年${r.month}月${r.day}日に近い${WD[r.wd]}曜日` : r.repeat === 'yearly' ? `毎年${r.month}月${r.day}日` : mdw(parse(r.date)); }
+function ritualsOn(k) { const d = parse(k); return S.rituals.filter(r => r.repeat === 'monthly' ? d.getDate() === r.day && !(r.skip || []).includes(d.getMonth() + 1) : r.repeat === 'yearly' ? (d.getMonth() + 1 === r.month && d.getDate() === r.day) : r.repeat === 'nth' ? (d.getMonth() + 1 === r.month && d.getDay() === r.wd && Math.ceil(d.getDate() / 7) === r.nth) : r.repeat === 'near' ? nearDay(d.getFullYear(), r) === k : r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start)); }
 const outingsOn = k => S.outings.filter(o => o.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
 const isEventDay = k => !!S.seasons[k] || ritualsOn(k).length > 0;
 function leaveCapOn(k) { const c = S.rules.leaveCap; return isEventDay(k) ? c.event : isWeekend(parse(k)) ? c.weekend : c.weekday; }
@@ -1340,6 +1354,19 @@ function dayPanel(k) {
     ${k === TK && unread.length ? `<div class="day-sec"><h4>未読の掲示板 <span class="badge">${unread.length}</span></h4><ul class="mini-list">${unread.slice(0, 3).map(p => `<li style="cursor:pointer" data-act="openPost" data-id="${p.id}"><span class="unread" style="width:7px;height:7px;border-radius:50%;background:var(--brand)"></span>${esc(p.title)}</li>`).join('')}</ul></div>` : ''}
 `;
 }
+/* 年間カレンダー（見出しの「2026年10月」を押すと開く。月を選ぶとその月へ飛ぶ） */
+let pickerYear = TODAY.getFullYear();
+function calPickerModal() {
+  const y = pickerYear, cur = S.ui.calView === 'month' ? calCursor : parse(selDay);
+  const months = Array.from({ length: 12 }, (_, m) => {
+    const n = new Date(y, m + 1, 0).getDate(), evs = [];
+    for (let d = 1; d <= n; d++) { const k = key(new Date(y, m, d)); ritualsOn(k).filter(r => r.repeat !== 'monthly').forEach(r => evs.push(`<li><b>${d}</b>${esc(r.name)}</li>`)); }
+    const isCur = cur.getFullYear() === y && cur.getMonth() === m, isNow = TODAY.getFullYear() === y && TODAY.getMonth() === m;
+    return `<button class="ym-cell ${isCur ? 'cur' : ''} ${isNow ? 'now' : ''}" data-act="calPick" data-y="${y}" data-m="${m}"><span class="ym-m">${m + 1}月${isNow ? '<i>今月</i>' : ''}</span><ul>${evs.slice(0, 4).join('')}${evs.length > 4 ? `<li class="muted">ほか${evs.length - 4}件</li>` : ''}</ul></button>`;
+  }).join('');
+  modal(`<div class="modal-h"><button class="icon-btn" data-act="pickerYear" data-n="-1" aria-label="前の年">${ICON.left}</button><h3 style="margin:0 10px">${y}年</h3><button class="icon-btn" data-act="pickerYear" data-n="1" aria-label="次の年">${ICON.right}</button><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b"><div class="ym-grid">${months}</div><div class="small muted" style="margin-top:10px">月を押すと、その月のカレンダーに移ります。毎月の月次祭は省いています。</div></div>`, 'wide');
+}
 /* 休みの残り日数（表示している月・ログイン中の人） */
 function leaveLeft(staffId, m) {
   const ymk = ym(m);
@@ -1361,15 +1388,14 @@ function vHome() {
   <div class="home">
     <section>
       <div class="cal-bar">
-        <h2>${title}</h2>
+        <div class="cal-l"><button class="cal-title" data-act="calPicker" title="年間カレンダーを開く"><h2>${title}</h2><span class="caret">▾</span></button></div>
         <div class="cal-nav"><button class="btn sm" data-act="calMove" data-n="-1">${ICON.left}<span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() - 1, 1).getMonth() + 1) + '月' : '前の週'}</span></button><button class="btn sm" data-act="calToday">今日</button><button class="btn sm" data-act="calMove" data-n="1"><span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1).getMonth() + 1) + '月' : '次の週'}</span>${ICON.right}</button></div>
-        <span class="sp"></span>
-        <div class="seg"><button class="${isMonth ? 'on' : ''}" data-act="calView" data-v="month">月</button><button class="${!isMonth ? 'on' : ''}" data-act="calView" data-v="week">週</button></div>
+        <div class="cal-r"><div class="seg"><button class="${isMonth ? 'on' : ''}" data-act="calView" data-v="month">月</button><button class="${!isMonth ? 'on' : ''}" data-act="calView" data-v="week">週</button></div>
         <button class="btn sm" data-act="addEvent" data-k="${selDay}">予定追加</button>
-        ${isTemp() ? `<div class="leave-box"><button class="btn pri sm" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri sm" data-act="leaveModal" data-k="${selDay}">＋ 休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}
+        ${isTemp() ? `<div class="leave-box"><button class="btn pri sm" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri sm" data-act="leaveModal" data-k="${selDay}">＋ 休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}</div>
       </div>
-      <div class="layers"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（アルバイト）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
       ${isMonth ? monthView() : weekView()}
+      <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（アルバイト）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
       <div class="legend">
         <span><span class="off-b">鈴木</span>青＝休みの職員</span><span><span class="bunka" style="font-size:11px">節分</span> 季節の行事</span>
         <span><span class="kd inu">戌</span>戌の日</span><span><span class="kd ichi">一</span>一粒万倍日</span><span><span class="kd ten">天</span>天赦日</span>
@@ -2377,6 +2403,9 @@ const ACT = {
     else { selDay = key(addDays(parse(selDay), 7 * n)); calCursor = new Date(parse(selDay).getFullYear(), parse(selDay).getMonth(), 1); }
     render();
   },
+  calPicker() { pickerYear = (S.ui.calView === 'month' ? calCursor : parse(selDay)).getFullYear(); calPickerModal(); },
+  pickerYear(el) { pickerYear += +el.dataset.n; calPickerModal(); },
+  calPick(el) { const y = +el.dataset.y, m = +el.dataset.m; calCursor = new Date(y, m, 1); if (S.ui.calView !== 'month') selDay = key(calCursor); closeModal(); render(); },
   calToday() { selDay = TK; calCursor = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1); render(); },
   calView(el) { S.ui.calView = el.dataset.v; if (el.dataset.v === 'week' && parse(selDay).getMonth() !== calCursor.getMonth()) selDay = key(calCursor); save(); render(); },
   mineOnly() { S.ui.mineOnly = !S.ui.mineOnly; save(); render(); },
@@ -2770,7 +2799,7 @@ function fromServer(d, me) {
   st.tempWork = (d.tempWork || []).map(r => ({ id: r.id, staff: r.staff, date: r.date }));
   st.visits = (d.visits || []).map(r => ({ id: r.id, date: r.date, start: r.start, dur: num(r.dur) || 60, who: r.who, purpose: r.purpose || '', host: r.host || '' }));
   st.outings = (d.outings || []).map(r => ({ id: r.id, date: r.date, start: r.start, dur: num(r.dur) || 60, staff: r.staff, staffs: r.staffs || [r.staff], place: r.place, purpose: r.purpose || '', travel: num(r.travel) || 0, buffer: num(r.buffer) ?? 15 }));
-  st.rituals = (d.rituals || []).map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: num(r.day), month: num(r.month), nth: num(r.nth), wd: num(r.wd), date: r.date || undefined, start: r.start || '00:00', dur: num(r.dur) || 0, allDay: yes(r.allDay) }));
+  st.rituals = (d.rituals || []).map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: num(r.day), month: num(r.month), nth: num(r.nth), wd: num(r.wd), date: r.repeat === 'monthly' ? undefined : r.date || undefined, skip: r.repeat === 'monthly' ? String(r.date || '').split(',').filter(Boolean).map(Number) : undefined, start: r.start || '00:00', dur: num(r.dur) || 0, allDay: yes(r.allDay) }));
   st.seasons = {}; (d.seasons || []).forEach(r => st.seasons[r.id] = r.type);
   const reads = {}; (d.reads || []).forEach(r => { (reads[r.post] = reads[r.post] || {})[r.user] = num(r.at); });
   st.board = (d.board || []).map(r => ({ id: r.id, title: r.title, body: r.body || '', by: r.by, at: num(r.at), target: r.target || [], reads: reads[r.id] || {} }));
@@ -2799,7 +2828,7 @@ function toRows(st) {
   R.tempWork = st.tempWork.map(w => ({ id: w.id, staff: w.staff, date: w.date }));
   R.visits = st.visits.map(v => ({ id: v.id, date: v.date, start: v.start, dur: v.dur, who: v.who, purpose: v.purpose || '', host: v.host || '' }));
   R.outings = st.outings.map(o => ({ id: o.id, date: o.date, start: o.start, dur: o.dur, staff: o.staff, staffs: o.staffs || [o.staff], place: o.place, purpose: o.purpose || '', travel: o.travel || 0, buffer: o.buffer ?? 15 }));
-  R.rituals = st.rituals.map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: r.day ?? '', month: r.month ?? '', nth: r.nth ?? '', wd: r.wd ?? '', date: r.date || '', start: r.start, dur: r.dur, allDay: !!r.allDay }));
+  R.rituals = st.rituals.map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: r.day ?? '', month: r.month ?? '', nth: r.nth ?? '', wd: r.wd ?? '', date: r.repeat === 'monthly' ? (r.skip || []).join(',') : r.date || '', start: r.start, dur: r.dur, allDay: !!r.allDay }));
   R.seasons = Object.entries(st.seasons).map(([id, type]) => ({ id, type }));
   R.board = st.board.map(p => ({ id: p.id, title: p.title, body: p.body, by: p.by, at: p.at, target: Array.isArray(p.target) ? p.target : boardTargets(p) }));
   R.reads = []; st.board.forEach(p => Object.entries(p.reads || {}).forEach(([u, at]) => R.reads.push({ id: p.id + '|' + u, post: p.id, user: u, at })));
