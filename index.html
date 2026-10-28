@@ -2885,7 +2885,9 @@ function boot() {
    - 画面の操作は今までどおり S を書き換え、save() のときに差分だけ送る
    - 1分ごとに読み直して、ほかの人の変更を反映する
    ========================================================= */
-const DEVICE_KEY = 'shamu-device', TOKEN_KEY = 'shamu-token', UI_KEY = 'shamu-ui', PENDING_KEY = 'shamu-pending';
+const DEVICE_KEY = 'shamu-device', TOKEN_KEY = 'shamu-token', UI_KEY = 'shamu-ui', PENDING_KEY = 'shamu-pending', CACHE_KEY = 'shamu-cache';
+/* 前回読み込んだデータを端末に残す（次に開いたとき、すぐ画面を出すため。ログアウトで消す） */
+function keepCache(r) { try { localStorage.setItem(CACHE_KEY, JSON.stringify({ me: r.me, data: r.data, at: Date.now() })); } catch (e) { } }
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } };
 let P = { device: lsGet(DEVICE_KEY), token: lsGet(TOKEN_KEY), deviceType: null, people: null, me: null, last: null, busy: false, pending: null, lastInput: Date.now(), screen: 'loading', msg: '', newPinStep: 0, newPin: '' };
@@ -3041,12 +3043,12 @@ async function refresh(force) {
   if (!force && (document.getElementById('modalBg') || editing || dirty || Date.now() - P.lastInput < 4000 || document.visibilityState !== 'visible')) return;
   try {
     const r = await api('data');
-    P.me = r.me; const ui = S && S.ui; S = fromServer(r.data, r.me); if (ui) S.ui = ui; P.last = snap(S);
+    P.me = r.me; const ui = S && S.ui; S = fromServer(r.data, r.me); if (ui) S.ui = ui; P.last = snap(S); keepCache(r);
     if (!document.getElementById('modalBg')) render();
   } catch (e) { if (e.code === 'session') expired(e.message); }
 }
 function syncBadge(on) { let b = document.getElementById('syncBadge'); if (!b) { b = document.createElement('div'); b.id = 'syncBadge'; b.className = 'sync-badge'; b.textContent = '保存中…'; document.body.appendChild(b); } b.hidden = !on; }
-function expired(msg) { P.token = null; lsSet(TOKEN_KEY, null); S.session = null; P.screen = 'login'; P.msg = msg || 'もう一度ログインしてください'; closeModal(); render(); }
+function expired(msg) { P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; P.screen = 'login'; P.msg = msg || 'もう一度ログインしてください'; closeModal(); render(); }
 
 /* ── ログイン画面（端末登録・名前・暗証番号・暗証番号の変更） ── */
 const ROLE_LABEL = { guji: '宮司', staff: '職員', temp: '臨時職員', shuin: '御朱印', miko: '巫女' };
@@ -3091,13 +3093,13 @@ async function afterLogin(r) {
   P.token = r.token || P.token; lsSet(TOKEN_KEY, P.token); P.me = r.me; if (r.device) P.deviceType = r.device.type;
   if (r.me.mustChange) { P.screen = 'newpin'; P.newPinStep = 0; loginPin = ''; P.msg = '最初のログインです。自分だけの暗証番号に変えてください'; S = S || { ui: loadUi() }; S.session = null; render(); return; }
   if (lsGet(PENDING_KEY) && await sendPending()) { try { r = Object.assign(r, await api('data')); } catch (e) { } }   // 前回送れなかった入力を先に送る
-  S = fromServer(r.data, r.me); P.last = snap(S); P.msg = ''; P.screen = 'app';
+  S = fromServer(r.data, r.me); P.last = snap(S); P.msg = ''; P.screen = 'app'; keepCache(r);
   if (S.session.role === 'staff' && (!location.hash || location.hash === '#/')) location.hash = '#/home';
   render();
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261028165844';
+const BUILD = '20261028170655';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3124,6 +3126,21 @@ async function bootProd() {
   loadWeather().then(ok => { if (ok && S && S.session) render(); });
   if (!P.device) { P.screen = 'register'; render(); return; }
   if (P.token) {
+    // 前回のデータがあれば、まずそれで画面を出し、裏で最新を読み込んで差し替える（開いたときに待たない）
+    let c = null; try { c = JSON.parse(lsGet(CACHE_KEY) || 'null'); } catch (e) { }
+    if (c && c.data && c.me && !c.me.mustChange) {
+      P.me = c.me; S = fromServer(c.data, c.me); P.last = snap(S); P.screen = 'app';
+      if (S.session.role === 'staff' && (!location.hash || location.hash === '#/')) location.hash = '#/home';
+      render();
+      try {
+        await sendPending();
+        const r = await api('data');
+        if (diff(P.last, snap(S)).length) { flush(); return; }   // 待っている間に入力した分は先に保存する
+        P.me = r.me; const ui = S.ui; S = fromServer(r.data, r.me); S.ui = ui; P.last = snap(S); keepCache(r);
+        if (!document.getElementById('modalBg') && !diaryDirty()) render();
+      } catch (e) { if (e.code === 'session' || e.code === 'must_change') expired(e.message); }   // 通信が切れているときは前回のデータのまま
+      return;
+    }
     try { const r = await api('data'); return afterLogin(Object.assign(r, { token: P.token })); }
     catch (e) { P.token = null; lsSet(TOKEN_KEY, null); }
   }
@@ -3172,7 +3189,7 @@ if (PROD) Object.assign(ACT, {
     try { await api('changePin', { oldPin: P.oldPin, newPin: pin }); P.oldPin = null; const r = await api('data'); toast('暗証番号を変えました'); await afterLogin(Object.assign(r, { me: Object.assign(r.me, { mustChange: false }) })); }
     catch (e) { P.newPinStep = 0; P.msg = e.message; render(); }
   },
-  logout() { closeModal(); api('logout').catch(() => { }); P.token = null; lsSet(TOKEN_KEY, null); S.session = null; loginWho = null; loginPin = ''; P.screen = 'login'; P.msg = ''; window.scrollTo(0, 0); loadPeople(); },
+  logout() { closeModal(); api('logout').catch(() => { }); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; loginWho = null; loginPin = ''; P.screen = 'login'; P.msg = ''; window.scrollTo(0, 0); loadPeople(); },
   reset() { toast('本番では使えません'); },
   // 人の登録・変更は管理画面で（暗証番号を発行するため）
   editRegular() { goAdmin(); }, saveRegular() { goAdmin(); }, editMember() { goAdmin(); }, saveMember() { goAdmin(); }, delMember() { goAdmin(); }, bulkMember() { goAdmin(); }, saveBulkMember() { goAdmin(); },
