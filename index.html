@@ -1074,7 +1074,10 @@ function seasonOf(k) {
   return null;
 }
 const resOn = k => S.res.filter(r => r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
-function ritualsOn(k) { const d = parse(k); return S.rituals.filter(r => r.repeat === 'monthly' ? d.getDate() === r.day : r.repeat === 'yearly' ? (d.getMonth() + 1 === r.month && d.getDate() === r.day) : r.repeat === 'nth' ? (d.getMonth() + 1 === r.month && d.getDay() === r.wd && Math.ceil(d.getDate() / 7) === r.nth) : r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start)); }
+/* 毎年○月○日にいちばん近い○曜日（例：4/20に近い日曜日） */
+function nearDay(y, r) { const t = new Date(y, r.month - 1, r.day); let diff = (r.wd - t.getDay() + 7) % 7; if (diff > 3) diff -= 7; return key(addDays(t, diff)); }
+function ritualWhen(r) { return r.repeat === 'monthly' ? `毎月${r.day}日` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : r.repeat === 'near' ? `毎年${r.month}月${r.day}日に近い${WD[r.wd]}曜日` : r.repeat === 'yearly' ? `毎年${r.month}月${r.day}日` : mdw(parse(r.date)); }
+function ritualsOn(k) { const d = parse(k); return S.rituals.filter(r => r.repeat === 'monthly' ? d.getDate() === r.day : r.repeat === 'yearly' ? (d.getMonth() + 1 === r.month && d.getDate() === r.day) : r.repeat === 'nth' ? (d.getMonth() + 1 === r.month && d.getDay() === r.wd && Math.ceil(d.getDate() / 7) === r.nth) : r.repeat === 'near' ? nearDay(d.getFullYear(), r) === k : r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start)); }
 const outingsOn = k => S.outings.filter(o => o.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
 const isEventDay = k => !!S.seasons[k] || ritualsOn(k).length > 0;
 function leaveCapOn(k) { const c = S.rules.leaveCap; return isEventDay(k) ? c.event : isWeekend(parse(k)) ? c.weekend : c.weekday; }
@@ -2127,25 +2130,25 @@ function vKigan() {
    ========================================================= */
 let paintType = 'shichigosan', seasonYear = TODAY.getFullYear();
 function vSeasons() {
-  const when = r => r.repeat === 'monthly' ? `毎月${r.day}日` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : `毎年${r.month}月${r.day}日`;
+  const when = ritualWhen;
   const opt = (n, f) => Array.from({ length: n }, (_, i) => f(i)).join('');
   return `
   <div class="page-h"><h1>祭典の設定</h1><span class="sub">決まった祭典を登録すると、カレンダーに自動で入ります</span></div>
   <div class="grid2" style="align-items:start">
     <div class="card card-p">
       <div class="card-h"><h3>登録している祭典・行事</h3></div>
-      <ul class="mini-list">${S.rituals.filter(r => r.repeat !== 'once').map(r => `<li><div style="flex:1;min-width:0"><b>${esc(r.name)}</b><div class="small muted">${when(r)}・${r.allDay ? '終日' : `${r.start}〜${tstr(tmin(r.start) + r.dur)}`}</div></div><button class="btn sm ghost" data-act="delRitual" data-id="${r.id}">削除</button></li>`).join('') || '<li class="muted">まだありません</li>'}</ul>
-      <div class="small muted" style="margin-top:8px">月次祭（毎月1日11時・30分）は確認済み。ほかの祭典は後で設定します。</div>
+      <ul class="mini-list">${S.rituals.filter(r => r.repeat !== 'once').sort((a, b) => (a.repeat === 'monthly' ? 0 : a.month * 100 + a.day) - (b.repeat === 'monthly' ? 0 : b.month * 100 + b.day)).map(r => `<li><div style="flex:1;min-width:0"><b>${esc(r.name)}</b><div class="small muted">${when(r)}・${r.allDay ? '終日' : `${r.start}〜${tstr(tmin(r.start) + r.dur)}`}</div></div><button class="btn sm ghost" data-act="delRitual" data-id="${r.id}">削除</button></li>`).join('') || '<li class="muted">まだありません</li>'}</ul>
+      ${PROD ? '' : '<div class="small muted" style="margin-top:8px">月次祭（毎月1日11時・30分）は確認済み。ほかの祭典は後で設定します。</div>'}
     </div>
     <div class="card card-p">
       <div class="card-h"><h3>祭典を追加</h3></div>
       <div class="field"><label>名前</label><input class="input" id="rtName" placeholder="例：○○祭"></div>
-      <div class="field"><label>繰り返し</label><select class="input" id="rtRepeat" data-chg="rtRepeat"><option value="monthly">毎月（日付）</option><option value="yearly">毎年（日付）</option><option value="nth">毎年（第○曜日）</option></select></div>
+      <div class="field"><label>繰り返し</label><select class="input" id="rtRepeat" data-chg="rtRepeat"><option value="monthly">毎月（日付）</option><option value="yearly">毎年（日付）</option><option value="nth">毎年（第○曜日）</option><option value="near">毎年（○月○日に近い○曜日）</option></select></div>
       <div class="row" style="gap:8px;margin-bottom:12px">
         <select class="input rt-y" id="rtMonth" style="width:auto" hidden>${opt(12, i => `<option value="${i + 1}">${i + 1}月</option>`)}</select>
         <select class="input rt-d" id="rtDay" style="width:auto">${opt(31, i => `<option value="${i + 1}">${i + 1}日</option>`)}</select>
         <select class="input rt-n" id="rtNth" style="width:auto" hidden>${opt(5, i => `<option value="${i + 1}">第${i + 1}</option>`)}</select>
-        <select class="input rt-n" id="rtWd" style="width:auto" hidden>${WD.map((w, i) => `<option value="${i}">${w}曜日</option>`).join('')}</select>
+        <select class="input rt-w" id="rtWd" style="width:auto" hidden>${WD.map((w, i) => `<option value="${i}">${w}曜日</option>`).join('')}</select>
       </div>
       <label class="row small" style="gap:6px;margin-bottom:12px"><input type="checkbox" id="rtAllDay" data-chg="rtAllDay" style="width:18px;height:18px;accent-color:var(--brand)"> 終日（時間を決めずに一日中）</label>
       <div class="row rt-time" style="gap:8px;margin-bottom:14px"><div class="field" style="margin:0"><label>開始</label><input class="input num" id="rtStart" value="10:00" style="width:90px"></div><div class="field" style="margin:0"><label>長さ</label><select class="input" id="rtDur" style="width:auto"><option value="30">30分</option><option value="60" selected>1時間</option><option value="90">1時間半</option><option value="120">2時間</option></select></div></div>
@@ -2423,7 +2426,7 @@ const ACT = {
     let html = '', del = false;
     if (kind === 'visit') { const v = S.visits.find(x => x.id === id); html = `<p><b style="font-size:18px">${esc(v.who)}</b></p><p class="muted">${mdw(parse(v.date))} ${v.start}〜${tstr(tmin(v.start) + v.dur)}</p><p>用件：${esc(v.purpose || '—')}</p><p>対応：${v.host ? hostName(v.host) : '未定'}</p>`; del = true; }
     else if (kind === 'out') { const o = S.outings.find(x => x.id === id), t = outTimes(o); html = `<p><b style="font-size:18px">${outStaff(o).map(id => hostName(id) + 'さん').join('・')} → ${esc(o.place)}</b></p><p class="muted">${mdw(parse(o.date))}</p>${t.travel ? `<p>出発 <b>${tstr(t.depart)}</b>（移動${t.travel}分＋余裕${t.buffer}分）</p>` : ''}<p>先方 ${o.start}〜${tstr(t.end)}${t.direct ? '（17:00を過ぎるので直帰）' : ''}</p>${t.travel ? '' : '<p class="small muted">移動時間が入っていないので、出発時刻は出していません。</p>'}<p>用件：${esc(o.purpose || '—')}</p>`; del = true; }
-    else if (kind === 'sai') { const r = S.rituals.find(x => x.id === id); html = `<p><b style="font-size:18px">${esc(r.name)}</b></p><p class="muted">${r.repeat === 'monthly' ? '毎月' + r.day + '日' : r.repeat === 'yearly' ? '毎年' + r.month + '月' + r.day + '日' : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : mdw(parse(r.date))} ${r.allDay ? '終日' : r.start + '〜' + tstr(tmin(r.start) + r.dur)}</p>${r.repeat !== 'once' ? '<p class="small muted">繰り返しの祭典は「時期・祭典の設定」で変更します。</p>' : ''}`; del = r.repeat === 'once'; }
+    else if (kind === 'sai') { const r = S.rituals.find(x => x.id === id); html = `<p><b style="font-size:18px">${esc(r.name)}</b></p><p class="muted">${ritualWhen(r)} ${r.allDay ? '終日' : r.start + '〜' + tstr(tmin(r.start) + r.dur)}</p>${r.repeat !== 'once' ? '<p class="small muted">繰り返しの祭典は「時期・祭典の設定」で変更します。</p>' : ''}`; del = r.repeat === 'once'; }
     else { const r = S.res.find(x => x.id === id); if (r.type === '外祭' || r.type === '企業・団体') return applicationForm(r); html = `<p><b style="font-size:18px">${esc(r.type)}${r.sub ? '（' + esc(r.sub) + '）' : ''}</b></p><p class="muted">${mdw(parse(r.date))} ${r.start}〜${tstr(tmin(r.start) + r.dur)}</p><p>${esc(r.name)}${r.people ? '・' + r.people + '名' : ''}${r.place ? '・' + esc(r.place) : ''}</p><p class="small muted">予約の変更は予約台帳（次の段階で作成）で行います。</p>`; }
     modal(`<div class="modal-h"><h3>予定の詳細</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div><div class="modal-b" style="line-height:1.9">${html}</div><div class="modal-f">${del ? `<button class="btn" style="color:var(--red)" data-act="delEvent" data-kind="${kind}" data-id="${id}">削除</button><span class="sp"></span>` : ''}<button class="btn pri" data-act="closeModal">閉じる</button></div>`);
   },
@@ -2690,7 +2693,7 @@ const CHG = {
     { const box = document.getElementById('manFiles'); if (box) box.innerHTML = manFilesHtml(); }
     if (tmp) toast('この端末ではブラウザに保存できないため、ページを閉じると消えます（デモの制限）');
   },
-  rtRepeat(el) { const v = el.value; document.getElementById('rtMonth').hidden = v === 'monthly'; document.getElementById('rtDay').hidden = v === 'nth'; document.querySelectorAll('.rt-n').forEach(x => x.hidden = v !== 'nth'); },
+  rtRepeat(el) { const v = el.value; document.getElementById('rtMonth').hidden = v === 'monthly'; document.getElementById('rtDay').hidden = v === 'nth'; document.querySelectorAll('.rt-n').forEach(x => x.hidden = v !== 'nth'); document.getElementById('rtWd').hidden = v !== 'nth' && v !== 'near'; },
   rtAllDay(el) { document.querySelector('.rt-time').style.display = el.checked ? 'none' : ''; },
   leaveCap(el) { S.rules.leaveCap[el.dataset.f] = Math.max(0, parseInt(el.value, 10) || 0); save(); },
   leaveQuota(el) { S.rules.leaveQuota = Math.max(0, parseInt(el.value, 10) || 0); save(); },
