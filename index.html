@@ -1656,7 +1656,7 @@ function vManual() {
     <div class="cats card" style="padding:8px">${cats.map(c => `<button class="${c === manCat ? 'on' : ''}" data-act="manCat" data-v="${esc(c)}">${esc(c)}<span class="muted">${c === 'すべて' ? S.manual.length : S.manual.filter(m => m.cat === c).length}</span></button>`).join('')}</div>
     <div>
       <div class="row" style="margin-bottom:12px"><input class="input" id="manQ" placeholder="キーワードで探す" value="${esc(manQ)}" data-enter="manSearch"><button class="btn" data-act="manSearch">検索</button></div>
-      <div class="card" style="overflow:hidden">${list.map(m => `<div class="man-item" data-act="editMan" data-id="${m.id}">
+      <div class="card" style="overflow:hidden">${list.map(m => `<div class="man-item" data-act="editMan" data-id="${esc(m.id)}">
         <div class="row" style="gap:8px"><span class="tag ${m.kind === 'faq' ? 'blue' : 'brand'}">${m.kind === 'faq' ? 'よくある質問' : 'マニュアル'}</span><b>${esc(m.title)}</b>${m.files?.length ? `<span class="tag red">PDF ${m.files.length}</span>` : ''}</div>
         <div class="small muted" style="margin-top:4px">${esc(m.cat)}・最終更新 ${staffById(m.by).name}（${new Date(m.at).getMonth() + 1}/${new Date(m.at).getDate()}）</div></div>`).join('') || '<div class="empty">該当なし</div>'}</div>
     </div>
@@ -2878,7 +2878,7 @@ function boot() {
    - 画面の操作は今までどおり S を書き換え、save() のときに差分だけ送る
    - 1分ごとに読み直して、ほかの人の変更を反映する
    ========================================================= */
-const DEVICE_KEY = 'shamu-device', TOKEN_KEY = 'shamu-token', UI_KEY = 'shamu-ui';
+const DEVICE_KEY = 'shamu-device', TOKEN_KEY = 'shamu-token', UI_KEY = 'shamu-ui', PENDING_KEY = 'shamu-pending';
 const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) { } };
 let P = { device: lsGet(DEVICE_KEY), token: lsGet(TOKEN_KEY), deviceType: null, people: null, me: null, last: null, busy: false, pending: null, lastInput: Date.now(), screen: 'loading', msg: '', newPinStep: 0, newPin: '' };
@@ -3002,14 +3002,29 @@ async function flush() {
       const r = await api('sync', { changes: changes.slice(i, i + 150) });
       if (r.denied && r.denied.length) { toast('権限のない変更があったため、一部は保存されませんでした'); await refresh(true); }
     }
+    lsSet(PENDING_KEY, null);
   } catch (e) {
     P.last = prev;
     if (e.code === 'session') return expired(e.message);
-    toast('保存できませんでした。通信を確かめて、もう一度お試しください（' + e.message + '）');
+    // 送れなかった変更は端末に残し、つながったら自動で送り直す（画面を閉じても、次に開いたときに送る）
+    const keep = {}; (JSON.parse(lsGet(PENDING_KEY) || '[]')).concat(changes).forEach(c => keep[c.c + ':' + (c.row && c.row.id || c.id)] = c);
+    lsSet(PENDING_KEY, JSON.stringify(Object.values(keep)));
+    if (!P.offlineToast) { P.offlineToast = true; toast('通信が切れています。つながったら自動で保存します'); }
+    clearTimeout(syncTimer); syncTimer = setTimeout(flush, 20000);
+    return;
   } finally { P.busy = false; syncBadge(false); }
+  P.offlineToast = false;
+}
+/* 前に送れなかった変更があれば、先に送る */
+async function sendPending() {
+  const pending = JSON.parse(lsGet(PENDING_KEY) || '[]'); if (!pending.length) return true;
+  try { for (let i = 0; i < pending.length; i += 150) await api('sync', { changes: pending.slice(i, i + 150) }); lsSet(PENDING_KEY, null); return true; }
+  catch (e) { return false; }
 }
 async function refresh(force) {
   if (!P.token || P.busy) return;
+  if (S && P.last && diff(P.last, snap(S)).length) { flush(); return; }   // まだ送れていない入力があるときは、読み直して上書きしない
+  if (!(await sendPending())) return;
   const ae = document.activeElement, editing = ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName);
   const dy = document.getElementById('dyText'), dirty = dy && S && S.diary && dy.value !== ((S.diary[diaryDay] || {}).text || '');
   if (!force && (document.getElementById('modalBg') || editing || dirty || Date.now() - P.lastInput < 4000 || document.visibilityState !== 'visible')) return;
@@ -3064,13 +3079,14 @@ async function loadPeople() {
 async function afterLogin(r) {
   P.token = r.token || P.token; lsSet(TOKEN_KEY, P.token); P.me = r.me; if (r.device) P.deviceType = r.device.type;
   if (r.me.mustChange) { P.screen = 'newpin'; P.newPinStep = 0; loginPin = ''; P.msg = '最初のログインです。自分だけの暗証番号に変えてください'; S = S || { ui: loadUi() }; S.session = null; render(); return; }
+  if (lsGet(PENDING_KEY) && await sendPending()) { try { r = Object.assign(r, await api('data')); } catch (e) { } }   // 前回送れなかった入力を先に送る
   S = fromServer(r.data, r.me); P.last = snap(S); P.msg = ''; P.screen = 'app';
   if (S.session.role === 'staff' && (!location.hash || location.hash === '#/')) location.hash = '#/home';
   render();
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261028162456';
+const BUILD = '20261028164706';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3078,11 +3094,11 @@ async function checkUpdate() {
     // 中身は読まず、置いてある画面ファイルの日付だけを聞く（軽い）
     const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
     const stamp = Date.parse(r.headers.get('last-modified') || '');
-    if (!stamp || stamp <= pageStamp + 1000) return;
+    if ((!stamp || stamp <= pageStamp + 1000) && key(new Date()) === TK) return;
     const ae = document.activeElement, busy = document.getElementById('modalBg') || (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) || (REGI.on && Object.keys(REGI.cart).length) || (() => { const dy = document.getElementById('dyText'); return dy && S && S.diary && dy.value !== ((S.diary[diaryDay] || {}).text || ''); })();
     if (busy) return;   // 入力中・レジの会計中は読み直さない（次の確認で）
     location.reload();
-  } catch (e) { }
+  } catch (e) { if (key(new Date()) !== TK && !document.getElementById('modalBg')) location.reload(); }
 }
 setInterval(checkUpdate, 10 * 60000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
@@ -3314,12 +3330,13 @@ async function regFlush() {
   REGI.sending = true;
   try {
     while (q.length) {
-      const it = q[0];
+      const it = q[0]; REGI.inflight = it.undo ? null : it.id;
       if (it.undo) await api('regUndo', { id: it.id }); else await api('regSale', { sale: it });
+      REGI.inflight = null;
       q = regQueue().filter(x => !(x.id === it.id && !!x.undo === !!it.undo)); lsSet(REG_QUEUE_KEY, JSON.stringify(q));
     }
     REGI.err = '';
-  } catch (e) { REGI.err = '送れていない会計があります。電波が戻ると自動で送ります'; }
+  } catch (e) { REGI.inflight = null; REGI.err = '送れていない会計があります。電波が戻ると自動で送ります'; }
   finally { REGI.sending = false; if (REGI.on) render(); }
 }
 
@@ -3361,6 +3378,11 @@ if (PROD) Object.assign(ACT, {
     const sale = { id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ts: Date.now(), lines, total: lines.reduce((a, l) => a + l.price * l.qty, 0) };
     const t = regToday(); t.sales.push(sale); lsSet(REG_TODAY_KEY, JSON.stringify(t));
     lsSet(REG_QUEUE_KEY, JSON.stringify(regQueue().concat([sale])));
+    if (!regQueue().some(x => x.id === sale.id)) {   // 端末に残せなかったとき（容量不足など）は、その場で送り、送れたときだけ会計を消す
+      api('regSale', { sale }).then(() => { REGI.cart = {}; render(); toast(`記録しました（${yen(sale.total)}円）`); })
+        .catch(() => toast('記録できませんでした。電波を確かめて、もう一度「記録する」を押してください'));
+      return;
+    }
     REGI.cart = {}; render(); toast(`記録しました（${yen(sale.total)}円）`);
     regFlush();
   },
@@ -3370,8 +3392,8 @@ if (PROD) Object.assign(ACT, {
     askConfirm('この会計を取り消しますか？', () => {
       const t = regToday(), s = t.sales.find(x => x.id === id); if (!s) return;
       s.undone = true; lsSet(REG_TODAY_KEY, JSON.stringify(t));
-      const q = regQueue(), pending = q.some(x => x.id === id && !x.undo);
-      // まだ送っていない会計なら、送る前に消すだけ
+      const q = regQueue(), pending = q.some(x => x.id === id && !x.undo) && REGI.inflight !== id;
+      // まだ送っていない会計なら、送る前に消すだけ。送っている最中や送り終えた会計は、あとから取り消しを送る
       lsSet(REG_QUEUE_KEY, JSON.stringify(pending ? q.filter(x => x.id !== id) : q.concat([{ id, undo: true }])));
       regHistoryModal(); render(); toast('取り消しました'); regFlush();
     }, '取り消す');
@@ -3381,7 +3403,7 @@ if (PROD) Object.assign(ACT, {
 if (PROD) {
   const renderApp = render;
   render = function () { if (REGI.on) { document.getElementById('root').innerHTML = vReji(); return; } renderApp(); };
-  setInterval(() => { if (REGI.on) regFlush(); }, 30000);
+  setInterval(() => { if (REGI.on) regFlush(); if (REGI.on && key(new Date()) !== TK && !Object.keys(REGI.cart).length && !document.getElementById('modalBg')) location.reload(); }, 30000);
   setInterval(() => { if (REGI.on && document.visibilityState === 'visible') regLoadItems(); }, 10 * 60000);
   document.addEventListener('visibilitychange', () => { if (REGI.on && document.visibilityState === 'visible') { regFlush(); render(); } });
 }
