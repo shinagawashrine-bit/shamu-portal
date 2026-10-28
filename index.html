@@ -147,10 +147,10 @@ a{color:var(--brand)}
 .date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
 .diary-h{flex-wrap:wrap;gap:8px}
 .cell .top .dots.in-top{display:inline-flex;gap:2px;flex:none}
-@keyframes swipedIn{from{opacity:.35}to{opacity:1}}.cal.swiped,#dayPanel.swiped{animation:swipedIn .2s ease-out}
+@keyframes swipedIn{from{opacity:.35}to{opacity:1}}.cal.swiped,#dayPanel.swiped,.diary > section.swiped{animation:swipedIn .2s ease-out}
 .wk-mini{display:none}.ev .ev-ic{display:none}
 @media (max-width:760px){
-  .cal,#dayPanel{touch-action:pan-y}                                   /* 横の動きはスワイプで月・週を移すのに使う */
+  .cal,#dayPanel,.diary > section:first-child{touch-action:pan-y}                                   /* 横の動きはスワイプで月・週を移すのに使う */
   .week-wrap .week{grid-template-columns:28px repeat(7,minmax(0,1fr))}
   .cal.week-wrap{overflow-x:hidden}
   .wk-h{padding:6px 2px;min-height:0;text-align:center}
@@ -817,6 +817,17 @@ async function loadWeather() {
     return true;
   } catch (e) { return false; }
 }
+/* 過去45日より前の天気は「過去の天気（アーカイブ）」から月ごとに読み込む */
+const WX_REQ = {};
+function needWx(k) {
+  const m = k.slice(0, 7); if (WX_REQ[m]) return; WX_REQ[m] = 1;
+  const p = 'daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,cloud_cover_mean&timezone=Asia%2FTokyo';
+  const end = [new Date(+m.slice(0, 4), +m.slice(5, 7), 0), addDays(TODAY, -2)].sort((a, b) => a - b)[0];
+  fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}&start_date=${m}-01&end_date=${key(end)}&${p}`).then(r => r.json()).then(j => {
+    (j.daily?.time || []).forEach((t, i) => { if (!WX[t]) WX[t] = { code: j.daily.weather_code[i], tmax: j.daily.temperature_2m_max[i], tmin: j.daily.temperature_2m_min[i], prec: j.daily.precipitation_sum[i] ?? 0, cloud: j.daily.cloud_cover_mean[i], real: true }; });
+    if (typeof render === 'function' && S && S.session) render();
+  }).catch(() => { delete WX_REQ[m]; });
+}
 /* 過去の日報用：記録が無い日は仮の天気 */
 function fakeWx(k) {
   const r = rng(hashStr('wx' + k)), d = parse(k), m = d.getMonth();
@@ -828,7 +839,8 @@ function fakeWx(k) {
 function wxOf(k) {
   const w = WX[k];
   if (w) return { kind: wxKind(w), tmax: Math.round(w.tmax), tmin: Math.round(w.tmin), real: true };
-  return k <= TK && !PROD ? { ...fakeWx(k), real: false } : null;   // 本番では仮の天気を出さない
+  if (PROD) { if (k < TK) needWx(k); return null; }   // 本番では仮の天気を出さず、過去の天気を読み込む
+  return k <= TK ? { ...fakeWx(k), real: false } : null;
 }
 
 /* =========================================================
@@ -1380,7 +1392,7 @@ function dayPanel(k) {
   if (ky.ten) kt.push('<span class="tag indigo">天赦日</span>');
   kt.push(`<span class="tag gray">${ky.kanshi}</span>`);
   ky.bunka.forEach(b => kt.push(`<span class="tag gold">${b}</span>`));
-  const wxs = w ? `<span>${WX_ICON[w.kind]} ${WX_LABEL[w.kind]}　<b class="num">${w.tmax}°</b> / <span class="num">${w.tmin}°</span>${w.real ? (k > TK ? '<span class="small muted">（予報）</span>' : '') : '<span class="small muted">（仮）</span>'}</span>` : `<span class="muted">天気：${k <= TK ? '記録なし' : '予報の範囲外'}</span>`;
+  const wxs = w ? `<span>${WX_ICON[w.kind]} ${WX_LABEL[w.kind]}　<b class="num">${w.tmax}°</b> / <span class="num">${w.tmin}°</span>${w.real ? '' : '<span class="small muted">（仮）</span>'}</span>` : `<span class="muted">天気：${k < TK ? '読み込み中…' : '予報の範囲外'}</span>`;
   const [H0, H1] = timeRange([k]);
   let tl = '';
   {
@@ -2814,7 +2826,7 @@ const CHG = {
   evDue(el) { const e = S.events.find(x => x.id === el.dataset.id); e.items[+el.dataset.i].due = el.value; save(); }
 };
 document.addEventListener('click', e => {
-  if (Date.now() - swipedAt < 450 && e.target.closest('.cal, #dayPanel')) return;   // スワイプした指でマスを押したことにしない
+  if (Date.now() - swipedAt < 450 && e.target.closest('.cal, #dayPanel, .diary')) return;   // スワイプした指でマスを押したことにしない
   const el = e.target.closest('[data-act]'); if (!el) return;
   const f = ACT[el.dataset.act]; if (!f) return;
   if (el.tagName === 'A' && el.getAttribute('href')?.startsWith('javascript')) e.preventDefault();
@@ -2824,7 +2836,7 @@ document.addEventListener('click', e => {
 /* スマホ：カレンダーを左右にスワイプすると前後の月（週表示は週）へ、1日の欄なら前後の日へ */
 let swipe = null, swipedAt = 0;
 document.addEventListener('touchstart', e => {
-  const area = e.touches.length === 1 && S && S.ui && innerWidth <= 760 ? (e.target.closest('.cal') ? 'cal' : e.target.closest('#dayPanel') ? 'day' : null) : null;
+  const t = e.target, area = e.touches.length === 1 && S && S.ui && innerWidth <= 760 && !t.closest('input, textarea, select') ? (t.closest('.cal') ? 'cal' : t.closest('#dayPanel') ? 'day' : t.closest('.diary > section:first-child') ? 'diary' : null) : null;
   swipe = area ? { area, x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null;
 }, { passive: true });
 document.addEventListener('touchend', e => {
@@ -2832,6 +2844,11 @@ document.addEventListener('touchend', e => {
   const swipe0 = swipe, dx = e.changedTouches[0].clientX - swipe.x, dy = e.changedTouches[0].clientY - swipe.y, quick = Date.now() - swipe.t < 700; swipe = null;
   if (!quick || Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
   swipedAt = Date.now();
+  if (swipe0.area === 'diary') {   // 日報：前の日・次の日（今日より先へは行かない）
+    if (dx < 0 && diaryDay >= TK) return;
+    ACT.diaryMove({ dataset: { n: dx < 0 ? 1 : -1 } }); setTimeout(() => document.querySelector('.diary > section:first-child')?.classList.add('swiped'), 0);
+    return;
+  }
   if (swipe0.area === 'day') {
     selDay = key(addDays(parse(selDay), dx < 0 ? 1 : -1)); calCursor = new Date(parse(selDay).getFullYear(), parse(selDay).getMonth(), 1);
     render(); document.getElementById('dayPanel')?.classList.add('swiped');
@@ -2896,6 +2913,7 @@ function fromServer(d, me) {
   st.outings = (d.outings || []).map(r => ({ id: r.id, date: r.date, start: r.start, dur: num(r.dur) || 60, staff: r.staff, staffs: r.staffs || [r.staff], place: r.place, purpose: r.purpose || '', travel: num(r.travel) || 0, buffer: num(r.buffer) ?? 15 }));
   st.rituals = (d.rituals || []).map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: num(r.day), month: num(r.month), nth: num(r.nth), wd: num(r.wd), date: r.repeat === 'monthly' ? undefined : r.date || undefined, skip: r.repeat === 'monthly' ? String(r.date || '').split(',').filter(Boolean).map(Number) : undefined, start: r.start || '00:00', dur: num(r.dur) || 0, allDay: yes(r.allDay) }));
   st.seasons = {}; (d.seasons || []).forEach(r => st.seasons[r.id] = r.type);
+  (d.weather || []).forEach(([t, code, tmax, tmin, prec, cloud]) => { if (!WX[t]) WX[t] = { code, tmax, tmin, prec, cloud, real: true }; });   // 受け口に記録した天気
   const reads = {}; (d.reads || []).forEach(r => { (reads[r.post] = reads[r.post] || {})[r.user] = num(r.at); });
   st.board = (d.board || []).map(r => ({ id: r.id, title: r.title, body: r.body || '', by: r.by, at: num(r.at), target: r.target || [], reads: reads[r.id] || {} }));
   st.manual = (d.manual || []).map(r => ({ id: r.id, cat: r.cat || 'その他', title: r.title, body: r.body || '', kind: r.kind || 'manual', by: r.by, at: num(r.at), files: r.files || [] }));
@@ -3049,6 +3067,22 @@ async function afterLogin(r) {
   if (S.session.role === 'staff' && (!location.hash || location.hash === '#/')) location.hash = '#/home';
   render();
 }
+
+/* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
+const BUILD = '20261028162023';
+async function checkUpdate() {
+  if (!PROD || !BUILD) return;
+  try {
+    const t = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' }).then(r => r.text());
+    const m = /const BUILD = '(\d+)'/.exec(t);
+    if (!m || m[1] === BUILD) return;
+    const ae = document.activeElement, busy = document.getElementById('modalBg') || (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) || (REGI.on && Object.keys(REGI.cart).length) || (() => { const dy = document.getElementById('dyText'); return dy && S && S.diary && dy.value !== ((S.diary[diaryDay] || {}).text || ''); })();
+    if (busy) return;   // 入力中・レジの会計中は読み直さない（次の確認で）
+    location.reload();
+  } catch (e) { }
+}
+setInterval(checkUpdate, 10 * 60000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
 
 /* ── 起動 ── */
 async function bootProd() {
