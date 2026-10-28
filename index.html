@@ -1125,9 +1125,9 @@ function seasonOf(k) {
   return null;
 }
 const resOn = k => S.res.filter(r => r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
-/* 毎年○月○日にいちばん近い○曜日（例：4/20に近い日曜日） */
-function nearDay(y, r) { const t = new Date(y, r.month - 1, r.day); let diff = (r.wd - t.getDay() + 7) % 7; if (diff > 3) diff -= 7; return key(addDays(t, diff)); }
-function ritualWhen(r) { return r.repeat === 'monthly' ? `毎月${r.day}日${(r.skip || []).length ? `（${r.skip.join('・')}月はなし）` : ''}` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : r.repeat === 'near' ? `毎年${r.month}月${r.day}日に近い${WD[r.wd]}曜日` : r.repeat === 'yearly' ? `毎年${r.month}月${r.day}日` : mdw(parse(r.date)); }
+/* 毎年○月○日にいちばん近い○曜日（例：4/20に近い日曜日）。nth に数を入れると、その日から何日ずらすか（例大祭：6/7に近い日曜日の2日前・1日前・当日） */
+function nearDay(y, r) { const t = new Date(y, r.month - 1, r.day); let diff = (r.wd - t.getDay() + 7) % 7; if (diff > 3) diff -= 7; return key(addDays(t, diff + (r.nth || 0))); }
+function ritualWhen(r) { return r.repeat === 'monthly' ? `毎月${r.day}日${(r.skip || []).length ? `（${r.skip.join('・')}月はなし）` : ''}` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : r.repeat === 'near' ? `毎年${r.month}月${r.day}日に近い${WD[r.wd]}曜日${r.nth ? `の${Math.abs(r.nth)}日${r.nth < 0 ? '前' : '後'}` : ''}` : r.repeat === 'yearly' ? `毎年${r.month}月${r.day}日` : mdw(parse(r.date)); }
 function ritualsOn(k) { const d = parse(k); return S.rituals.filter(r => r.repeat === 'monthly' ? d.getDate() === r.day && !(r.skip || []).includes(d.getMonth() + 1) : r.repeat === 'yearly' ? (d.getMonth() + 1 === r.month && d.getDate() === r.day) : r.repeat === 'nth' ? (d.getMonth() + 1 === r.month && d.getDay() === r.wd && Math.ceil(d.getDate() / 7) === r.nth) : r.repeat === 'near' ? nearDay(d.getFullYear(), r) === k : r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start)); }
 const outingsOn = k => S.outings.filter(o => o.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
 const isEventDay = k => !!S.seasons[k] || ritualsOn(k).length > 0;
