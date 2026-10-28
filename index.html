@@ -1490,6 +1490,10 @@ function noteCard(k, compact) {
     <button class="mini-btn" data-act="noteDone" data-k="${n.date}">対応済</button></div>
     <div style="white-space:pre-wrap;margin-top:4px">${esc(n.text)}</div></div>`;
 }
+/* 祈願の件数：予約台帳の予約から自動で数える（外祭は除く）。本番は予約台帳とつながってから数え始める */
+const kiganOn = k => resOn(k).filter(r => r.type !== '外祭').length;
+const kiganMonth = k => { let n = 0; for (let d = new Date(parse(k).getFullYear(), parse(k).getMonth(), 1); key(d) <= k; d = addDays(d, 1)) n += kiganOn(key(d)); return n; };
+const kiganReady = () => !PROD || S.res.length > 0;
 function autoInfo(k) {
   const d = parse(k), ky = KOYOMI.get(d), w = wxOf(k), s = seasonOf(k), e = S.diary[k];
   const rs = resOn(k).filter(r => r.type !== '外祭');
@@ -1501,7 +1505,7 @@ function pastCard(k, label) {
   if (!e) return `<div class="past"><div class="ph"><span class="ag">${label}</span><b>${ymdw(d)}</b></div><p class="muted small">この日の日報はありません</p></div>`;
   const wx = e.wx || fakeWx(k);
   return `<div class="past"><div class="ph"><span class="ag">${label}</span><b>${ymdw(d)}</b><span class="sp"></span><span class="small muted">${WX_ICON[wx.kind]} ${wx.tmax}°・${ky.roku}${ky.inu ? '・戌' : ''}</span></div>
-    <div class="row small muted" style="gap:12px;margin-bottom:6px"><span>祈願 <b class="num" style="color:var(--text)">${e.kigan ?? '—'}</b>件</span>${PROD ? '' : `<span>授与品 <b class="num" style="color:var(--text)">${e.juyo}</b>体</span>`}<span>記入 ${staffById(e.by).name}</span></div>
+    <div class="row small muted" style="gap:12px;margin-bottom:6px"><span>祈願 <b class="num" style="color:var(--text)">${PROD ? (kiganReady() ? kiganOn(k) : '—') : e.kigan}</b>件</span>${PROD ? '' : `<span>授与品 <b class="num" style="color:var(--text)">${e.juyo}</b>体</span>`}<span>記入 ${staffById(e.by).name}</span></div>
     <p>${esc(e.text)}</p>${e.next ? `<p class="small muted" style="margin-top:6px">申し送り：${esc(e.next)}</p>` : ''}</div>`;
 }
 function vDiary() {
@@ -1525,7 +1529,7 @@ function vDiary() {
         <div><div class="l">天気 <span class="autotag">自動</span></div><div class="v">${a.wx ? `${WX_ICON[a.wx.kind]} ${WX_LABEL[a.wx.kind]}` : '—'}</div><div class="small muted">${a.wx ? `${a.wx.tmax}° / ${a.wx.tmin}°` : ''}</div></div>
         <div><div class="l">暦 <span class="autotag">自動</span></div><div class="v" style="font-size:13.5px">${kt}</div><div class="small muted">${a.ky.kanshi}</div></div>
         ${PROD ? `<div><div class="l">来訪 <span class="autotag">自動</span></div><div class="v num">${a.visits}件</div><div class="small muted">外出 ${outingsOn(k).length}件</div></div>` : `<div><div class="l">祈願 <span class="autotag">台帳から</span></div><div class="v num">${a.kigan}件</div><div class="small muted">来客 ${a.visits}件</div></div>`}
-        ${PROD ? `<div><div class="l">祈願</div><div class="v num" style="display:flex;align-items:baseline;gap:4px"><input class="input num" id="dyKigan" type="number" min="0" inputmode="numeric" value="${e.kigan ?? ''}" placeholder="—" style="width:76px;font-size:18px;font-weight:700;text-align:right;padding:4px 8px"><span style="font-size:14px">件</span></div><div class="small muted">紙の台帳から</div></div>` : `<div><div class="l">授与品の出数 <span class="autotag">レジから</span></div><div class="v num">${a.juyo ?? '—'}${a.juyo != null ? '体' : ''}</div><div class="small muted">${a.s ? esc(a.s.mode === 'off' ? '休み（全員）' : a.s.label) : '平時'}</div></div>`}
+        ${PROD ? `<div><div class="l">祈願 <span class="autotag">自動</span></div>${kiganReady() ? `<div class="v num">${kiganOn(k)}件</div><div class="small muted">今月 ${kiganMonth(k)}件</div>` : '<div class="v num">—</div><div class="small muted">予約台帳とつながると自動で数えます</div>'}</div>` : `<div><div class="l">授与品の出数 <span class="autotag">レジから</span></div><div class="v num">${a.juyo ?? '—'}${a.juyo != null ? '体' : ''}</div><div class="small muted">${a.s ? esc(a.s.mode === 'off' ? '休み（全員）' : a.s.label) : '平時'}</div></div>`}
       </div>
       <div class="field"><label>今日の出来事</label><textarea class="input" id="dyText" placeholder="参拝の様子、印象に残ったこと、トラブルなど">${esc(e.text)}</textarea></div>
       <div class="field"><label>明日への申し送り</label><textarea class="input" id="dyNext" style="min-height:60px" placeholder="次の人に伝えること">${esc(e.next)}</textarea></div>
@@ -2522,7 +2526,7 @@ const ACT = {
   diaryGo(el) { location.hash = '#/diary/' + el.dataset.k; },
   saveDiary() {
     const k = diaryDay, a = autoInfo(k), old = S.diary[k] || {};
-    S.diary[k] = { ...old, text: document.getElementById('dyText').value, next: document.getElementById('dyNext').value, by: S.me, kigan: PROD ? (val('dyKigan') === '' ? null : Math.max(0, parseInt(val('dyKigan'), 10) || 0)) : a.kigan, juyo: a.juyo ?? 0, wx: a.wx ? { kind: a.wx.kind, tmax: a.wx.tmax, tmin: a.wx.tmin } : old.wx };
+    S.diary[k] = { ...old, text: document.getElementById('dyText').value, next: document.getElementById('dyNext').value, by: S.me, kigan: PROD ? null : a.kigan, juyo: a.juyo ?? 0, wx: a.wx ? { kind: a.wx.kind, tmax: a.wx.tmax, tmin: a.wx.tmin } : old.wx };
     if (document.getElementById('dyBoard').checked && S.diary[k].next) S.board.push({ id: 'b' + Date.now(), title: `申し送り（${md(parse(k))}）`, body: S.diary[k].next, by: S.me, at: Date.now(), target: 'staff', reads: { [S.me]: Date.now() } });
     save(); render(); toast('日報を保存しました');
   },
