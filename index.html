@@ -137,8 +137,9 @@ a{color:var(--brand)}
   .cal-r > .leave-box .btn{width:100%}
   .cal-r > .leave-box .leave-left{position:static;text-align:right;margin-top:4px}
   .cal-nav{grid-row:3 !important}
-  .day-acts{justify-content:stretch;flex-wrap:nowrap}
-  .day-acts > .btn{flex:1 1 0;min-width:0;padding:0 8px;font-size:14px}
+  .row.day-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;flex:1 1 100%}
+  .day-acts > .btn{width:100%;padding:0 14px}
+  .day-acts > .add-ev{grid-column:1/-1}
 }.btn.add-ev{border-color:var(--brand);color:var(--brand)}
 .ev.one{white-space:nowrap;text-overflow:ellipsis;padding-top:0;padding-bottom:0}.ev.one b,.ev.one span{display:inline;margin-right:6px}
 .date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
@@ -1431,7 +1432,7 @@ function vHome() {
         <div class="cal-nav"><button class="btn sm" data-act="calMove" data-n="-1">${ICON.left}<span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() - 1, 1).getMonth() + 1) + '月' : '前の週'}</span></button><button class="btn sm" data-act="calToday">今日</button><button class="btn sm" data-act="calMove" data-n="1"><span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1).getMonth() + 1) + '月' : '次の週'}</span>${ICON.right}</button></div>
         <div class="cal-r"><div class="seg"><button class="${isMonth ? 'on' : ''}" data-act="calView" data-v="month">月</button><button class="${!isMonth ? 'on' : ''}" data-act="calView" data-v="week">週</button></div>
         <button class="btn act-btn add-ev" data-act="addEvent" data-k="${selDay}">＋ 予定を追加</button>
-        ${isTemp() ? `<div class="leave-box"><button class="btn pri act-btn" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri act-btn" data-act="leaveModal" data-k="${selDay}">＋ 休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}</div>
+        ${isTemp() ? `<div class="leave-box"><button class="btn pri act-btn" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri act-btn" data-act="leaveModal" data-k="${selDay}">休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}</div>
       </div>
       ${isMonth ? monthView() : weekView()}
       <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（アルバイト）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
