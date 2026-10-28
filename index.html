@@ -168,6 +168,13 @@ a{color:var(--brand)}
   .week .ev.one{line-height:normal !important}
 }
 img.mark{object-fit:cover;border-radius:50% !important;background:none !important;padding:0;flex:none}
+.dy-h{font-size:14px;margin:16px 0 8px}
+.dy-entry{border:1px solid var(--hair);border-radius:12px;padding:10px 12px;margin-bottom:8px}
+.dy-entry.mine{border-color:var(--brand);background:var(--brand-soft)}
+.dy-who{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.dy-text{white-space:pre-wrap;line-height:1.7}
+.hv-item{border-top:1px solid var(--hair);padding:8px 0}.hv-item:first-of-type{border-top:0}
+.hv-item.mine-day{border:1px solid var(--hair);border-radius:10px;padding:8px 10px;margin-bottom:6px}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -2918,7 +2925,10 @@ function fromServer(d, me) {
   const reads = {}; (d.reads || []).forEach(r => { (reads[r.post] = reads[r.post] || {})[r.user] = num(r.at); });
   st.board = (d.board || []).map(r => ({ id: r.id, title: r.title, body: r.body || '', by: r.by, at: num(r.at), target: r.target || [], reads: reads[r.id] || {} }));
   st.manual = (d.manual || []).map(r => ({ id: r.id, cat: r.cat || 'その他', title: r.title, body: r.body || '', kind: r.kind || 'manual', by: r.by, at: num(r.at), files: r.files || [] }));
-  st.diary = {}; (d.diary || []).forEach(r => st.diary[r.id] = { text: r.text || '', next: r.next || '', by: r.by, wx: r.wx && r.wx.kind ? { kind: r.wx.kind, tmax: r.wx.tmax, tmin: r.wx.tmin } : undefined, nextDone: yes(r.nextDone), kigan: r.wx && r.wx.kigan != null ? Number(r.wx.kigan) : null, juyo: null });
+  // 日報は人ごと（id「日付|書いた人」）。申し送りは1件ずつ
+  st.diaryEntries = {}; (d.diary || []).forEach(r => { const date = String(r.id).split('|')[0], by = r.by || String(r.id).split('|')[1]; if (!by) return; (st.diaryEntries[date] = st.diaryEntries[date] || {})[by] = { text: r.text || '', wx: r.wx && r.wx.kind ? { kind: r.wx.kind, tmax: r.wx.tmax, tmin: r.wx.tmin } : undefined }; });
+  st.handovers = (d.handover || []).map(r => ({ id: r.id, date: r.date, text: r.text || '', by: r.by, at: num(r.at) || 0, done: yes(r.done), doneBy: r.doneBy || '', doneAt: num(r.doneAt) || 0 }));
+  st.diary = {};
   st.shifts = {}; (d.shifts || []).forEach(r => st.shifts[r.id] = { shuin: r.shuin || [], honden: r.honden || [] });
   st.extraNeed = {}; (d.extraNeed || []).forEach(r => { if (num(r.n)) st.extraNeed[r.id] = num(r.n); });
   st.requests = {}; (d.requests || []).forEach(r => { (st.requests[r.pid] = st.requests[r.pid] || {})[r.ym] = { days: r.days || {}, at: num(r.at) }; });
@@ -2937,6 +2947,7 @@ function fromServer(d, me) {
   const role = ['guji', 'staff', 'temp'].includes(me.role) ? 'staff' : 'baito';
   st.me = me.id;
   st.session = { role, id: me.id, group: role === 'staff' ? 'staff' : (me.role === 'shuin' ? 'shuin' : me.grp) };
+  const prevS = S; S = st; diaryCompat(); S = prevS;   // 日報（人ごと）をホーム・検索・天気が使う形にまとめる
   return st;
 }
 /* 在庫の箱数：日付順に「数えた（count）」で置きかえ、「1箱開けた（open）」で減らし、「入荷（in）」で足す */
@@ -2961,8 +2972,8 @@ function toRows(st) {
   R.board = st.board.map(p => ({ id: p.id, title: p.title, body: p.body, by: p.by, at: p.at, target: Array.isArray(p.target) ? p.target : boardTargets(p) }));
   R.reads = []; st.board.forEach(p => Object.entries(p.reads || {}).forEach(([u, at]) => R.reads.push({ id: p.id + '|' + u, post: p.id, user: u, at })));
   R.manual = st.manual.map(m => ({ id: m.id, cat: m.cat, title: m.title, body: m.body, kind: m.kind, by: m.by, at: m.at, files: m.files || [] }));
-  // 祈願の件数（紙の台帳から手で入れる）は wx 列に一緒に入れる（受け口の列を増やさないため）
-  R.diary = Object.entries(st.diary).map(([id, e]) => ({ id, text: e.text || '', next: e.next || '', by: e.by || '', wx: e.wx || e.kigan != null ? Object.assign({}, e.wx || {}, e.kigan != null ? { kigan: e.kigan } : {}) : null, nextDone: !!e.nextDone }));
+  R.diary = []; Object.entries(st.diaryEntries || {}).forEach(([date, m]) => Object.entries(m).forEach(([by, e]) => R.diary.push({ id: date + '|' + by, text: e.text || '', next: '', by, wx: e.wx || null, nextDone: false })));
+  R.handover = (st.handovers || []).map(h => ({ id: h.id, date: h.date, text: h.text, by: h.by, at: h.at, done: !!h.done, doneBy: h.doneBy || '', doneAt: h.doneAt || '' }));
   R.shifts = Object.entries(st.shifts).map(([id, v]) => ({ id, shuin: v.shuin || [], honden: v.honden || [] }));
   R.extraNeed = Object.entries(st.extraNeed).map(([id, n]) => ({ id, n }));
   R.requests = []; Object.entries(st.requests).forEach(([pid, byM]) => Object.entries(byM).forEach(([ym, v]) => R.requests.push({ id: pid + '|' + ym, pid, ym, days: v.days || {}, at: v.at })));
@@ -3026,7 +3037,7 @@ async function refresh(force) {
   if (S && P.last && diff(P.last, snap(S)).length) { flush(); return; }   // まだ送れていない入力があるときは、読み直して上書きしない
   if (!(await sendPending())) return;
   const ae = document.activeElement, editing = ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName);
-  const dy = document.getElementById('dyText'), dirty = dy && S && S.diary && dy.value !== ((S.diary[diaryDay] || {}).text || '');
+  const dirty = diaryDirty();
   if (!force && (document.getElementById('modalBg') || editing || dirty || Date.now() - P.lastInput < 4000 || document.visibilityState !== 'visible')) return;
   try {
     const r = await api('data');
@@ -3086,7 +3097,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261028164706';
+const BUILD = '20261028165844';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3095,7 +3106,7 @@ async function checkUpdate() {
     const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
     const stamp = Date.parse(r.headers.get('last-modified') || '');
     if ((!stamp || stamp <= pageStamp + 1000) && key(new Date()) === TK) return;
-    const ae = document.activeElement, busy = document.getElementById('modalBg') || (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) || (REGI.on && Object.keys(REGI.cart).length) || (() => { const dy = document.getElementById('dyText'); return dy && S && S.diary && dy.value !== ((S.diary[diaryDay] || {}).text || ''); })();
+    const ae = document.activeElement, busy = document.getElementById('modalBg') || (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) || (REGI.on && Object.keys(REGI.cart).length) || diaryDirty();
     if (busy) return;   // 入力中・レジの会計中は読み直さない（次の確認で）
     location.reload();
   } catch (e) { if (key(new Date()) !== TK && !document.getElementById('modalBg')) location.reload(); }
@@ -3532,6 +3543,107 @@ if (PROD) {
     sumItem(el) { sumItem = el.dataset.id; render(); },
     sumReload() { loadSalesSummary(true); },
     sumCsv() { sumCsv(); }
+  });
+}
+
+/* =========================================================
+   日報（本番）：人ごとに書く・申し送りは1件ずつ（2026-10-28）
+   - 同じ日に何人が書いても、それぞれの日報として残る（ほかの人の分は上書きしない）
+   - 申し送りは「＋ 申し送りを追加」で1件ずつ。「対応済」も1件ずつ
+   ========================================================= */
+const diaryPeople = () => [...HOSTS, ...TEMP_STAFF];   // 宮司・勝史・鈴木・今井、そのあと臨時職員
+const entriesOn = k => { const m = S.diaryEntries[k] || {}; const order = diaryPeople().map(p => p.id); return Object.keys(m).filter(u => (m[u].text || '').trim()).sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99)).map(u => ({ by: u, ...m[u] })); };
+const myEntry = k => (S.diaryEntries[k] || {})[S.me] || { text: '' };
+function diaryDirty() { const dy = document.getElementById('dyText'); return !!(dy && S && S.diaryEntries && dy.value !== (myEntry(diaryDay).text || '')); }
+/* 日報の内容を、ほかの画面（ホーム・検索・天気）が使う形にまとめる */
+function diaryCompat() {
+  S.diary = {};
+  Object.keys(S.diaryEntries).forEach(k => {
+    const es = entriesOn(k), any = Object.values(S.diaryEntries[k])[0] || {};
+    if (es.length) S.diary[k] = { text: es.map(e => `${staffById(e.by)?.name || ''}：${e.text}`).join('\n'), next: '', by: es[0].by, wx: Object.values(S.diaryEntries[k]).map(e => e.wx).find(Boolean) || any.wx };
+  });
+}
+/* 申し送り：その日より前の7日間に書かれた、まだ対応済でないもの */
+const openHandovers = k => S.handovers.filter(h => !h.done && h.date < k && h.date >= key(addDays(parse(k), -7))).sort((a, b) => a.at - b.at);
+const handoverItem = (h, compact) => `<div class="hv-item"><div class="row" style="gap:6px"><span class="small" style="font-weight:700;color:var(--brand)">${md(parse(h.date))} ${esc(staffById(h.by)?.name || '')}</span><span class="sp"></span><button class="mini-btn" data-act="hvDone" data-id="${esc(h.id)}">対応済</button></div><div style="white-space:pre-wrap;margin-top:2px${compact ? ';font-size:13px' : ''}">${esc(h.text)}</div></div>`;
+function prevNoteProd(k) { return openHandovers(k).length ? openHandovers(k)[0] : null; }
+function noteCardProd(k, compact) {
+  const hs = openHandovers(k); if (!hs.length) return '';
+  return `<div class="handover${compact ? ' compact' : ''}"><div class="small" style="font-weight:700;color:var(--brand);margin-bottom:4px">申し送り ${hs.length}件</div>${hs.map(h => handoverItem(h, compact)).join('')}</div>`;
+}
+function pastCardProd(k, label) {
+  const es = entriesOn(k), hs = S.handovers.filter(h => h.date === k), d = parse(k), ky = KOYOMI.get(d), wx = (S.diary[k] && S.diary[k].wx) || wxOf(k);
+  if (!es.length && !hs.length) return `<div class="past"><div class="ph"><span class="ag">${label}</span><b>${ymdw(d)}</b></div><p class="muted small">この日の日報はありません</p></div>`;
+  return `<div class="past"><div class="ph"><span class="ag">${label}</span><b>${ymdw(d)}</b><span class="sp"></span><span class="small muted">${wx ? `${WX_ICON[wx.kind]} ${wx.tmax}°・` : ''}${ky.roku}${ky.inu ? '・戌' : ''}</span></div>
+    <div class="row small muted" style="gap:12px;margin-bottom:6px"><span>祈願 <b class="num" style="color:var(--text)">${kiganReady() ? kiganOn(k) : '—'}</b>件</span></div>
+    ${es.map(e => `<p><b>${esc(staffById(e.by)?.name || '')}</b>　${esc(e.text)}</p>`).join('')}${hs.map(h => `<p class="small muted" style="margin-top:6px">申し送り（${esc(staffById(h.by)?.name || '')}）：${esc(h.text)}</p>`).join('')}</div>`;
+}
+function vDiaryProd() {
+  const k = diaryDay, a = autoInfo(k), mine = myEntry(k), order = diaryPeople().map(p => p.id);
+  // 宮司・勝史・鈴木・今井の順。自分の欄（書く欄）もその順の位置に出す
+  const entryList = entriesOn(k).filter(e => e.by !== S.me).concat([{ by: S.me }]).sort((x, y) => (order.indexOf(x.by) + 1 || 99) - (order.indexOf(y.by) + 1 || 99));
+  const todays = S.handovers.filter(h => h.date === k).sort((x, y) => x.at - y.at);
+  const cmp = S.ui.diaryCmp;
+  const p1 = cmp === 'weekday' ? key(addDays(a.d, -364)) : key(new Date(a.d.getFullYear() - 1, a.d.getMonth(), a.d.getDate()));
+  const p2 = cmp === 'weekday' ? key(addDays(a.d, -728)) : key(new Date(a.d.getFullYear() - 2, a.d.getMonth(), a.d.getDate()));
+  const kt = [a.ky.roku, a.ky.inu && '戌の日', a.ky.ichi && '一粒万倍日', a.ky.ten && '天赦日'].filter(Boolean).join('・');
+  const results = diaryQ ? Object.entries(S.diary).filter(([, v]) => v.text.includes(diaryQ)).concat(S.handovers.filter(h => h.text.includes(diaryQ)).map(h => [h.date, { text: '申し送り：' + h.text }])).sort((x, y) => x[0] < y[0] ? 1 : -1).slice(0, 30) : [];
+  return `
+  <div class="page-h"><h1>日報</h1></div>
+  <div class="diary">
+    <section class="card card-p">
+      <div class="row diary-h" style="margin-bottom:14px">
+        <div class="date-pick"><span class="cal-title"><h3 style="font-size:18px">${ymdw(a.d)}</h3><span class="caret">▾</span></span><input type="date" class="date-over" value="${k}" max="${TK}" data-chg="diaryDate" data-act="diaryPick" aria-label="日付を選ぶ" title="日付を選ぶ"></div>
+        <span class="sp"></span>
+        <div class="cal-nav"><button class="btn sm" data-act="diaryMove" data-n="-1">${ICON.left}<span>前の日</span></button><button class="btn sm" data-act="diaryToday" ${k === TK ? 'disabled' : ''}>今日</button><button class="btn sm" data-act="diaryMove" data-n="1" ${k >= TK ? 'disabled' : ''}><span>次の日</span>${ICON.right}</button></div>
+      </div>
+      ${noteCardProd(k)}
+      <div class="auto">
+        <div><div class="l">天気 <span class="autotag">自動</span></div><div class="v">${a.wx ? `${WX_ICON[a.wx.kind]} ${WX_LABEL[a.wx.kind]}` : '—'}</div><div class="small muted">${a.wx ? `${a.wx.tmax}° / ${a.wx.tmin}°` : ''}</div></div>
+        <div><div class="l">暦 <span class="autotag">自動</span></div><div class="v" style="font-size:13.5px">${kt}</div><div class="small muted">${a.ky.kanshi}</div></div>
+        <div><div class="l">来訪 <span class="autotag">自動</span></div><div class="v num">${a.visits}件</div><div class="small muted">外出 ${outingsOn(k).length}件</div></div>
+        <div><div class="l">祈願 <span class="autotag">自動</span></div>${kiganReady() ? `<div class="v num">${kiganOn(k)}件</div><div class="small muted">今月 ${kiganMonth(k)}件</div>` : '<div class="v num">—</div><div class="small muted">予約台帳とつながると自動で数えます</div>'}</div>
+      </div>
+      <h4 class="dy-h">今日の出来事</h4>
+      ${entryList.map(e => e.by === S.me ? `<div class="dy-entry mine"><div class="dy-who">${avatar(me().name, me().color, true)}<b>${esc(me().name)}</b><span class="small muted">（自分）</span></div>
+        <textarea class="input" id="dyText" placeholder="この日にしたこと、参拝の様子、トラブルなど">${esc(mine.text || '')}</textarea>
+        <div class="row" style="margin-top:6px"><span class="sp"></span><button class="btn pri" data-act="saveDiary">保存</button></div></div>`
+        : `<div class="dy-entry"><div class="dy-who">${avatar(staffById(e.by)?.name || '?', staffById(e.by)?.color || 'var(--brand)', true)}<b>${esc(staffById(e.by)?.name || '')}</b></div><div class="dy-text">${esc(e.text)}</div></div>`).join('')}
+      <h4 class="dy-h">申し送り</h4>
+      ${todays.map(h => `<div class="hv-item mine-day"><div class="row" style="gap:6px"><b class="small">${esc(staffById(h.by)?.name || '')}</b>${h.done ? `<span class="tag gray">対応済（${esc(staffById(h.doneBy)?.name || '')}）</span>` : ''}<span class="sp"></span>${h.by === S.me && !h.done ? `<button class="mini-btn" data-act="hvDel" data-id="${esc(h.id)}">取り消す</button>` : ''}</div><div style="white-space:pre-wrap;margin-top:2px">${esc(h.text)}</div></div>`).join('') || '<div class="small muted" style="margin-bottom:8px">この日の申し送りはまだありません</div>'}
+      <textarea class="input" id="hvText" style="min-height:56px" placeholder="次の人に伝えること（1件ずつ追加できます）"></textarea>
+      <div class="row" style="margin-top:6px"><label class="row small" style="gap:6px"><input type="checkbox" id="hvBoard"> 掲示板にも載せる</label><span class="sp"></span><button class="btn" data-act="hvAdd">＋ 申し送りを追加</button></div>
+      <div class="small muted" style="margin-top:6px">申し送りは、次の日から1週間、ホーム（今日の欄）と日報の上に出ます。「対応済」を押すと消えます。</div>
+    </section>
+    <section>
+      <div class="row" style="margin-bottom:12px"><h3 style="font-size:15px">過去の同じ時期</h3><span class="sp"></span>
+        <div class="seg"><button class="${cmp === 'weekday' ? 'on' : ''}" data-act="diaryCmp" data-v="weekday">同じ曜日</button><button class="${cmp === 'date' ? 'on' : ''}" data-act="diaryCmp" data-v="date">同じ日付</button></div></div>
+      ${pastCardProd(p1, '1年前')}${pastCardProd(p2, '2年前')}
+      <div class="card card-p">
+        <div class="row" style="margin-bottom:8px">${ICON.search.replace('<svg', '<svg width="16" height="16"')}<input class="input" id="dyQ" placeholder="過去の日報を検索（例：取材、雨、外祭）" value="${esc(diaryQ)}" data-enter="diarySearch"><button class="btn sm" data-act="diarySearch">検索</button></div>
+        ${diaryQ ? (results.length ? `<ul class="mini-list">${results.map(([kk, v]) => `<li style="cursor:pointer" data-act="diaryGo" data-k="${esc(kk)}"><b class="num" style="white-space:nowrap">${kk.replace(/-/g, '/')}</b><span class="small" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(v.text.split('\n')[0])}</span></li>`).join('')}</ul>` : '<div class="small muted">見つかりませんでした</div>') : '<div class="small muted">キーワードで過去の日報を探せます</div>'}
+      </div>
+    </section>
+  </div>`;
+}
+if (PROD) {
+  vDiary = vDiaryProd; prevNote = prevNoteProd; noteCard = noteCardProd; pastCard = pastCardProd;
+  Object.assign(ACT, {
+    saveDiary() {
+      const k = diaryDay, a = autoInfo(k);
+      const day = S.diaryEntries[k] = S.diaryEntries[k] || {};
+      day[S.me] = { text: document.getElementById('dyText').value, wx: a.wx ? { kind: a.wx.kind, tmax: a.wx.tmax, tmin: a.wx.tmin } : (day[S.me] || {}).wx, at: Date.now() };
+      diaryCompat(); save(); render(); toast('日報を保存しました');
+    },
+    hvAdd() {
+      const text = (document.getElementById('hvText').value || '').trim(); if (!text) return toast('申し送りを入れてください');
+      const k = diaryDay, h = { id: 'h' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), date: k, text, by: S.me, at: Date.now(), done: false };
+      S.handovers.push(h);
+      if (document.getElementById('hvBoard').checked) S.board.push({ id: 'b' + Date.now(), title: `申し送り（${md(parse(k))}）`, body: text, by: S.me, at: Date.now(), target: 'staff', reads: { [S.me]: Date.now() } });
+      save(); render(); toast('申し送りを追加しました');
+    },
+    hvDone(el) { const h = S.handovers.find(x => x.id === el.dataset.id); if (!h) return; h.done = true; h.doneBy = S.me; h.doneAt = Date.now(); save(); render(); toast('申し送りを対応済にしました'); },
+    hvDel(el) { askConfirm('この申し送りを取り消しますか？', () => { S.handovers = S.handovers.filter(x => x.id !== el.dataset.id); save(); render(); }, '取り消す'); }
   });
 }
 
