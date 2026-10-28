@@ -141,12 +141,30 @@ a{color:var(--brand)}
   .day-acts > .btn{width:100%;padding:0 14px}
   .day-acts > .add-ev{grid-column:1/-1}
 }.btn.add-ev{border-color:var(--brand);color:var(--brand)}
-.ev.one{white-space:nowrap;text-overflow:ellipsis;padding-top:0;padding-bottom:0}.ev.one b,.ev.one span{display:inline;margin-right:6px}
+.ev.one{white-space:nowrap;text-overflow:ellipsis;padding-top:0;padding-bottom:0}.ev.one b,.ev.one > span:not(.ev-ic),.ev.one .ev-tx span{display:inline;margin-right:6px}
 .date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
 .diary-h{flex-wrap:wrap;gap:8px}
 .cell .top .dots.in-top{display:inline-flex;gap:2px;flex:none}
-@keyframes swipeNext{from{transform:translateX(28px);opacity:.4}to{transform:none;opacity:1}}@keyframes swipePrev{from{transform:translateX(-28px);opacity:.4}to{transform:none;opacity:1}}
-.cal.swipe-next{animation:swipeNext .18s ease-out}.cal.swipe-prev{animation:swipePrev .18s ease-out}
+@keyframes swipedIn{from{opacity:.35}to{opacity:1}}.cal.swiped{animation:swipedIn .2s ease-out}
+.wk-mini{display:none}.ev .ev-ic{display:none}
+@media (max-width:760px){
+  .cal{touch-action:pan-y}                                   /* 横の動きはスワイプで月・週を移すのに使う */
+  .week-wrap .week{grid-template-columns:28px repeat(7,minmax(0,1fr))}
+  .cal.week-wrap{overflow-x:hidden}
+  .wk-h{padding:6px 2px;min-height:0;text-align:center}
+  .wk-h > .row{flex-direction:column;gap:0 !important;align-items:center}
+  .wk-h .offs,.wk-h .season,.wk-h .sp,.wk-full{display:none}
+  .wk-h .rokuyo{font-size:9px}
+  .wk-h .dots{justify-content:center}
+  .wk-mini{display:flex;flex-wrap:wrap;justify-content:center;gap:1px;margin-top:2px;min-height:14px}
+  .wk-mini i{font-style:normal;font-size:9px;font-weight:700;line-height:13px;padding:0 2px;border-radius:3px}
+  .m-leave{color:var(--blue);background:var(--blue-soft)}.m-temp{color:var(--teal);background:var(--teal-soft)}.m-shuin{color:var(--green);background:var(--green-soft)}.m-honden{color:var(--honden);background:var(--honden-soft)}.m-sai{color:var(--shu);background:var(--shu-soft)}
+  .wk-t{font-size:9px;padding-right:3px}
+  .week .ev{padding:0;left:1px;right:1px}
+  .week .ev .ev-tx{display:none}
+  .week .ev .ev-ic{display:grid;place-items:center;height:100%;min-height:14px;font-size:12px;font-weight:800;line-height:1}
+  .week .ev.one{line-height:normal !important}
+}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -1245,7 +1263,7 @@ function cellLines(k) {
     ritualsOn(k).forEach(r => out.push(`<div class="ln sai"><i>祭</i><span>${esc(r.name)}</span></div>`));
     if (leavesOn(k).includes(S.me)) out.push('<div class="ln leave"><i>休</i><span>休み</span></div>');
     if (tempOn(k).some(t => t.id === S.me)) out.push('<div class="ln temp"><i>臨</i><span>出勤</span></div>');
-    visitsOn(k).filter(v => v.host === S.me).forEach(v => out.push(`<div class="ln visit"><i>客</i><span>${esc(v.who)}</span></div>`));
+    visitsOn(k).filter(v => v.host === S.me).forEach(v => out.push(`<div class="ln visit"><i>来</i><span>${esc(v.who)}</span></div>`));
     outingsOn(k).filter(o => outStaff(o).includes(S.me)).forEach(o => { const t = outTimes(o); out.push(`<div class="ln out"><i>出</i><span>${tstr(t.depart)}発 ${esc(o.place)}</span></div>`); });
     return out.join('');
   }
@@ -1256,7 +1274,7 @@ function cellLines(k) {
     if (kg.length) out.push(`<div class="ln kigan"><i>祈</i><span>祈願 ${kg.length}件</span></div>`);
     gs.forEach(g => out.push(`<div class="ln kigan" data-act="evDetail" data-kind="gaisai" data-id="${g.id}" title="申込用紙を開く"><i>外</i><span>外祭 ${g.start}</span></div>`));
   }
-  if (L.visit) visitsOn(k).forEach(v => out.push(`<div class="ln visit"><i>客</i><span>${esc(v.who)}</span></div>`));
+  if (L.visit) visitsOn(k).forEach(v => out.push(`<div class="ln visit"><i>来</i><span>${esc(v.who)}</span></div>`));
   if (L.out) outingsOn(k).forEach(o => { const t = outTimes(o); out.push(`<div class="ln out"><i>出</i><span>${tstr(t.depart)}発 ${outNames(o)} ${esc(o.place)}</span></div>`); });
   if (L.baito) {
     const sh = regularsOn(k, 'shuin'), hd = regularsOn(k, 'honden');
@@ -1323,6 +1341,8 @@ function timeRange(keys) {
   return [a, b];
 }
 const isOffHours = m => m < 540 || m >= 1020;
+/* スマホの週表示で予定を1文字で表すときの字 */
+const EV_CHAR = { visit: '来', out: '出', sai: '祭', kigan: '祈', gaisai: '外' };
 function weekView() {
   const ws = weekStart(), PX = 52 / 60, [H0, H1] = timeRange(Array.from({ length: 7 }, (_, i) => key(addDays(weekStart(), i))));
   let heads = '<div style="border-bottom:1px solid var(--hair)"></div>', cols = '';
@@ -1333,14 +1353,15 @@ function weekView() {
     heads += `<div class="wk-h ${d.getDay() === 0 ? 'sun' : ''} ${d.getDay() === 6 ? 'sat' : ''} ${hol ? 'hol' : ''} ${k === TK ? 'today' : ''} ${k === selDay ? 'sel' : ''}" data-act="pick" data-k="${k}">
       <div class="row" style="gap:6px;align-items:center"><span class="dw">${WD[d.getDay()]}</span><span class="dn">${d.getDate()}</span>${offBadges(k)}<span class="rokuyo${ky.roku === '大安' ? ' taian' : ''}">${ky.roku}</span></div>
       <div class="row" style="gap:4px;margin-top:3px">${s ? `<span class="season ${MODES[s.mode].cls}">${s.mode === 'off' ? '休（全員）' : MODES[s.mode].label}</span>` : ''}<span class="sp"></span><span class="dots">${kDots(ky)}</span></div>
-      ${ky.bunka.length ? `<div class="small" style="color:var(--gold);line-height:1.35">${ky.bunka.join('・')}</div>` : ''}${ritualsOn(k).filter(r => r.allDay).map(r => `<div class="ln sai" style="margin-top:3px"><i>終日</i><span>${esc(r.name)}</span></div>`).join('')}${tempOn(k).length ? `<div class="small" style="color:var(--teal);margin-top:2px">臨 ${tempOn(k).map(t => t.name).join('・')}</div>` : ''}<div class="small" style="margin-top:3px;line-height:1.4">${regularsOn(k, 'shuin').length ? `<span style="color:var(--green)">朱印 ${regularsOn(k, 'shuin').map(r => shortName(r.name)).join('・')}</span><br>` : ''}${regularsOn(k, 'honden').length ? `<span style="color:var(--honden)">本殿 ${regularsOn(k, 'honden').map(r => shortName(r.name)).join('・')}</span>` : ''}</div>
+      <div class="wk-mini">${leavesOn(k).length ? '<i class="m-leave">休</i>' : ''}${tempOn(k).length ? '<i class="m-temp">臨</i>' : ''}${regularsOn(k, 'shuin').length ? '<i class="m-shuin">朱</i>' : ''}${regularsOn(k, 'honden').length ? '<i class="m-honden">本</i>' : ''}${ritualsOn(k).some(r => r.allDay) ? '<i class="m-sai">祭</i>' : ''}</div>
+      <div class="wk-full">${ky.bunka.length ? `<div class="small" style="color:var(--gold);line-height:1.35">${ky.bunka.join('・')}</div>` : ''}${ritualsOn(k).filter(r => r.allDay).map(r => `<div class="ln sai" style="margin-top:3px"><i>終日</i><span>${esc(r.name)}</span></div>`).join('')}${tempOn(k).length ? `<div class="small" style="color:var(--teal);margin-top:2px">臨 ${tempOn(k).map(t => t.name).join('・')}</div>` : ''}<div class="small" style="margin-top:3px;line-height:1.4">${regularsOn(k, 'shuin').length ? `<span style="color:var(--green)">朱印 ${regularsOn(k, 'shuin').map(r => shortName(r.name)).join('・')}</span><br>` : ''}${regularsOn(k, 'honden').length ? `<span style="color:var(--honden)">本殿 ${regularsOn(k, 'honden').map(r => shortName(r.name)).join('・')}</span>` : ''}</div></div>
     </div>`;
     let evs = '';
     if (s && s.mode !== 'hou') evs += `<div class="wk-shade" style="background:var(--s-${MODES[s.mode].cls});opacity:.55;place-items:start center;padding-top:6px"><span style="color:var(--s-${MODES[s.mode].cls}-b);font-size:11px">${MODES[s.mode].label}</span></div>`;
     layoutCols(eventsShown(k)).forEach(x => { const e = x.e;
       const top = (tmin(e.start) - H0) * PX, h = e.dur * PX - 2;
       const one = h <= 30 && !(e.travel && e.travel.travel);
-      evs += `<div class="ev ${e.kind}${e.travel && e.travel.travel ? ' has-travel' : ''}${one ? ' one' : ''}" style="top:${top}px;height:${h}px${one ? `;line-height:${h - 2}px` : ''}${travelBg(e)}${colStyle(x, 3)}" data-act="evDetail" data-kind="${e.kind}" data-id="${e.id}" title="${esc(e.start + ' ' + e.title)}">${e.travel && e.travel.travel ? outInner(e, PX) : `<b>${e.start} ${esc(e.short || e.title)}</b>${h > 30 ? esc(e.sub) : ''}`}</div>`;
+      evs += `<div class="ev ${e.kind}${e.travel && e.travel.travel ? ' has-travel' : ''}${one ? ' one' : ''}" style="top:${top}px;height:${h}px${one ? `;line-height:${h - 2}px` : ''}${travelBg(e)}${colStyle(x, 3)}" data-act="evDetail" data-kind="${e.kind}" data-id="${e.id}" title="${esc(e.start + ' ' + e.title)}"><span class="ev-ic">${EV_CHAR[e.kind] || esc((e.short || e.title).slice(0, 1))}</span><span class="ev-tx">${e.travel && e.travel.travel ? outInner(e, PX) : `<b>${e.start} ${esc(e.short || e.title)}</b>${h > 30 ? esc(e.sub) : ''}`}</span></div>`;
     });
     cols += `<div class="wk-col">${Array.from({ length: (H1 - H0) / 60 }, (_, i) => `<div class="wk-row${isOffHours(H0 + i * 60) ? ' off-hours' : ''}" style="height:52px"></div>`).join('')}${evs}</div>`;
   }
@@ -2790,6 +2811,7 @@ const CHG = {
   evDue(el) { const e = S.events.find(x => x.id === el.dataset.id); e.items[+el.dataset.i].due = el.value; save(); }
 };
 document.addEventListener('click', e => {
+  if (Date.now() - swipedAt < 450 && e.target.closest('.cal')) return;   // スワイプした指でマスを押したことにしない
   const el = e.target.closest('[data-act]'); if (!el) return;
   const f = ACT[el.dataset.act]; if (!f) return;
   if (el.tagName === 'A' && el.getAttribute('href')?.startsWith('javascript')) e.preventDefault();
@@ -2797,14 +2819,15 @@ document.addEventListener('click', e => {
   f(el, e);
 });
 /* スマホ：月のカレンダーを左右にスワイプすると、前の月・次の月へ */
-let swipe = null;
-document.addEventListener('touchstart', e => { swipe = e.touches.length === 1 && S && S.ui && S.ui.calView === 'month' && e.target.closest('.cal') ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null; }, { passive: true });
+let swipe = null, swipedAt = 0;
+document.addEventListener('touchstart', e => { swipe = e.touches.length === 1 && S && S.ui && e.target.closest('.cal') && innerWidth <= 760 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null; }, { passive: true });
 document.addEventListener('touchend', e => {
   if (!swipe) return;
   const dx = e.changedTouches[0].clientX - swipe.x, dy = e.changedTouches[0].clientY - swipe.y, quick = Date.now() - swipe.t < 700; swipe = null;
   if (!quick || Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
+  swipedAt = Date.now();
   ACT.calMove({ dataset: { n: dx < 0 ? 1 : -1 } });
-  const c = document.querySelector('.cal'); if (c) c.classList.add(dx < 0 ? 'swipe-next' : 'swipe-prev');
+  const c = document.querySelector('.cal'); if (c) c.classList.add('swiped');
 }, { passive: true });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el, e); });
 document.addEventListener('keydown', e => {
