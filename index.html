@@ -124,7 +124,22 @@ a{color:var(--brand)}
 .reji-total b{font-size:30px}.reji-total small{font-size:15px;margin-left:2px}
 .reji-go{width:100%;min-height:56px;font-size:18px;border-radius:14px}
 @media (max-width:760px){.reji-b{grid-template-columns:1fr}.reji-cart{position:static}.reji-items{grid-template-columns:repeat(2,1fr)}}
-.btn.act-btn{min-height:38px;font-size:15px;font-weight:700;padding:0 14px;border-radius:10px}.btn.add-ev{border-color:var(--brand);color:var(--brand)}
+.btn.act-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;font-size:15px;font-weight:700;padding:0 14px;border-radius:10px;line-height:1.2;text-decoration:none;white-space:nowrap}
+.day-acts{gap:6px;flex-wrap:wrap;justify-content:flex-end}
+@media (max-width:900px){
+  /* スマホ：見出しと月・週／予定を追加と休みを申告を同じ幅で並べる／月の移動 */
+  .cal-bar.cal-bar{grid-template-columns:1fr 1fr;row-gap:8px}
+  .cal-r{display:contents}
+  .cal-l{grid-column:1;grid-row:1}
+  .cal-r .seg{grid-column:2;grid-row:1;justify-self:end}
+  .cal-r > .add-ev{grid-column:1;grid-row:2;width:100%;align-self:start}
+  .cal-r > .leave-box{grid-column:2;grid-row:2;align-items:stretch;align-self:start}
+  .cal-r > .leave-box .btn{width:100%}
+  .cal-r > .leave-box .leave-left{position:static;text-align:right;margin-top:4px}
+  .cal-nav{grid-row:3 !important}
+  .day-acts{justify-content:stretch;flex-wrap:nowrap}
+  .day-acts > .btn{flex:1 1 0;min-width:0;padding:0 8px;font-size:14px}
+}.btn.add-ev{border-color:var(--brand);color:var(--brand)}
 .ev.one{white-space:nowrap;text-overflow:ellipsis;padding-top:0;padding-bottom:0}.ev.one b,.ev.one span{display:inline;margin-right:6px}
 .date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
 .diary-h{flex-wrap:wrap;gap:8px}
@@ -1182,7 +1197,7 @@ function shell(route, body) {
     const badge = n[0] === 'board' && ub ? `<span class="badge">${ub}</span>` : n[0] === 'ujiko' ? '<span class="ext">別システム</span>' : n[0] === 'kigan' ? '<span class="ext">準備中</span>' : '';
     return `<a href="#/${n[0]}" class="${on ? 'on' : ''}${n[0] === 'board' && ub ? ' has-badge' : ''}" title="${n[1]}">${n[2]}<span class="lbl">${n[1]}</span>${badge}</a>`;
   }).join('');
-  const tabs = [['home', 'ホーム', ICON.home], ['diary', '日報', ICON.diary], ['board', '掲示板', ICON.board], PROD ? ['manual', 'マニュアル', ICON.manual] : ['tasks', 'タスク', ICON.task], ['menu', 'その他', ICON.more]];
+  const tabs = [['home', 'ホーム', ICON.home], ['diary', '日報', ICON.diary], ['board', '掲示板', ICON.board], PROD ? null : ['tasks', 'タスク', ICON.task], ['menu', 'その他', ICON.more]].filter(Boolean);
   return `
   <div class="app">
     <aside class="side">
@@ -1196,7 +1211,7 @@ function shell(route, body) {
     </aside>
     <header class="topbar"><span class="brand" style="padding:0"><span class="mark" style="width:28px;height:28px;font-size:13px">品</span></span><b>社務ポータル</b>${PROD ? '' : '<span class="demo-pill">デモ</span>'}<span class="sp"></span><span class="small" style="font-weight:600">${me().name}</span>${avatar(me().name, me().color, true)}</header>
     <main class="main">${body}</main>
-    <nav class="tabbar">${tabs.map(t => `<a href="#/${t[0]}" class="${route === t[0] ? 'on' : ''}" ${t[0] === 'menu' ? 'data-act="menu"' : ''}>${t[2]}${t[0] === 'board' && ub ? `<span class="badge">${ub}</span>` : ''}${t[1]}</a>`).join('')}</nav>
+    <nav class="tabbar" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(t => `<a href="#/${t[0]}" class="${route === t[0] ? 'on' : ''}" ${t[0] === 'menu' ? 'data-act="menu"' : ''}>${t[2]}${t[0] === 'board' && ub ? `<span class="badge">${ub}</span>` : ''}${t[1]}</a>`).join('')}</nav>
   </div>`;
 }
 
@@ -1366,7 +1381,7 @@ function dayPanel(k) {
     <div class="day-h">
       <div class="row" style="align-items:flex-start;row-gap:6px"><div style="flex:1 0 auto"><div class="small muted">${d.getFullYear()}年${k === TK ? '・今日' : ''}</div>
       <div class="dt">${mdw(d)}</div></div>
-      <div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn act-btn add-ev" data-act="addEvent" data-k="${k}">＋ 予定を追加</button>${k >= TK && isTemp() ? `<button class="btn act-btn" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn act-btn" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn act-btn" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn act-btn" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
+      <div class="row day-acts"><button class="btn act-btn add-ev" data-act="addEvent" data-k="${k}">＋ 予定を追加</button>${k >= TK && isTemp() ? `<button class="btn act-btn" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn act-btn" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn act-btn" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn act-btn" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
       <div class="meta">${wxs}${HOLIDAYS[k] ? `<span class="tag red">${HOLIDAYS[k]}</span>` : ''}</div>
       <div class="kfull">${kt.join('')}</div>
     </div>
