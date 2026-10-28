@@ -91,6 +91,7 @@ a{color:var(--brand)}
 .brand .mark{width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700;font-size:16px}
 .brand b{display:block;font-size:15px;letter-spacing:.02em}
 .brand span{display:block;font-size:11px;color:var(--text-2)}
+.cal-nav{display:inline-flex;gap:6px;align-items:center}.cal-nav .btn{display:inline-flex;align-items:center;gap:2px;font-weight:700;min-height:36px}.cal-nav .btn svg{width:16px;height:16px}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -1183,7 +1184,7 @@ function kDots(ky) {
 function cellLines(k) {
   const L = S.ui.layers, out = [];
   if (mineOnly()) {
-    ritualsOn(k).forEach(r => out.push(`<div class="ln sai"><i>祭</i><span>${r.allDay ? '終日' : r.start} ${esc(r.name)}</span></div>`));
+    ritualsOn(k).forEach(r => out.push(`<div class="ln sai"><i>祭</i><span>${esc(r.name)}</span></div>`));
     if (leavesOn(k).includes(S.me)) out.push('<div class="ln leave"><i>休</i><span>休み</span></div>');
     if (tempOn(k).some(t => t.id === S.me)) out.push('<div class="ln temp"><i>臨</i><span>出勤</span></div>');
     visitsOn(k).filter(v => v.host === S.me).forEach(v => out.push(`<div class="ln visit"><i>客</i><span>${esc(v.who)}</span></div>`));
@@ -1192,7 +1193,7 @@ function cellLines(k) {
   }
   const rs = resOn(k), kg = rs.filter(r => r.type !== '外祭'), gs = rs.filter(r => r.type === '外祭');
   if (L.leave) { const tw = tempOn(k); if (tw.length) out.push(`<div class="ln temp"><i>臨</i><span>${tw.map(t => t.name).join('・')}</span></div>`); }
-  if (L.sai) ritualsOn(k).forEach(r => out.push(`<div class="ln sai"><i>祭</i><span>${r.allDay ? '終日' : r.start} ${esc(r.name)}</span></div>`));
+  if (L.sai) ritualsOn(k).forEach(r => out.push(`<div class="ln sai"><i>祭</i><span>${esc(r.name)}</span></div>`));
   if (L.kigan) {
     if (kg.length) out.push(`<div class="ln kigan"><i>祈</i><span>祈願 ${kg.length}件</span></div>`);
     gs.forEach(g => out.push(`<div class="ln kigan" data-act="evDetail" data-kind="gaisai" data-id="${g.id}" title="申込用紙を開く"><i>外</i><span>外祭 ${g.start}</span></div>`));
@@ -1358,9 +1359,7 @@ function vHome() {
     <section>
       <div class="cal-bar">
         <h2>${title}</h2>
-        <button class="icon-btn" data-act="calMove" data-n="-1" aria-label="前へ">${ICON.left}</button>
-        <button class="icon-btn" data-act="calMove" data-n="1" aria-label="次へ">${ICON.right}</button>
-        <button class="btn sm" data-act="calToday">今日</button>
+        <div class="cal-nav"><button class="btn sm" data-act="calMove" data-n="-1">${ICON.left}<span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() - 1, 1).getMonth() + 1) + '月' : '前の週'}</span></button><button class="btn sm" data-act="calToday">今日</button><button class="btn sm" data-act="calMove" data-n="1"><span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1).getMonth() + 1) + '月' : '次の週'}</span>${ICON.right}</button></div>
         <span class="sp"></span>
         <div class="seg"><button class="${isMonth ? 'on' : ''}" data-act="calView" data-v="month">月</button><button class="${!isMonth ? 'on' : ''}" data-act="calView" data-v="week">週</button></div>
         <button class="btn sm" data-act="addEvent" data-k="${selDay}">予定追加</button>
