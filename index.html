@@ -144,6 +144,7 @@ a{color:var(--brand)}
 .ev.one{white-space:nowrap;text-overflow:ellipsis;padding-top:0;padding-bottom:0}.ev.one b,.ev.one span{display:inline;margin-right:6px}
 .date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
 .diary-h{flex-wrap:wrap;gap:8px}
+.cell .top .dots.in-top{display:inline-flex;gap:2px;flex:none}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -270,7 +271,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .rokuyo{font-size:11px;font-weight:600;color:var(--text-3);line-height:1.2;white-space:nowrap}
 .rokuyo.taian{color:var(--brand)}
 .dots{display:flex;gap:2px}
-.kd{width:17px;height:17px;border-radius:50%;font-size:10px;font-weight:800;display:grid;place-items:center;line-height:1;background:var(--card);border:1.5px solid currentColor}   /* 暦の印＝枠線の丸 */
+.kd{width:15px;height:15px;border-radius:50%;font-size:9px;font-weight:800;display:grid;place-items:center;line-height:1;background:var(--card);border:1.5px solid currentColor}   /* 暦の印＝枠線の丸 */
 .kd.inu{color:var(--dog)}
 .kd.ichi{color:var(--gold)}
 .kd.ten{color:var(--indigo)}
@@ -1273,9 +1274,10 @@ function monthView() {
     const d = addDays(start, i), k = key(d), s = seasonOf(k), hol = HOLIDAYS[k], ky = KOYOMI.get(d);
     const w = wxOf(k), dots = L.koyomi ? kDots(ky) : '';
     const cls = ['cell', d.getMonth() !== first.getMonth() ? 'out' : '', d.getDay() === 0 ? 'sun' : '', d.getDay() === 6 ? 'sat' : '', hol ? 'hol' : '', k === TK ? 'today' : '', k === selDay ? 'sel' : '', s ? 'bg-' + MODES[s.mode].cls : ''].join(' ');
+    const names = hol || (L.bunka && ky.bunka.length);   // 祝日・季節の行事の名前があるときだけ2段目を使う。暦の丸だけなら日付の行に入れる（予定が下にずれないように）
     cells += `<div class="${cls}" data-act="pick" data-k="${k}">
-      <div class="top"><span class="d-num">${d.getDate()}</span>${w && w.real ? `<span class="wx-mini" title="${WX_LABEL[w.kind]}">${WX_ICON[w.kind]}</span>` : ''}${L.leave ? offBadges(k) : '<span class="offs"></span>'}${L.koyomi ? `<span class="rokuyo${ky.roku === '大安' ? ' taian' : ''}">${ky.roku}</span>` : ''}</div>
-      ${hol || dots || (L.bunka && ky.bunka.length) ? `<div class="row2"><span class="day-names">${hol ? `<span class="hol-name">${hol}</span>` : ''}${L.bunka ? ky.bunka.map(b => `<span class="bunka">${b}</span>`).join('') : ''}</span>${dots ? `<span class="dots">${dots}</span>` : ''}</div>` : ''}
+      <div class="top"><span class="d-num">${d.getDate()}</span>${w && w.real ? `<span class="wx-mini" title="${WX_LABEL[w.kind]}">${WX_ICON[w.kind]}</span>` : ''}${L.leave ? offBadges(k) : '<span class="offs"></span>'}${dots && !names ? `<span class="dots in-top">${dots}</span>` : ''}${L.koyomi ? `<span class="rokuyo${ky.roku === '大安' ? ' taian' : ''}">${ky.roku}</span>` : ''}</div>
+      ${names ? `<div class="row2"><span class="day-names">${hol ? `<span class="hol-name">${hol}</span>` : ''}${L.bunka ? ky.bunka.map(b => `<span class="bunka">${b}</span>`).join('') : ''}</span>${dots ? `<span class="dots">${dots}</span>` : ''}</div>` : ''}
       ${s ? `<span class="season ${MODES[s.mode].cls}">${s.mode === 'off' ? '休（全員）' : s.label + '・' + MODES[s.mode].label}</span>` : ''}
       <div class="lines">${cellLines(k)}</div>
     </div>`;
