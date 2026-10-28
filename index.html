@@ -124,6 +124,7 @@ a{color:var(--brand)}
 .reji-total b{font-size:30px}.reji-total small{font-size:15px;margin-left:2px}
 .reji-go{width:100%;min-height:56px;font-size:18px;border-radius:14px}
 @media (max-width:760px){.reji-b{grid-template-columns:1fr}.reji-cart{position:static}.reji-items{grid-template-columns:repeat(2,1fr)}}
+.btn.add-ev{min-height:42px;font-size:15px;font-weight:700;padding:0 16px;border-radius:12px;border-color:var(--brand);color:var(--brand)}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -1360,7 +1361,7 @@ function dayPanel(k) {
     <div class="day-h">
       <div class="row" style="align-items:flex-start;row-gap:6px"><div style="flex:1 0 auto"><div class="small muted">${d.getFullYear()}年${k === TK ? '・今日' : ''}</div>
       <div class="dt">${mdw(d)}</div></div>
-      <div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn sm" data-act="addEvent" data-k="${k}">予定追加</button>${k >= TK && isTemp() ? `<button class="btn sm" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn sm" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn sm" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn sm" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
+      <div class="row" style="gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="btn add-ev" data-act="addEvent" data-k="${k}">＋ 予定を追加</button>${k >= TK && isTemp() ? `<button class="btn sm" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn sm" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn sm" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn sm" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
       <div class="meta">${wxs}${HOLIDAYS[k] ? `<span class="tag red">${HOLIDAYS[k]}</span>` : ''}</div>
       <div class="kfull">${kt.join('')}</div>
     </div>
@@ -1409,7 +1410,7 @@ function vHome() {
         <div class="cal-l"><button class="cal-title" data-act="calPicker" title="年間カレンダーを開く"><h2>${title}</h2><span class="caret">▾</span></button></div>
         <div class="cal-nav"><button class="btn sm" data-act="calMove" data-n="-1">${ICON.left}<span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() - 1, 1).getMonth() + 1) + '月' : '前の週'}</span></button><button class="btn sm" data-act="calToday">今日</button><button class="btn sm" data-act="calMove" data-n="1"><span>${isMonth ? (new Date(calCursor.getFullYear(), calCursor.getMonth() + 1, 1).getMonth() + 1) + '月' : '次の週'}</span>${ICON.right}</button></div>
         <div class="cal-r"><div class="seg"><button class="${isMonth ? 'on' : ''}" data-act="calView" data-v="month">月</button><button class="${!isMonth ? 'on' : ''}" data-act="calView" data-v="week">週</button></div>
-        <button class="btn sm" data-act="addEvent" data-k="${selDay}">予定追加</button>
+        <button class="btn add-ev" data-act="addEvent" data-k="${selDay}">＋ 予定を追加</button>
         ${isTemp() ? `<div class="leave-box"><button class="btn pri sm" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri sm" data-act="leaveModal" data-k="${selDay}">＋ 休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}</div>
       </div>
       ${isMonth ? monthView() : weekView()}
