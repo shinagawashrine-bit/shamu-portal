@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="社務ポータル">
-<title>品川神社 社務ポータル</title>
+<meta name="apple-mobile-web-app-title" content="神社くん">
+<title>神社くん｜品川神社</title>
 <style>
 :root{
   --text:#1d1d1f; --text-2:#6e6e73; --text-3:#86868b;
@@ -1223,7 +1223,7 @@ function shell(route, body) {
   return `
   <div class="app">
     <aside class="side">
-      <div class="brand"><span class="mark">品</span><div><b>社務ポータル${PROD ? '' : '<span class="demo-pill">デモ</span>'}</b><span>品川神社</span></div></div>
+      <div class="brand"><span class="mark">品</span><div><b>神社くん${PROD ? '' : '<span class="demo-pill">デモ</span>'}</b><span>品川神社</span></div></div>
       <nav class="nav">${nav}</nav>
       <div class="side-foot">
         <div class="me">${avatar(me().name, me().color)}<div class="nm"><b style="font-size:14px">${me().name}</b><div style="font-size:11px;color:var(--text-2)">ログイン中</div></div></div>
@@ -1231,7 +1231,7 @@ function shell(route, body) {
         ${PROD ? '' : '<button class="linkbtn" data-act="reset" title="仮データに戻す"><span class="lbl">仮データに戻す（デモ）</span></button>'}
       </div>
     </aside>
-    <header class="topbar"><span class="brand" style="padding:0"><span class="mark" style="width:28px;height:28px;font-size:13px">品</span></span><b>社務ポータル</b>${PROD ? '' : '<span class="demo-pill">デモ</span>'}<span class="sp"></span><span class="small" style="font-weight:600">${me().name}</span>${avatar(me().name, me().color, true)}</header>
+    <header class="topbar"><span class="brand" style="padding:0"><span class="mark" style="width:28px;height:28px;font-size:13px">品</span></span><b>神社くん</b>${PROD ? '' : '<span class="demo-pill">デモ</span>'}<span class="sp"></span><span class="small" style="font-weight:600">${me().name}</span>${avatar(me().name, me().color, true)}</header>
     <main class="main">${body}</main>
     <nav class="tabbar" style="grid-template-columns:repeat(${tabs.length},1fr)">${tabs.map(t => `<a href="#/${t[0]}" class="${route === t[0] ? 'on' : ''}" ${t[0] === 'menu' ? 'data-act="menu"' : ''}>${t[2]}${t[0] === 'board' && ub ? `<span class="badge">${ub}</span>` : ''}${t[1]}</a>`).join('')}</nav>
   </div>`;
@@ -2260,7 +2260,7 @@ function vUjiko() {
   <div class="card card-p" style="max-width:660px;text-align:center;padding:40px 30px">
     <div style="width:64px;height:64px;border-radius:18px;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center;margin:0 auto 16px">${ICON.lock.replace('<svg', '<svg width="30" height="30"')}</div>
     <h3 style="font-size:19px;margin-bottom:8px">氏子名簿は別のシステムで管理します</h3>
-    <p class="muted" style="font-size:14px">見られるのは<b style="color:var(--text)">職員だけ</b>。社務ポータルとは保存先を分け、開くときにもう一度本人確認をします。</p>
+    <p class="muted" style="font-size:14px">見られるのは<b style="color:var(--text)">職員だけ</b>。神社くんとは保存先を分け、開くときにもう一度本人確認をします。</p>
     <ul class="mini-list" style="text-align:left;margin:20px auto 0;max-width:460px">
       <li>${ICON.lock.replace('<svg', '<svg width="15" height="15"')} アルバイトのアカウントからは入口も見えない</li>
       <li>${ICON.lock.replace('<svg', '<svg width="15" height="15"')} 開くたびに再ログイン（個人の暗証番号）か共有パスワード（検討中）</li>
@@ -2434,7 +2434,7 @@ function vLogin() {
   return `
   <div class="login">
     <div class="login-card card">
-      <div class="brand" style="justify-content:center;padding:0 0 14px"><span class="mark">品</span><div><b>社務ポータル<span class="demo-pill">デモ</span></b><span>品川神社</span></div></div>
+      <div class="brand" style="justify-content:center;padding:0 0 14px"><span class="mark">品</span><div><b>神社くん<span class="demo-pill">デモ</span></b><span>品川神社</span></div></div>
       <div class="seg" style="display:flex;margin-bottom:10px"><button style="flex:1" class="${isStaffTab ? 'on' : ''}" data-act="loginRole" data-v="staff">職員</button><button style="flex:1" class="${!isStaffTab ? 'on' : ''}" data-act="loginRole" data-v="${isStaffTab ? 'shuin' : loginRole}">アルバイト</button></div>
       ${!isStaffTab && !who ? `<div class="seg" style="display:flex;margin-bottom:12px;background:transparent;border:1px solid var(--line)"><button style="flex:1" class="${loginRole === 'shuin' ? 'on' : ''}" data-act="loginRole" data-v="shuin">御朱印</button><button style="flex:1" class="${loginRole === 'miko' ? 'on' : ''}" data-act="loginRole" data-v="miko">巫女</button></div>` : ''}
       ${!who ? `<div class="small muted" style="margin-bottom:8px;text-align:center">名前を選んでください</div>
@@ -3003,7 +3003,7 @@ function expired(msg) { P.token = null; lsSet(TOKEN_KEY, null); S.session = null
 /* ── ログイン画面（端末登録・名前・暗証番号・暗証番号の変更） ── */
 const ROLE_LABEL = { guji: '宮司', staff: '職員', temp: '臨時職員', shuin: '御朱印', miko: '巫女' };
 function prodLogin() {
-  const card = inner => `<div class="login"><div class="login-card card"><div class="brand" style="justify-content:center;padding:0 0 14px"><span class="mark">品</span><div><b>社務ポータル</b><span>品川神社</span></div></div>${inner}</div></div>`;
+  const card = inner => `<div class="login"><div class="login-card card"><div class="brand" style="justify-content:center;padding:0 0 14px"><span class="mark">品</span><div><b>神社くん</b><span>品川神社</span></div></div>${inner}</div></div>`;
   const err = P.msg ? `<div class="login-err">${esc(P.msg)}</div>` : '<div class="login-err"></div>';
   if (P.screen === 'loading') return card('<div class="empty">読み込み中…</div>');
   if (P.screen === 'register' || !P.device) return card(`
@@ -3224,7 +3224,7 @@ if (PROD) Object.assign(ACT, {
     <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="admInviteSave">コードを出す</button></div>`);
   },
   async admInviteSave() {
-    try { const r = await api('adminInvite', { type: val('aiType'), userId: val('aiUser'), label: val('aiLabel') }); closeModal(); ADM = null; render(); const d = new Date(r.expires); showOnce('招待コード', r.code, `登録する端末でポータルを開き、このコードを入れてください。${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${pad(d.getMinutes())}まで、1回だけ使えます。`); }
+    try { const r = await api('adminInvite', { type: val('aiType'), userId: val('aiUser'), label: val('aiLabel') }); closeModal(); ADM = null; render(); const d = new Date(r.expires); showOnce('招待コード', r.code, `登録する端末で神社くんを開き、このコードを入れてください。${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${pad(d.getMinutes())}まで、1回だけ使えます。`); }
     catch (e) { toast(e.message); }
   },
   admRevoke(el) {
@@ -3295,7 +3295,7 @@ function vReji() {
     ${REGI.err ? `<div class="note" style="margin:10px 16px 0">${ICON.info}<span>${esc(REGI.err)}</span></div>` : ''}
     <div class="reji-b">
       <div class="reji-items">${items.length ? items.map(i => `<button class="reji-item ${i.big ? 'big' : ''} ${REGI.cart[i.id] ? 'in' : ''}" data-act="regAdd" data-id="${i.id}"><span class="nm">${esc(i.name)}</span><span class="pr">${yen(i.price)}円</span>${REGI.cart[i.id] ? `<span class="q">${REGI.cart[i.id]}</span>` : ''}</button>`).join('')
-        : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>社務ポータルの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div>
+        : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>神社くんの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div>
       <aside class="reji-cart card">
         <div class="reji-lines">${cart.length ? cart.map(([id, n]) => { const it = byId(id); return `<div class="reji-line"><div style="flex:1;min-width:0"><b>${esc(it.name || '')}</b><div class="small muted">${yen(it.price || 0)}円</div></div><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="-1" aria-label="減らす">−</button><b class="num" style="min-width:24px;text-align:center">${n}</b><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="1" aria-label="増やす">＋</button></div>`; }).join('') : '<div class="empty small">品目を押すと、ここに入ります</div>'}</div>
         <div class="reji-total"><span>${count}体</span><b>${yen(total)}<small>円</small></b></div>
