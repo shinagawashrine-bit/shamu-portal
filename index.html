@@ -145,10 +145,10 @@ a{color:var(--brand)}
 .date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
 .diary-h{flex-wrap:wrap;gap:8px}
 .cell .top .dots.in-top{display:inline-flex;gap:2px;flex:none}
-@keyframes swipedIn{from{opacity:.35}to{opacity:1}}.cal.swiped{animation:swipedIn .2s ease-out}
+@keyframes swipedIn{from{opacity:.35}to{opacity:1}}.cal.swiped,#dayPanel.swiped{animation:swipedIn .2s ease-out}
 .wk-mini{display:none}.ev .ev-ic{display:none}
 @media (max-width:760px){
-  .cal{touch-action:pan-y}                                   /* 横の動きはスワイプで月・週を移すのに使う */
+  .cal,#dayPanel{touch-action:pan-y}                                   /* 横の動きはスワイプで月・週を移すのに使う */
   .week-wrap .week{grid-template-columns:28px repeat(7,minmax(0,1fr))}
   .cal.week-wrap{overflow-x:hidden}
   .wk-h{padding:6px 2px;min-height:0;text-align:center}
@@ -2811,21 +2811,29 @@ const CHG = {
   evDue(el) { const e = S.events.find(x => x.id === el.dataset.id); e.items[+el.dataset.i].due = el.value; save(); }
 };
 document.addEventListener('click', e => {
-  if (Date.now() - swipedAt < 450 && e.target.closest('.cal')) return;   // スワイプした指でマスを押したことにしない
+  if (Date.now() - swipedAt < 450 && e.target.closest('.cal, #dayPanel')) return;   // スワイプした指でマスを押したことにしない
   const el = e.target.closest('[data-act]'); if (!el) return;
   const f = ACT[el.dataset.act]; if (!f) return;
   if (el.tagName === 'A' && el.getAttribute('href')?.startsWith('javascript')) e.preventDefault();
   if (el.dataset.act === 'closeModal' && el.tagName === 'A') { closeModal(); return; }
   f(el, e);
 });
-/* スマホ：月のカレンダーを左右にスワイプすると、前の月・次の月へ */
+/* スマホ：カレンダーを左右にスワイプすると前後の月（週表示は週）へ、1日の欄なら前後の日へ */
 let swipe = null, swipedAt = 0;
-document.addEventListener('touchstart', e => { swipe = e.touches.length === 1 && S && S.ui && e.target.closest('.cal') && innerWidth <= 760 ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null; }, { passive: true });
+document.addEventListener('touchstart', e => {
+  const area = e.touches.length === 1 && S && S.ui && innerWidth <= 760 ? (e.target.closest('.cal') ? 'cal' : e.target.closest('#dayPanel') ? 'day' : null) : null;
+  swipe = area ? { area, x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() } : null;
+}, { passive: true });
 document.addEventListener('touchend', e => {
   if (!swipe) return;
-  const dx = e.changedTouches[0].clientX - swipe.x, dy = e.changedTouches[0].clientY - swipe.y, quick = Date.now() - swipe.t < 700; swipe = null;
+  const swipe0 = swipe, dx = e.changedTouches[0].clientX - swipe.x, dy = e.changedTouches[0].clientY - swipe.y, quick = Date.now() - swipe.t < 700; swipe = null;
   if (!quick || Math.abs(dx) < 60 || Math.abs(dy) > Math.abs(dx) * 0.6) return;
   swipedAt = Date.now();
+  if (swipe0.area === 'day') {
+    selDay = key(addDays(parse(selDay), dx < 0 ? 1 : -1)); calCursor = new Date(parse(selDay).getFullYear(), parse(selDay).getMonth(), 1);
+    render(); document.getElementById('dayPanel')?.classList.add('swiped');
+    return;
+  }
   ACT.calMove({ dataset: { n: dx < 0 ? 1 : -1 } });
   const c = document.querySelector('.cal'); if (c) c.classList.add('swiped');
 }, { passive: true });
