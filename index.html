@@ -106,6 +106,24 @@ a{color:var(--brand)}
 .ym-m{font-weight:700;font-size:16px;display:flex;align-items:center;gap:6px}.ym-m i{font-style:normal;font-size:10px;font-weight:700;color:var(--brand-ink);background:var(--brand);border-radius:99px;padding:1px 6px}
 .ym-cell ul{list-style:none;margin:0;padding:0;font-size:11.5px;line-height:1.5;color:var(--text-2)}.ym-cell li b{display:inline-block;min-width:18px;color:var(--shu);font-weight:700}
 @media (max-width:600px){.ym-grid{grid-template-columns:repeat(3,1fr)}.ym-cell{min-height:80px;padding:8px}}
+.reji{min-height:100vh;background:var(--bg-2);display:flex;flex-direction:column}
+.reji-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--hair)}
+.reji-h .mark{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:inline-grid;place-items:center;font-weight:700;font-size:14px}
+.reji-b{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;padding:14px 16px;align-items:start}
+.reji-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));grid-auto-rows:96px;gap:10px}
+.reji-item{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.reji-item:active{transform:scale(.98)}.reji-item.in{border:2px solid var(--brand);background:var(--brand-soft)}
+.reji-item.big{grid-column:span 2;grid-row:span 2}.reji-item.big .nm{font-size:24px}.reji-item.big .pr{font-size:18px}
+.reji-item .nm{font-weight:700;font-size:16px;line-height:1.3}.reji-item .pr{font-size:14px;color:var(--text-2)}
+.reji-item .q{position:absolute;top:8px;right:8px;min-width:26px;height:26px;border-radius:99px;background:var(--brand);color:var(--brand-ink);font-weight:700;font-size:14px;display:grid;place-items:center;padding:0 6px}
+.reji-cart{position:sticky;top:14px;padding:14px;display:flex;flex-direction:column}
+.reji-lines{max-height:46vh;overflow:auto;margin-bottom:10px}
+.reji-line{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--hair)}
+.reji-qb{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--card);font-size:20px;color:inherit;touch-action:manipulation}
+.reji-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;border-top:2px solid var(--text);margin-top:4px}
+.reji-total b{font-size:30px}.reji-total small{font-size:15px;margin-left:2px}
+.reji-go{width:100%;min-height:56px;font-size:18px;border-radius:14px}
+@media (max-width:760px){.reji-b{grid-template-columns:1fr}.reji-cart{position:static}.reji-items{grid-template-columns:repeat(2,1fr)}}
 .adm-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:10px 16px;border-top:1px solid var(--hair)}.adm-row:first-child{border-top:0}.adm-who{min-width:150px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.adm-st{flex:1;min-width:120px}.adm-btns{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
 .demo-pill{display:inline-block;font-size:10px;font-weight:700;color:var(--brand);background:var(--brand-soft);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
 .nav-g{font-size:11px;font-weight:600;color:var(--text-3);padding:14px 10px 6px;letter-spacing:.04em}
@@ -1145,7 +1163,7 @@ const NAV = [
   ['g', '業務'], ['kigan', '祈願予約', ICON.kigan], ['tasks', 'タスク', ICON.task], ['juyo', '授与品', ICON.juyo], ['baito', 'アルバイト', ICON.baito], ['analytics', '分析', ICON.chart],
   ['g', '設定'], ['seasons', '祭典の設定', ICON.season], ['ujiko', '氏子名簿', ICON.lock]
 ];
-const PHASE1_HIDE = ['kigan', 'tasks', 'juyo', 'analytics', 'ujiko'];
+const PHASE1_HIDE = ['kigan', 'tasks', 'analytics', 'ujiko'];
 function navItems() {
   if (!PROD) return NAV;
   const list = NAV.filter(n => !PHASE1_HIDE.includes(n[0])).filter((n, i, a) => !(n[0] === 'g' && (!a[i + 1] || a[i + 1][0] === 'g')));
@@ -2813,12 +2831,26 @@ function fromServer(d, me) {
   const set = id => ((d.settings || []).find(r => r.id === id) || {}).value;
   st.rules = Object.assign({ posts: { shuin: { weekday: 0, weekend: 1, shichigosan: 1, reitaisai: 2 }, honden: { weekday: 0, weekend: 0, shichigosan: 1, reitaisai: 2, shogatsu: 2 } }, leaveQuota: 8, leaveCap: { weekday: 2, weekend: 1, event: 0 }, deadline: '' }, set('rules') || {});
   st.places = set('places') || {};
+  // 授与品：品目と在庫の箱の記録（いまの箱数は記録から計算する）
+  st.items = (d.items || []).map(r => ({ id: r.id, name: r.name, cat: r.cat || '', price: num(r.price) || 0, perBox: num(r.perBox), perCase: num(r.perCase), big: yes(r.big), ord: num(r.ord) ?? 999, active: r.active === '' || r.active == null ? true : yes(r.active) })).sort((a, b) => a.ord - b.ord);
+  st.stockLog = (d.stockLog || []).map(r => ({ id: r.id, item: r.item, date: r.date, type: r.type, boxes: num(r.boxes) || 0, note: r.note || '' }));
+  st.stock = stockFromLog(st.items, st.stockLog);
   // 第一弾で使わないもの（空のまま）
-  Object.assign(st, { res: [], tasks: [], inbox: [], events: [], items: [], suppliers: [], stock: {}, stockLog: [], analytics: {}, seasonal: [], seasonShifts: {}, order: {}, nextDelivery: key(addDays(TODAY, 60)) });
+  Object.assign(st, { res: [], tasks: [], inbox: [], events: [], suppliers: [], analytics: {}, seasonal: [], seasonShifts: {}, order: {}, nextDelivery: key(addDays(TODAY, 60)) });
   // ログインしている人
   const role = ['guji', 'staff', 'temp'].includes(me.role) ? 'staff' : 'baito';
   st.me = me.id;
   st.session = { role, id: me.id, group: role === 'staff' ? 'staff' : (me.role === 'shuin' ? 'shuin' : me.grp) };
+  return st;
+}
+/* 在庫の箱数：日付順に「数えた（count）」で置きかえ、「1箱開けた（open）」で減らし、「入荷（in）」で足す */
+function stockFromLog(items, logs) {
+  const seq = l => Number((String(l.id).match(/\d{13}/) || [0])[0]);   // id に入れた記録時刻（ミリ秒）の順
+  const st = {}; items.forEach(i => st[i.id] = 0);
+  [...logs].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : seq(a) - seq(b)).forEach(l => {
+    if (!(l.item in st)) return;
+    if (l.type === 'count') st[l.item] = l.boxes; else if (l.type === 'open') st[l.item] = Math.max(0, st[l.item] - l.boxes); else if (l.type === 'in') st[l.item] += l.boxes;
+  });
   return st;
 }
 /* ── 画面の形（S） → 受け口の行 ── */
@@ -2840,6 +2872,8 @@ function toRows(st) {
   R.seasonReq = Object.entries(st.seasonReq).map(([id, v]) => ({ id, days: v.days || {}, at: v.at }));
   R.draft = Object.entries(st.draft).map(([id, data]) => ({ id, data }));
   R.settings = [{ id: 'rules', value: st.rules }, { id: 'places', value: st.places || {} }];
+  R.items = st.items.map(i => ({ id: i.id, name: i.name, cat: i.cat || '', price: i.price || 0, perBox: i.perBox ?? '', perCase: i.perCase ?? '', big: !!i.big, ord: i.ord ?? 999, active: i.active !== false }));
+  R.stockLog = st.stockLog.map(l => ({ id: l.id, item: l.item, date: l.date, type: l.type, boxes: l.boxes, note: l.note || '' }));
   return R;
 }
 const snap = st => { const R = toRows(st), m = {}; Object.entries(R).forEach(([c, rows]) => { m[c] = {}; rows.forEach(r => m[c][r.id] = JSON.stringify(r)); }); return m; };
@@ -2926,7 +2960,7 @@ function prodLogin() {
       <div class="keypad">${keys.map(k => k ? `<button data-act="pinKey" data-v="${k}">${k}</button>` : '<span></span>').join('')}</div>`);
 }
 async function loadPeople() {
-  try { const r = await api('people'); P.people = r.people; P.deviceType = r.device.type; P.screen = 'login'; }
+  try { const r = await api('people'); P.people = r.people; P.deviceType = r.device.type; P.screen = 'login'; if (P.deviceType === 'register') return startReji(r.device.label); }
   catch (e) { if (e.code === 'device') { P.device = null; lsSet(DEVICE_KEY, null); P.screen = 'register'; P.msg = ''; } else { P.screen = 'login'; P.people = []; P.msg = '受け口につながりません。通信を確かめてください'; } }
   render();
 }
@@ -3047,9 +3081,9 @@ function vAdmin() {
   } else if (admTab === 'devices') {
     body = `<div class="row" style="margin-bottom:12px"><span class="small muted">新しいPC・スマホは、ここで出す招待コード（6桁・24時間・1回だけ）で登録します。なくした端末はすぐ取り消してください。</span><span class="sp"></span><button class="btn pri" data-act="admInvite">＋ 招待コードを出す</button></div>
     <div class="card adm-list" style="overflow:hidden">
-    ${ADM.devices.map(d => `<div class="adm-row"><div class="adm-who"><b>${esc(d.label || '（名前なし）')}</b></div><div class="small adm-st">${d.type === 'shared' ? '共有（社務所）・宮司・職員・臨時職員' : '個人・' + esc(nameOf(d.userId))}<span class="muted">　最後に使った ${fmt(d.lastUsed)}</span></div><div class="adm-btns"><button class="btn sm ghost" style="color:var(--red)" data-act="admRevoke" data-id="${d.id}">取り消す</button></div></div>`).join('') || '<div class="adm-row muted">登録された端末はありません</div>'}
+    ${ADM.devices.map(d => `<div class="adm-row"><div class="adm-who"><b>${esc(d.label || '（名前なし）')}</b></div><div class="small adm-st">${d.type === 'register' ? 'レジ（授与所）・暗証番号なしでレジだけ' : d.type === 'shared' ? '共有（社務所）・宮司・職員・臨時職員' : '個人・' + esc(nameOf(d.userId))}<span class="muted">　最後に使った ${fmt(d.lastUsed)}</span></div><div class="adm-btns"><button class="btn sm ghost" style="color:var(--red)" data-act="admRevoke" data-id="${d.id}">取り消す</button></div></div>`).join('') || '<div class="adm-row muted">登録された端末はありません</div>'}
     </div>
-    ${ADM.invites.length ? `<h4 class="small muted" style="margin:14px 0 6px">使われていない招待コード</h4><ul class="mini-list">${ADM.invites.map(i => `<li>${esc(i.label || '—')}<span class="small muted">${i.type === 'shared' ? '共有' : esc(nameOf(i.userId))}・${fmt(i.expires)}まで</span></li>`).join('')}</ul>` : ''}`;
+    ${ADM.invites.length ? `<h4 class="small muted" style="margin:14px 0 6px">使われていない招待コード</h4><ul class="mini-list">${ADM.invites.map(i => `<li>${esc(i.label || '—')}<span class="small muted">${i.type === 'register' ? 'レジ' : i.type === 'shared' ? '共有' : esc(nameOf(i.userId))}・${fmt(i.expires)}まで</span></li>`).join('')}</ul>` : ''}`;
   } else {
     const TB = { leaves: '休み', tempWork: '臨時職員の出勤', visits: '来訪者', outings: '外出', rituals: '祭典', seasons: '時期', board: '掲示板', reads: '既読', manual: 'マニュアル', diary: '日報', shifts: 'シフト', extraNeed: '追加の人数', requests: '希望シフト', seasonReq: '巫女の希望', draft: 'シフトの下書き', settings: '設定' };
     const logTarget = t => { const m = /^(\w+):(.*)$/.exec(t || ''); return m && TB[m[1]] ? TB[m[1]] + (/^\d{4}-\d{2}(-\d{2})?$/.test(m[2]) ? '（' + m[2] + '）' : '') : (t || ''); };
@@ -3108,7 +3142,7 @@ if (PROD) Object.assign(ACT, {
     const people = ADM.users.filter(u => u.active);
     modal(`<div class="modal-h"><h3>招待コードを出す</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
     <div class="modal-b">
-      <div class="field"><label for="aiType">端末の種類</label><select class="input" id="aiType" data-chg="aiType"><option value="personal">個人の端末（その人だけが使う）</option><option value="shared">共有の端末（社務所のPC・iPad。宮司・職員・臨時職員が使う）</option></select></div>
+      <div class="field"><label for="aiType">端末の種類</label><select class="input" id="aiType" data-chg="aiType"><option value="personal">個人の端末（その人だけが使う）</option><option value="shared">共有の端末（社務所のPC・iPad。宮司・職員・臨時職員が使う）</option><option value="register">レジ端末（授与所のiPad。暗証番号なしでレジだけ使える）</option></select></div>
       <div class="field" id="aiUserBox"><label for="aiUser">使う人</label><select class="input" id="aiUser">${people.map(u => `<option value="${u.id}">${esc(u.name)}（${ROLE_LABEL[u.role]}${u.role === 'miko' ? '・' + (GRP_LABEL[u.grp] || '') : ''}）</option>`).join('')}</select></div>
       <div class="field"><label for="aiLabel">端末の名前</label><input class="input" id="aiLabel" maxlength="30" placeholder="例：鈴木のスマホ、社務所のPC"></div>
     </div>
@@ -3125,8 +3159,243 @@ if (PROD) Object.assign(ACT, {
 });
 if (PROD) Object.assign(CHG, {
   auRole(el) { document.getElementById('auGrpBox').hidden = el.value !== 'miko'; document.getElementById('auDaysBox').hidden = el.value !== 'shuin'; },
-  aiType(el) { document.getElementById('aiUserBox').hidden = el.value === 'shared'; }
+  aiType(el) { document.getElementById('aiUserBox').hidden = el.value !== 'personal'; }
 });
+
+/* =========================================================
+   授与品（本番）：授与所のレジ端末と、職員の在庫・出数・品目の登録
+   - レジ端末：授与所のiPadを「レジ端末」として登録すると、暗証番号なしでレジだけ開く
+   - 会計はまず端末に保存してから送る。電波が悪くても、あとで自動で送り直す
+   - 出数（レジ）と在庫（箱）は分けて扱い、数を合わせない（宮司が接客した分はレジに入らないため）
+   ========================================================= */
+const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items';
+const lsJson = (k, d) => { try { return JSON.parse(lsGet(k) || 'null') ?? d; } catch (e) { return d; } };
+let REGI = { on: false, label: '', items: [], cart: {}, sending: false, err: '' };
+
+const regDay = () => key(new Date());
+function regToday() { const t = lsJson(REG_TODAY_KEY, null), d = regDay(); return t && t.date === d ? t : { date: d, sales: [] }; }
+function regQueue() { return lsJson(REG_QUEUE_KEY, []); }
+
+async function startReji(label) {
+  REGI.on = true; REGI.label = label || REGI.label; REGI.items = lsJson(REG_ITEMS_KEY, []);
+  S = S || { ui: loadUi() }; S.session = null;
+  render();
+  await regLoadItems();
+  regFlush();
+}
+async function regLoadItems() {
+  try { const r = await api('regItems'); REGI.items = r.items; REGI.label = r.label || REGI.label; REGI.err = ''; lsSet(REG_ITEMS_KEY, JSON.stringify(r.items)); }
+  catch (e) {
+    if (e.code === 'device') { REGI.on = false; P.device = null; lsSet(DEVICE_KEY, null); P.screen = 'register'; P.msg = 'この端末の登録が取り消されました。管理者に確認してください'; }
+    else REGI.err = '受け口につながりません。前回の品目で動いています';
+  }
+  render();
+}
+/* 送れていない会計をまとめて送る（同じ会計は受け口で二重にならない） */
+async function regFlush() {
+  if (REGI.sending) return;
+  let q = regQueue(); if (!q.length) return;
+  REGI.sending = true;
+  try {
+    while (q.length) {
+      const it = q[0];
+      if (it.undo) await api('regUndo', { id: it.id }); else await api('regSale', { sale: it });
+      q = regQueue().filter(x => !(x.id === it.id && !!x.undo === !!it.undo)); lsSet(REG_QUEUE_KEY, JSON.stringify(q));
+    }
+    REGI.err = '';
+  } catch (e) { REGI.err = '送れていない会計があります。電波が戻ると自動で送ります'; }
+  finally { REGI.sending = false; if (REGI.on) render(); }
+}
+
+function vReji() {
+  const items = REGI.items, cart = Object.entries(REGI.cart).filter(([, q]) => q > 0);
+  const byId = id => items.find(i => i.id === id) || {};
+  const total = cart.reduce((a, [id, q]) => a + (byId(id).price || 0) * q, 0), count = cart.reduce((a, [, q]) => a + q, 0);
+  const today = regToday(), live = today.sales.filter(s => !s.undone), q = regQueue().length;
+  const tSum = live.reduce((a, s) => a + s.total, 0), tCnt = live.reduce((a, s) => a + s.lines.reduce((b, l) => b + l.qty, 0), 0);
+  return `<div class="reji">
+    <header class="reji-h"><span class="mark">品</span><b>授与所レジ</b><span class="small muted">${esc(REGI.label)}</span><span class="sp"></span>
+      <span class="small">${mdw(new Date())}　本日 <b>${tCnt}</b>体・<b>${yen(tSum)}</b>円</span>
+      ${q ? `<span class="tag warn">未送信 ${q}件</span>` : ''}<button class="btn sm" data-act="regHistory">今日の記録</button></header>
+    ${REGI.err ? `<div class="note" style="margin:10px 16px 0">${ICON.info}<span>${esc(REGI.err)}</span></div>` : ''}
+    <div class="reji-b">
+      <div class="reji-items">${items.length ? items.map(i => `<button class="reji-item ${i.big ? 'big' : ''} ${REGI.cart[i.id] ? 'in' : ''}" data-act="regAdd" data-id="${i.id}"><span class="nm">${esc(i.name)}</span><span class="pr">${yen(i.price)}円</span>${REGI.cart[i.id] ? `<span class="q">${REGI.cart[i.id]}</span>` : ''}</button>`).join('')
+        : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>社務ポータルの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div>
+      <aside class="reji-cart card">
+        <div class="reji-lines">${cart.length ? cart.map(([id, n]) => { const it = byId(id); return `<div class="reji-line"><div style="flex:1;min-width:0"><b>${esc(it.name || '')}</b><div class="small muted">${yen(it.price || 0)}円</div></div><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="-1" aria-label="減らす">−</button><b class="num" style="min-width:24px;text-align:center">${n}</b><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="1" aria-label="増やす">＋</button></div>`; }).join('') : '<div class="empty small">品目を押すと、ここに入ります</div>'}</div>
+        <div class="reji-total"><span>${count}体</span><b>${yen(total)}<small>円</small></b></div>
+        <button class="btn pri reji-go" data-act="regCommit" ${cart.length ? '' : 'disabled'}>記録する</button>
+        <button class="btn ghost" style="width:100%;margin-top:6px" data-act="regClear" ${cart.length ? '' : 'disabled'}>はじめから</button>
+      </aside>
+    </div></div>`;
+}
+function regHistoryModal() {
+  const t = regToday();
+  modal(`<div class="modal-h"><h3>今日の記録（この端末）</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">${t.sales.length ? `<ul class="mini-list">${[...t.sales].reverse().map(s => `<li style="${s.undone ? 'opacity:.45;text-decoration:line-through' : ''}"><span class="num small">${new Date(s.ts).toTimeString().slice(0, 5)}</span><span style="flex:1;min-width:0">${s.lines.map(l => esc(l.name) + (l.qty > 1 ? '×' + l.qty : '')).join('、')}</span><b class="num">${yen(s.total)}円</b>${s.undone ? '<span class="small muted">取り消し済み</span>' : `<button class="btn sm ghost" style="color:var(--red)" data-act="regUndo" data-id="${s.id}">取り消す</button>`}</li>`).join('')}</ul>` : '<div class="empty">今日はまだ記録がありません</div>'}
+  <div class="small muted" style="margin-top:10px">押し間違えたときは「取り消す」。取り消せるのは、この端末で記録した24時間以内の会計です。</div></div>`);
+}
+if (PROD) Object.assign(ACT, {
+  regAdd(el) { const id = el.dataset.id; REGI.cart[id] = (REGI.cart[id] || 0) + 1; render(); },
+  regQty(el) { const id = el.dataset.id; REGI.cart[id] = Math.max(0, (REGI.cart[id] || 0) + +el.dataset.n); if (!REGI.cart[id]) delete REGI.cart[id]; render(); },
+  regClear() { REGI.cart = {}; render(); },
+  regCommit() {
+    const lines = Object.entries(REGI.cart).filter(([, q]) => q > 0).map(([id, qty]) => { const it = REGI.items.find(i => i.id === id); return { item: id, name: it.name, price: it.price, qty }; });
+    if (!lines.length) return;
+    const sale = { id: 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), ts: Date.now(), lines, total: lines.reduce((a, l) => a + l.price * l.qty, 0) };
+    const t = regToday(); t.sales.push(sale); lsSet(REG_TODAY_KEY, JSON.stringify(t));
+    lsSet(REG_QUEUE_KEY, JSON.stringify(regQueue().concat([sale])));
+    REGI.cart = {}; render(); toast(`記録しました（${yen(sale.total)}円）`);
+    regFlush();
+  },
+  regHistory() { regHistoryModal(); },
+  regUndo(el) {
+    const id = el.dataset.id;
+    askConfirm('この会計を取り消しますか？', () => {
+      const t = regToday(), s = t.sales.find(x => x.id === id); if (!s) return;
+      s.undone = true; lsSet(REG_TODAY_KEY, JSON.stringify(t));
+      const q = regQueue(), pending = q.some(x => x.id === id && !x.undo);
+      // まだ送っていない会計なら、送る前に消すだけ
+      lsSet(REG_QUEUE_KEY, JSON.stringify(pending ? q.filter(x => x.id !== id) : q.concat([{ id, undo: true }])));
+      regHistoryModal(); render(); toast('取り消しました'); regFlush();
+    }, '取り消す');
+  }
+});
+// レジ端末のときは、ほかの画面を出さずにレジだけを出す
+if (PROD) {
+  const renderApp = render;
+  render = function () { if (REGI.on) { document.getElementById('root').innerHTML = vReji(); return; } renderApp(); };
+  setInterval(() => { if (REGI.on) regFlush(); }, 30000);
+  setInterval(() => { if (REGI.on && document.visibilityState === 'visible') regLoadItems(); }, 10 * 60000);
+  document.addEventListener('visibilitychange', () => { if (REGI.on && document.visibilityState === 'visible') { regFlush(); render(); } });
+}
+
+/* ── 職員：授与品（在庫・出数と集計・授与品の登録） ── */
+let SUM = { rows: null, at: 0, loading: false, err: '' }, sumMonth = ym(TODAY), sumItem = 'all';
+async function loadSalesSummary(force) {
+  if (SUM.loading || (!force && SUM.rows && Date.now() - SUM.at < 60000)) return;
+  SUM.loading = true;
+  try { const r = await api('salesSummary'); SUM.rows = r.rows; SUM.at = Date.now(); SUM.err = ''; }
+  catch (e) { SUM.err = '集計を読み込めませんでした（' + e.message + '）'; }
+  finally { SUM.loading = false; if (route().r === 'juyo') render(); }
+}
+function vJuyoProd() {
+  const tab = ['stock', 'sales', 'items'].includes(S.ui.juyoTab) ? S.ui.juyoTab : 'stock';
+  const T = [['stock', '在庫'], ['sales', '出数と集計'], ['items', '授与品の登録']];
+  return `
+  <div class="page-h"><h1>授与品</h1><span class="sub">レジ端末の記録と、在庫の箱数</span></div>
+  <div class="tabs">${T.map(t => `<button class="${tab === t[0] ? 'on' : ''}" data-act="juyoTab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
+  ${tab === 'stock' ? juyoStockProd() : tab === 'sales' ? juyoSalesProd() : juyoItemsProd()}`;
+}
+const activeItems = () => S.items.filter(i => i.active !== false);
+function juyoStockProd() {
+  const items = activeItems();
+  if (!items.length) return `<div class="card card-p"><div class="empty">授与品がまだ登録されていません。「授与品の登録」から登録してください。</div></div>`;
+  const rows = items.map(it => ({ it, st: stockStat(it) }));
+  const lastC = rows.map(r => r.st.lastCount?.date).filter(Boolean).sort().pop();
+  return `
+  <div class="note" style="margin-bottom:14px">${ICON.info}<span><b>在庫は箱で数えます。</b>レジの出数とは合わせません（宮司が接客した分はレジに入らないため）。箱を開けたら「1箱開けた」、入荷したときや忙しい時期のあとは「まとめて数える」で実際の箱数を入れます。</span></div>
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card kpi"><div class="l">最後に数えた日</div><div class="v">${lastC ? md(parse(lastC)) : '—'}</div><div class="small muted"><a href="javascript:void 0" data-act="countModal">まとめて数える →</a></div></div>
+    <div class="card kpi"><div class="l">在庫の合計</div><div class="v">${rows.reduce((a, r) => a + r.st.now, 0)}箱</div><div class="small muted">${items.length}品</div></div>
+  </div>
+  <div class="card"><div class="tbl-wrap"><table class="tbl">
+    <thead><tr><th>授与品</th><th class="r">在庫</th><th class="r">減り方</th><th>無くなる見込み</th><th></th></tr></thead>
+    <tbody>${rows.map(({ it, st }) => `<tr>
+      <td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}${it.perBox ? '・1箱' + it.perBox + '体' : ''}</div></td>
+      <td class="r num"><b style="font-size:16px">${st.now}</b>箱<div class="small muted">約${(st.now * (it.perBox || 0)).toLocaleString()}体</div></td>
+      <td class="r num small">${st.rate ? (st.rate * 7).toFixed(1) + '箱/週' : '—'}</td>
+      <td class="small">${st.now <= 0 ? '<span class="tag red">在庫なし</span>' : st.out ? mdw(st.out) + `<div class="muted">あと約${st.daysLeft}日</div>` : '<span class="muted">記録が足りない</span>'}</td>
+      <td><button class="btn sm" data-act="openBox" data-id="${it.id}" ${st.now <= 0 ? 'disabled' : ''}>1箱開けた</button></td></tr>`).join('')}</tbody></table></div></div>
+  <div class="small muted" style="margin-top:8px">減り方は、90日以内に数えた記録から計算します（7日以上たつと出ます）。</div>`;
+}
+function juyoSalesProd() {
+  if (!SUM.rows) { loadSalesSummary(); return `<div class="card card-p"><div class="empty">${SUM.err ? esc(SUM.err) : '集計を読み込んでいます…'}</div></div>`; }
+  const rows = SUM.rows;   // [日付, 品目ID, 品名, 数, 金額]
+  const [y, m] = sumMonth.split('-').map(Number);
+  const inM = rows.filter(r => r[0].startsWith(sumMonth));
+  const lastY = `${y - 1}-${pad(m)}`, inLY = rows.filter(r => r[0].startsWith(lastY));
+  const qty = a => a.reduce((s, r) => s + r[3], 0), amt = a => a.reduce((s, r) => s + r[4], 0);
+  // 品目ごと（この月）
+  const per = {}; inM.forEach(r => { const p = per[r[1]] || (per[r[1]] = { id: r[1], name: r[2], q: 0, a: 0 }); p.q += r[3]; p.a += r[4]; });
+  const rank = Object.values(per).sort((a, b) => b.q - a.q), sum = qty(inM); let acc = 0;
+  rank.forEach(t => { acc += t.q; t.abc = acc / sum <= 0.7 ? 'A' : acc / sum <= 0.9 ? 'B' : 'C'; });
+  const max = rank[0]?.q || 1;
+  // 日ごと（この月）
+  const days = {}; inM.forEach(r => { const d = days[r[0]] || (days[r[0]] = { q: 0, a: 0 }); d.q += r[3]; d.a += r[4]; });
+  const dim = new Date(y, m, 0).getDate();
+  // 12か月のグラフ
+  const months = monthsBack(12, new Date(y, m - 1, 1)), prevMonths = months.map(k => `${Number(k.slice(0, 4)) - 1}${k.slice(4)}`);
+  const pick = sumItem === 'all' ? null : sumItem;
+  const mq = k => rows.filter(r => r[0].startsWith(k) && (!pick || r[1] === pick)).reduce((s, r) => s + r[3], 0);
+  const pickName = pick ? (rank.find(t => t.id === pick)?.name || S.items.find(i => i.id === pick)?.name || '') : '';
+  const yoy = qty(inLY) ? Math.round((sum / qty(inLY) - 1) * 100) : null;
+  return `
+  <div class="note" style="margin-bottom:14px">${ICON.info}<span>出数は<b>授与所のレジ端末</b>の記録です。宮司が接客した分などは入らないので、在庫とは合わせません。</span></div>
+  <div class="row" style="margin-bottom:14px;gap:8px"><button class="icon-btn" data-act="sumMonth" data-n="-1" aria-label="前の月">${ICON.left}</button><h3 style="font-size:18px;margin:0">${y}年${m}月</h3><button class="icon-btn" data-act="sumMonth" data-n="1" aria-label="次の月">${ICON.right}</button><span class="sp"></span><button class="btn sm" data-act="sumCsv">日ごとの集計をCSVで保存</button><button class="btn sm ghost" data-act="sumReload">読み直す</button></div>
+  <div class="grid3" style="margin-bottom:16px">
+    <div class="card kpi"><div class="l">出数</div><div class="v">${sum.toLocaleString()}体</div><div class="small muted">${yoy == null ? '前年の記録なし' : `前年同月 ${yoy >= 0 ? '+' : ''}${yoy}%`}</div></div>
+    <div class="card kpi"><div class="l">初穂料の合計</div><div class="v">${yen(amt(inM))}円</div><div class="small muted">レジ端末の記録</div></div>
+    <div class="card kpi"><div class="l">記録のあった日</div><div class="v">${Object.keys(days).length}日</div><div class="small muted">${dim}日中</div></div>
+  </div>
+  <div class="grid2" style="align-items:start">
+    <div class="card card-p"><div class="card-h"><h3>よく出ている順</h3></div>
+      ${rank.length ? `<ul class="rank">${rank.map((t, i) => `<li style="cursor:pointer;${pick === t.id ? 'background:var(--brand-soft);border-radius:8px' : ''}" data-act="sumItem" data-id="${t.id}"><span class="n">${i + 1}</span><span><b>${esc(t.name)}</b><span class="abc ${t.abc}">${t.abc}</span></span><span class="bar"><i style="width:${t.q / max * 100}%"></i></span><span class="r num">${t.q.toLocaleString()}</span><span class="r num small">${yen(t.a)}円</span></li>`).join('')}</ul>
+      <div class="small muted" style="margin-top:8px">A＝上位で全体の7割／B＝9割まで／C＝残り。品名を押すと右のグラフがその品だけになります</div>` : '<div class="empty">この月の記録はありません</div>'}</div>
+    <div class="card card-p"><div class="card-h"><h3>${pick ? esc(pickName) : 'すべての授与品'}の月別</h3><span class="sp"></span>${pick ? '<button class="btn sm" data-act="sumItem" data-id="all">すべてに戻す</button>' : ''}</div>
+      ${barChart(months.map(k => Number(k.split('-')[1]) + '月'), months.map(mq), prevMonths.map(mq), '直近12か月', '前年')}</div>
+  </div>
+  <div class="card" style="margin-top:16px"><div class="card-h card-p" style="margin:0;padding-bottom:6px"><h3>日ごとの集計</h3></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>日付</th><th class="r">出数</th><th class="r">初穂料</th></tr></thead><tbody>
+    ${Object.keys(days).sort().map(d => `<tr><td>${mdw(parse(d))}</td><td class="r num">${days[d].q.toLocaleString()}体</td><td class="r num">${yen(days[d].a)}円</td></tr>`).join('') || '<tr><td colspan="3" class="muted">記録はありません</td></tr>'}
+  </tbody></table></div></div>`;
+}
+function juyoItemsProd() {
+  const can = !isTemp(), all = S.items;
+  return `
+  <div class="card"><div class="card-h card-p" style="margin:0;padding-bottom:6px"><h3>授与品（${all.filter(i => i.active !== false).length}品）</h3><span class="sp"></span>${can ? '<button class="btn pri sm" data-act="editItem" data-id="">＋ 登録</button>' : ''}</div>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="r">順</th><th>品名</th><th class="r">初穂料</th><th class="r">段ボール</th><th class="r">1箱</th><th>レジ</th><th></th></tr></thead>
+    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? '大きく' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
+  <div class="small muted" style="margin-top:8px">レジ端末には「出す」品が、順の小さい順に並びます。使わなくなった品は消さずに「レジに出さない」にすると、過去の集計が残ります。</div>`;
+}
+function editItemModalProd(id) {
+  const it = S.items.find(x => x.id === id) || { id: '', name: '', price: 1000, cat: '', perCase: '', perBox: '', big: false, ord: (Math.max(0, ...S.items.map(i => i.ord || 0)) + 10), active: true };
+  const cats = [...new Set(S.items.map(i => i.cat).filter(Boolean))];
+  modal(`<div class="modal-h"><h3>${it.id ? '授与品の編集' : '授与品の登録'}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">
+    <div class="grid2"><div class="field"><label for="itName">品名</label><input class="input" id="itName" value="${esc(it.name)}" maxlength="30"></div><div class="field"><label for="itCat">分類</label><input class="input" id="itCat" value="${esc(it.cat)}" list="itCatList" placeholder="例：御守"><datalist id="itCatList">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div></div>
+    <div class="grid2"><div class="field"><label for="itPrice">初穂料（円）</label><input class="input num" type="number" min="0" inputmode="numeric" id="itPrice" value="${it.price}"></div><div class="field"><label for="itOrd">レジでの並び順（小さいほど前）</label><input class="input num" type="number" inputmode="numeric" id="itOrd" value="${it.ord ?? ''}"></div></div>
+    <div class="grid2"><div class="field"><label for="itCase">段ボール1つに何箱</label><input class="input num" type="number" min="1" inputmode="numeric" id="itCase" value="${it.perCase || ''}" placeholder="分からなければ空欄"></div><div class="field"><label for="itBox">1箱に何体</label><input class="input num" type="number" min="1" inputmode="numeric" id="itBox" value="${it.perBox || ''}" placeholder="分からなければ空欄"></div></div>
+    <label class="row small" style="gap:6px;margin:4px 0 8px"><input type="checkbox" id="itBig" ${it.big ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジで大きく表示する（よく出る品）</label>
+    <label class="row small" style="gap:6px"><input type="checkbox" id="itActive" ${it.active !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジに出す（外すとレジに出ません。記録は残ります）</label>
+  </div>
+  <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveItem" data-id="${it.id}">保存</button></div>`);
+}
+function sumCsv() {
+  const rows = (SUM.rows || []).filter(r => r[0].startsWith(sumMonth));
+  const days = {}; rows.forEach(r => { const d = days[r[0]] || (days[r[0]] = { q: 0, a: 0 }); d.q += r[3]; d.a += r[4]; });
+  const lines = [['日付', '曜日', '出数', '初穂料'].join(',')].concat(Object.keys(days).sort().map(d => [d, WD[parse(d).getDay()], days[d].q, days[d].a].join(',')));
+  const detail = [''].concat([['日付', '品名', '出数', '初穂料'].join(',')], rows.map(r => [r[0], '"' + String(r[2]).replace(/"/g, '""') + '"', r[3], r[4]].join(',')));
+  const blob = new Blob(['﻿' + lines.concat(detail).join('\r\n')], { type: 'text/csv' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `授与所レジ_${sumMonth}.csv`; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+if (PROD) {
+  vJuyo = vJuyoProd;
+  Object.assign(ACT, {
+    editItem(el) { editItemModalProd(el.dataset.id); },
+    saveItem(el) {
+      const id = el.dataset.id, n = v => v === '' ? null : Math.max(1, parseInt(v, 10) || 1);
+      const d = { name: val('itName').trim(), cat: val('itCat').trim(), price: Math.max(0, parseInt(val('itPrice'), 10) || 0), ord: val('itOrd') === '' ? 999 : parseInt(val('itOrd'), 10) || 0, perCase: n(val('itCase')), perBox: n(val('itBox')), big: document.getElementById('itBig').checked, active: document.getElementById('itActive').checked };
+      if (!d.name) return toast('品名を入れてください');
+      if (id) Object.assign(S.items.find(i => i.id === id), d); else { const nid = 'it' + Date.now().toString(36); S.items.push({ id: nid, ...d }); S.stock[nid] = 0; }
+      S.items.sort((a, b) => (a.ord ?? 999) - (b.ord ?? 999));
+      save(); closeModal(); render(); toast('保存しました');
+    },
+    sumMonth(el) { const [y, m] = sumMonth.split('-').map(Number); sumMonth = ym(new Date(y, m - 1 + +el.dataset.n, 1)); render(); },
+    sumItem(el) { sumItem = el.dataset.id; render(); },
+    sumReload() { loadSalesSummary(true); },
+    sumCsv() { sumCsv(); }
+  });
+}
 
 boot();
 </script>
