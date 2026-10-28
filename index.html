@@ -828,7 +828,7 @@ function fakeWx(k) {
 function wxOf(k) {
   const w = WX[k];
   if (w) return { kind: wxKind(w), tmax: Math.round(w.tmax), tmin: Math.round(w.tmin), real: true };
-  return k <= TK ? { ...fakeWx(k), real: false } : null;
+  return k <= TK && !PROD ? { ...fakeWx(k), real: false } : null;   // 本番では仮の天気を出さない
 }
 
 /* =========================================================
@@ -1255,7 +1255,7 @@ function offBadges(k) {
   const s = seasonOf(k);
   if (s && s.mode === 'off') return '<span class="offs"></span>';
   const lv = leavesOn(k);
-  return `<span class="offs"${lv.length ? ` title="休み：${lv.map(id => staffById(id).name).join('・')}"` : ''}>${lv.map(id => `<span class="off-b">${staffById(id).name}</span>`).join('')}</span>`;
+  return `<span class="offs"${lv.length ? ` title="休み：${lv.map(id => staffById(id).name).join('・')}"` : ''}>${lv.map(id => `<span class="off-b" style="background:${staffById(id).color}">${staffById(id).name}</span>`).join('')}</span>`;   // 休みの人は、その人の色で
 }
 function kDots(ky) {
   return (ky.inu ? '<span class="kd inu" title="戌の日">戌</span>' : '') + (ky.ichi ? '<span class="kd ichi" title="一粒万倍日">一</span>' : '') + (ky.ten ? '<span class="kd ten" title="天赦日">天</span>' : '');
@@ -1380,7 +1380,7 @@ function dayPanel(k) {
   if (ky.ten) kt.push('<span class="tag indigo">天赦日</span>');
   kt.push(`<span class="tag gray">${ky.kanshi}</span>`);
   ky.bunka.forEach(b => kt.push(`<span class="tag gold">${b}</span>`));
-  const wxs = w ? `<span>${WX_ICON[w.kind]} ${WX_LABEL[w.kind]}　<b class="num">${w.tmax}°</b> / <span class="num">${w.tmin}°</span>${w.real ? (k > TK ? '<span class="small muted">（予報）</span>' : '') : '<span class="small muted">（仮）</span>'}</span>` : '<span class="muted">天気：予報の範囲外</span>';
+  const wxs = w ? `<span>${WX_ICON[w.kind]} ${WX_LABEL[w.kind]}　<b class="num">${w.tmax}°</b> / <span class="num">${w.tmin}°</span>${w.real ? (k > TK ? '<span class="small muted">（予報）</span>' : '') : '<span class="small muted">（仮）</span>'}</span>` : `<span class="muted">天気：${k <= TK ? '記録なし' : '予報の範囲外'}</span>`;
   const [H0, H1] = timeRange([k]);
   let tl = '';
   {
@@ -1401,7 +1401,7 @@ function dayPanel(k) {
   }
   const unread = unreadFor(S.me);
   const status = st => {
-    if (lv.includes(st.id)) return `<span class="person off">${avatar(st.name, 'var(--blue)', true)}${st.name}　休み</span>`;
+    if (lv.includes(st.id)) return `<span class="person off" style="background:color-mix(in srgb, ${st.color} 14%, transparent);color:${st.color}">${avatar(st.name, st.color, true)}${st.name}　休み</span>`;
     const o = os.filter(x => outStaff(x).includes(st.id));
     if (o.length) return `<span class="person out">${avatar(st.name, st.color, true)}${st.name}<span class="small" style="font-weight:500">　外出 ${o.map(x => { const t = outTimes(x); return `${tstr(t.depart)}発 ${esc(x.place)}${t.direct ? '（直帰）' : ''}`; }).join('、')}</span></span>`;
     return `<span class="person">${avatar(st.name, st.color, true)}${st.name}</span>`;
@@ -1465,7 +1465,7 @@ function vHome() {
       ${isMonth ? monthView() : weekView()}
       <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（アルバイト）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
       <div class="legend">
-        <span><span class="off-b">鈴木</span>青＝休みの職員</span><span><span class="bunka" style="font-size:11px">節分</span> 季節の行事</span>
+        <span><span class="off-b" style="background:${(STAFF[1] || STAFF[0] || {}).color || 'var(--blue)'}">${esc((STAFF[1] || STAFF[0] || { name: '鈴木' }).name)}</span>名前＝休みの職員（その人の色）</span><span><span class="bunka" style="font-size:11px">節分</span> 季節の行事</span>
         <span><span class="kd inu">戌</span>戌の日</span><span><span class="kd ichi">一</span>一粒万倍日</span><span><span class="kd ten">天</span>天赦日</span>
         <span><span class="season uke">受付順</span> 予約なし</span><span><span class="season hou">法人のみ</span></span><span><span class="season nok">祈願なし</span></span>
         <span class="small">※暦は計算値。祈願・来訪・外出・アルバイト名は仮のデータです</span>
@@ -3056,13 +3056,14 @@ async function bootProd() {
   vLogin = prodLogin;
   S = { ui: loadUi(), session: null };
   render();
+  // 天気（過去45日〜16日先）は最初に読み込む。ログインしたまま開いたときも読み込むように、ここで始める
+  loadWeather().then(ok => { if (ok && S && S.session) render(); });
   if (!P.device) { P.screen = 'register'; render(); return; }
   if (P.token) {
     try { const r = await api('data'); return afterLogin(Object.assign(r, { token: P.token })); }
     catch (e) { P.token = null; lsSet(TOKEN_KEY, null); }
   }
   await loadPeople();
-  loadWeather().then(ok => { if (ok && S && S.session) render(); });
 }
 ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { P.lastInput = Date.now(); }, { passive: true, capture: true }));
 setInterval(() => { if (PROD && S && S.session) refresh(false); }, 60000);
