@@ -203,6 +203,13 @@ img.mark{object-fit:cover;border-radius:50% !important;background:none !importan
 .an-star span{color:var(--hair)}   /* 横いっぱいの枠（検索回数・曜日と時間帯） */
 .an-wide .an-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
 .an-dh{display:grid;grid-template-columns:1fr;gap:22px}
+/* 正月団体：日付×時間帯の混み具合（2026-11-02） */
+.an-heat{overflow-x:auto}
+.an-heat table{border-collapse:separate;border-spacing:2px;width:100%;min-width:520px;font-size:11px;table-layout:fixed}
+.an-heat th{font-weight:500;color:var(--text-3);padding:2px 0;text-align:center}
+.an-heat th.d{text-align:right;padding-right:6px;width:66px;white-space:nowrap}
+.an-heat td{height:26px;text-align:center;border-radius:4px;background:var(--bg-2);font-variant-numeric:tabular-nums;font-weight:600}
+@media (min-width:761px){.an-ny .rank.with-share li{grid-template-columns:20px minmax(6em,1fr) minmax(30px,80px) 64px 44px 46px}}
 .an-bars{display:flex;align-items:stretch;gap:3px;height:160px;border-bottom:1px solid var(--hair);margin-bottom:22px}
 .an-bar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative;outline:none;cursor:default}
 .an-bar .c{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
@@ -3177,7 +3184,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261102174513';
+const BUILD = '20261102235918';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3795,7 +3802,7 @@ async function loadAnalytics(force) {
     // 最初に開いたときは、取り込み済みの最後の日の月。月の初め（7日まで）は数字が少ないので前の月を出す
     const dl = a.data.daily, last = dl.length ? parse(dl[dl.length - 1][0]) : null;
     if (last && !anPicked) anMonth = ym(last.getDate() <= 7 ? new Date(last.getFullYear(), last.getMonth() - 1, 1) : last);
-    if (!a.tabSet) { a.tabSet = true; if (kgDays(a.data, 'p').length) anTab = 'kigan'; }   // 最初に開くタブ：祈願の記録があれば祈願、なければHP
+    if (!a.tabSet) { a.tabSet = true; if (kgDays(a.data, 'p').length) anTab = 'kigan'; else if (nySeasons(a.data).length) anKg = 'ny'; }   // 最初に開くタブ：祈願の記録があれば祈願、なければHP
   } catch (e) { if (a !== AN) return; a.err = e.code === 'bad_action' ? '分析の受け口はまだ入っていません。次に受け口（Code.gs）を貼り直したときに使えるようになります。' : '読み込めませんでした（' + e.message + '）'; }
   finally { a.loading = false; a.at = Date.now(); if (a === AN && route().r === 'analytics') render(); }   // 失敗しても時刻を残す（続けて読み直さない）
 }
@@ -3851,13 +3858,116 @@ const snsDays = (D, k) => { let prev = null; return ((D.sns || {}).daily || []).
    1件は [日付, 開始時刻（10:00〜16:00の30分ごと）, 個人/団体/その他, 祈願内容（その他は地鎮祭・結婚式など）, 受付（電話・FAX・ネット・当日）, 都道府県, 市区町村（住所がわかるものだけ）, 前の年にも受けた団体なら1]。
    名前・電話・初穂料などは分析に渡さない。取り消しになった予約と、取り込んだ日（last）より後の予約は数えない。数字は件数だけ（人数・初穂料は出さない。本人） */
 let anKg = 'p', anKArea = 'city';
-const KG_KIND = [['p', '個人', '個人'], ['g', '団体', '団体'], ['o', 'その他', 'その他']];
+const KG_KIND = [['p', '個人', '個人'], ['ny', '正月（団体）', '正月団体'], ['g', '団体', '団体'], ['o', 'その他', 'その他']];   // 正月（団体）は予約サイトのCSVから（kgNyView）。団体は正月以外（2026-11-02 本人）
 const kgMets = k => [k === 'o' ? ['n', '件数', '地鎮祭などの外祭・結婚式・神葬祭の数'] : ['n', '祈願数', k === 'g' ? '祈願を受けた団体の数' : '祈願の数（1組で1件）']];
 const kgRows = (D, k) => { const K = D.kigan || {}, c = (KG_KIND.find(x => x[0] === k) || KG_KIND[0])[2]; return (K.rows || []).filter(r => r[2] === c && r[0] <= K.last); };
 // 毎日の件数（ない日は0）。個人・団体・その他とも同じ期間にそろえる
 const kgDays = (D, k) => { const K = D.kigan || {}, all = (K.rows || []).filter(r => r[0] <= K.last); if (!all.length) return [];
   const by = {}; kgRows(D, k).forEach(r => { by[r[0]] = (by[r[0]] || 0) + 1; });
   const out = []; for (let d = parse(all.reduce((a, r) => r[0] < a ? r[0] : a, K.last)); key(d) <= K.last; d = addDays(d, 1)) out.push([key(d), { n: by[key(d)] || 0 }]); return out; };
+/* 正月の団体祈願（2026-11-02 本人）。画面に出すのは件数・団体の数・申し込みの入り具合・日ごと・日付×時間帯・地域だけ（参列人数・玉串・お札とお守り・同時か別々かは本人「不要」。取り込みの形には残す）。予約サイト（shinagawajinja.tokyo の管理画面）の「CSVダウンロード」のCSVを、管理者が取り込む。
+   CSVは端末の中で読み、会社名・担当者・メール・電話・宛名・備考は送らない。会社名は、次の季と照らす印（元に戻せない短い暗号）にするだけ。
+   季（その年の1/1〜2/3の祈願）ごとに { y, at（取り込んだ日）, rows }。1件は
+   [予約日時, 最新更新日, 団体数（1件で何社か一緒に受ける）, 参列人数, 玉串本数, 同時にお参りなら1, 神宮大麻, 品川神社神札, 荒神様, 肌守, 交通安全守・小, 交通安全守・大, 都道府県, 市区町村, 会社の印] */
+let anNyY = 0;
+const NY_JUYO = [[6, '神宮大麻'], [7, '品川神社神札'], [8, '荒神様'], [9, '肌守'], [10, '交通安全守・小'], [11, '交通安全守・大']];
+const nySeasons = D => ((((D || {}).kigan || {}).ny) || []).slice().sort((a, b) => b.y - a.y);
+const kgSel = () => `<div class="seg">${KG_KIND.map(([k, l]) => `<button class="${k === anKg ? 'on' : ''}" data-act="anKg" data-v="${k}">${l}</button>`).join('')}</div>`;
+// CSVを行に分ける（""で囲まれた中の改行・カンマもそのまま）
+function nyCsvRows(text) {
+  const out = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); out.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f || row.length) { row.push(f); out.push(row); }
+  return out;
+}
+// 住所から都道府県と市区町村だけを取り出す（番地より後は使わない）。都道府県のない23区は東京都
+const nyPlace = a => {
+  a = String(a || '').normalize('NFKC').replace(/\s+/g, '').replace(/^(?:〒[\d\-‐－ー−]*|[\d\-‐－ー−]{5,9})/, '');   // 郵便番号（書き方がまちまち・桁が欠けたものもあるので、〒のあとの数字とダッシュをまとめて）
+  const m = a.match(/^(東京都|北海道|(?:京都|大阪)府|.{2,3}?県)/), pref = m ? m[1] : ''; a = a.slice(pref.length); if (pref && a.startsWith(pref)) a = a.slice(pref.length);
+  const c = a.match(/^((?:.+?郡)?.+?[市区町村])/), city = c ? c[1] : '';
+  return [pref || (/区$/.test(city) ? '東京都' : ''), city];
+};
+const nyMark = async s => {
+  s = String(s || '').normalize('NFKC').replace(/\s+/g, '').replace(/株式会社|有限会社|合同会社|\(株\)|\(有\)/g, '');
+  if (!s || !(window.crypto && crypto.subtle)) return '';
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('shinagawa-ny:' + s));
+  return [...new Uint8Array(b)].slice(0, 6).map(x => x.toString(16).padStart(2, '0')).join('');
+};
+async function nyFromCsv(buf) {
+  let text = new TextDecoder('shift_jis').decode(buf); if (!/予約日/.test(text.slice(0, 300))) text = new TextDecoder('utf-8').decode(buf);
+  const t = nyCsvRows(text.replace(/^﻿/, '')), h = (t.shift() || []).map(x => x.trim()), ix = n => h.indexOf(n);
+  if (['予約日', '最新更新日', '参列人数', '玉串本数', 'お参り', '会社・団体住所'].some(n => ix(n) < 0)) throw new Error('予約サイトのCSVではないようです（「予約日」などの列が見つかりません）');
+  const num = v => parseInt(String(v || '').normalize('NFKC'), 10) || 0, gi = Array.from({ length: 10 }, (_, i) => ix(`${i + 1}団体・企業名`));
+  const rows = [];
+  for (const r of t) {
+    const dt = String(r[ix('予約日')] || '').trim(); if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(dt)) continue;
+    rows.push([dt.slice(0, 16), String(r[ix('最新更新日')] || '').slice(0, 10), Math.max(1, gi.filter(j => j >= 0 && String(r[j] || '').trim()).length), num(r[ix('参列人数')]), num(r[ix('玉串本数')]), /同時/.test(r[ix('お参り')] || '') ? 1 : 0,
+      ...NY_JUYO.map(([, n]) => num(r[ix(n)])), ...nyPlace(r[ix('会社・団体住所')]), await nyMark(gi[0] >= 0 ? r[gi[0]] : '')]);
+  }
+  if (!rows.length) throw new Error('予約が1件も見つかりません');
+  const ys = {}; rows.forEach(r => { const y = r[0].slice(0, 4); ys[y] = (ys[y] || 0) + 1; });
+  const y = Number(Object.keys(ys).sort((a, b) => ys[b] - ys[a])[0]);
+  return { y, at: key(TODAY), rows: rows.filter(r => Number(r[0].slice(0, 4)) === y).sort((a, b) => a[0] < b[0] ? -1 : 1) };
+}
+function kgNyView(D) {
+  const SS = nySeasons(D), imp = P.me && P.me.isAdmin ? `<button class="btn sm" data-act="anNyImport">CSVを取り込む</button>` : '';
+  if (!SS.length) return anHead() + `<div style="margin:0 0 14px">${kgSel()}</div><div class="card card-p"><div class="empty">正月の団体祈願の記録はまだありません。<br>予約サイトの管理画面の「CSVダウンロード」で出したCSVを、管理者が取り込むと出ます。${imp ? `<div style="margin-top:12px">${imp}</div>` : ''}</div></div>`;
+  const S = SS.find(s => s.y === anNyY) || SS[0], P0 = SS.find(s => s.y === S.y - 1), A = S.rows;
+  // 受付中（申込は前の年の8/1〜12/20。HPの祈祷ページ）の季は、前の季を「同じ時点まで」で比べる。最新更新日は予約を直すと新しくなるので目安
+  const live = S.at <= `${S.y - 1}-12-20`, cut = `${Number(S.at.slice(0, 4)) - 1}${S.at.slice(4)}`, B = P0 ? (live ? P0.rows.filter(r => r[1] <= cut) : P0.rows) : null;
+  const tot = (xs, i) => xs.reduce((n, r) => n + r[i], 0), pct = (a, b) => b ? Math.round((a / b - 1) * 100) : null;
+  const pctTxt = p => p == null ? '—' : (p >= 0 ? '+' : '') + p + '%', pctCls = p => p == null ? 'muted' : p >= 0 ? 'up' : 'down', pc = (v, t) => `${Math.round(v / (t || 1) * 100)}%`;
+  const kpi = (l, a, b) => `<div class="card kpi"><div class="l">${l}</div><div class="v num">${a.toLocaleString()}</div><div class="small ${b == null ? 'muted' : pctCls(pct(a, b))}">${b == null ? '前の季との比較は来季から' : `前の季${live ? 'の同じ時点' : ''} ${b.toLocaleString()}（${pctTxt(pct(a, b))}）`}</div></div>`;
+  const card = (title, body, sub, cls) => `<div class="card card-p${cls ? ' ' + cls : ''}"><div class="card-h"><h3>${title}</h3></div>${sub ? `<div class="small muted" style="margin:-4px 0 8px">${sub}</div>` : ''}${body}</div>`;
+  const bars = (rows, showPct) => { const max = Math.max(1, ...rows.map(r => r.v)), t = rows.reduce((n, r) => n + r.v, 0); return `<div class="an-bars">${rows.map(r => `<div class="an-bar${r.v === max ? ' top' : ''}" tabindex="0"><span class="tip">${r.t} ${r.v.toLocaleString()}件（${pc(r.v, t)}）</span><div class="c">${showPct ? `<em>${pc(r.v, t)}</em>` : ''}<i style="height:${r.v / max * 100}%"></i></div><span class="ax"${r.red ? ' style="color:var(--red)"' : ''}>${r.l}</span></div>`).join('')}</div>`; };
+  const rank = (items, t, unit) => { const max = Math.max(1, ...items.map(r => r.v)); return items.length ? `<ul class="rank with-share">${items.map((r, i) => `<li title="${esc(r.label)}"><span class="n">${i + 1}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(r.label)}</b></span><span class="bar"><i style="width:${r.v / max * 100}%"></i></span><span class="r num">${r.v.toLocaleString()}${unit || ''}</span><span class="r num small muted">${r.sub != null ? r.sub : t ? (r.v / t < 0.005 ? '&lt;1' : Math.round(r.v / t * 100)) + '%' : ''}</span><span class="r num small ${pctCls(r.p)}">${r.p === undefined ? '' : pctTxt(r.p)}</span></li>`).join('')}</ul>` : '<div class="empty small">記録はありません</div>'; };
+  const dlab = k => `${Number(k.slice(5, 7))}/${Number(k.slice(8, 10))}（${WD[parse(k.slice(0, 10)).getDay()]}）`;
+  // 前の季にも受けた団体（会社の印で照らす）
+  // リピート率（前の季にも受けた団体の割合）と、前の季の団体でまだ予約がない数。会社の印で照らすので、前の季を取り込んでいない今年は「—」（2026-11-02 本人「枠だけ」）
+  const pm = new Set(P0 ? P0.rows.map(r => r[14]).filter(Boolean) : []), am = new Set(A.map(r => r[14]).filter(Boolean)), mk = A.filter(r => r[14]), rep = pm.size && mk.length ? pc(mk.filter(r => pm.has(r[14])).length, mk.length) : null, notYet = pm.size ? [...pm].filter(x => !am.has(x)).length : null;
+  const later = (l, v, sub) => `<div class="card kpi"><div class="l">${l}</div><div class="v num">${v == null ? '—' : v}</div><div class="small muted">${v == null ? `${S.y + 1}年の正月から` : sub}</div></div>`;
+  const seasonBar = `<div class="row" style="margin:0 0 14px;gap:10px;flex-wrap:wrap;align-items:center"><div class="seg">${SS.map(s => `<button class="${s.y === S.y ? 'on' : ''}" data-act="anNyY" data-v="${s.y}">${s.y}年の正月</button>`).join('')}</div><span class="tag ${live ? 'brand' : 'gray'}">${live ? '受付中（12/20まで）' : '受付終了'}</span><span class="small muted">予約サイトのCSV（${md(parse(S.at))}に取り込み）</span><span class="sp"></span>${imp}</div>`;
+  // 申込の入り具合：最新更新日までに入っていた予約の数（8/1の受付開始から12/20の締切まで1週間ごと）
+  const st = parse(`${S.y - 1}-08-01`), wk = []; for (let d = addDays(st, 6); key(addDays(d, -6)) <= `${S.y - 1}-12-20`; d = addDays(d, 7)) wk.push(key(d));
+  const cum = (rows, k) => rows.filter(r => r[1] && r[1] <= k).length, shift = k => `${Number(k.slice(0, 4)) - 1}${k.slice(4)}`;
+  const pace = lineChart(wk.map((k, i) => i === 0 || k.slice(5, 7) !== wk[i - 1].slice(5, 7) ? `${Number(k.slice(5, 7))}月` : ''),
+    Object.assign([{ name: `${S.y}年の正月`, vals: wk.map(k => live && k > S.at ? null : cum(A, k)), color: 'var(--brand)', width: 2.4, dots: false },
+      ...(P0 ? [{ name: `${P0.y}年の正月`, vals: wk.map(k => cum(P0.rows, shift(k))), color: 'var(--text-3)', dash: '4 3' }] : [])], { tip: i => `${md(addDays(parse(wk[i]), -6))}〜${md(parse(wk[i]))}の週の終わり` }));
+  // 日ごとの件数（1/1〜2/3）
+  const days = []; for (let d = parse(`${S.y}-01-01`); key(d) <= `${S.y}-02-03`; d = addDays(d, 1)) days.push(key(d));
+  const byD = {}; A.forEach(r => { const k = r[0].slice(0, 10); byD[k] = (byD[k] || 0) + 1; });
+  const dRows = days.map(k => { const dd = Number(k.slice(8)), d = parse(k); return { t: dlab(k), l: dd === 1 ? `${Number(k.slice(5, 7))}/1` : [5, 10, 15, 20, 25].includes(dd) ? String(dd) : '', red: d.getDay() === 0 || !!HOLIDAYS[k], v: byD[k] || 0 }; });
+  const pk = dRows.reduce((a, r) => r.v > a.v ? r : a, dRows[0]);
+  // 仕事始めの週：三が日のあとの平日5日間（土日・祝日・1月の第2月曜＝成人の日を除く）。年で曜日がずれても同じ物差しで比べる
+  const w5 = y => { const o = []; for (let d = parse(`${y}-01-04`); o.length < 5; d = addDays(d, 1)) if (!isWeekend(d) && !(d.getDay() === 1 && d.getDate() >= 8 && d.getDate() <= 14)) o.push(key(d)); return o; };
+  const inW5 = (rows, y) => { const w = w5(y); return rows.filter(r => w.includes(r[0].slice(0, 10))).length; };
+  const wA = w5(S.y), nW = inW5(A, S.y), nWB = B && B.length ? inW5(B, P0.y) : null;
+  // 日付×時間帯の混み具合。5件以上の日は1日ずつ、ほかの日はまとめる
+  const hs = A.map(r => Number(r[0].slice(11, 13))), h0 = Math.min(...hs), h1 = Math.max(...hs), hrs = Array.from({ length: h1 - h0 + 1 }, (_, i) => h0 + i);
+  const busy = days.filter(k => (byD[k] || 0) >= 5), cellOf = (pick, h) => A.filter(r => pick(r[0].slice(0, 10)) && Number(r[0].slice(11, 13)) === h).length;
+  const hrows = busy.map(k => [dlab(k), x => x === k]);
+  if (busy.length < days.filter(k => byD[k]).length) hrows.push(['そのほかの日', x => !busy.includes(x)]);
+  const grid = hrows.map(([l, pick]) => [l, hrs.map(h => cellOf(pick, h))]), hmax = Math.max(1, ...grid.flatMap(g => g[1]));
+  let hot = null; grid.forEach(([l, vs]) => vs.forEach((v, i) => { if (l !== 'そのほかの日' && (!hot || v > hot.v)) hot = { l, h: hrs[i], v }; }));
+  const heat = `<div class="an-heat"><table><thead><tr><th class="d"></th>${hrs.map(h => `<th>${h}時</th>`).join('')}</tr></thead><tbody>${grid.map(([l, vs]) => `<tr><th class="d">${l}</th>${vs.map((v, i) => `<td title="${l} ${hrs[i]}時台 ${v}件" style="${v ? `background:color-mix(in srgb,var(--brand) ${Math.round(14 + v / hmax * 86)}%,var(--card));color:${v / hmax > 0.5 ? '#fff' : 'var(--text)'}` : ''}">${v || ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  const cnt = f => { const g = {}; A.forEach(r => { const l = f(r); if (l) g[l] = (g[l] || 0) + 1; }); return Object.entries(g).map(([label, v]) => ({ label, v })).sort((a, b) => b.v - a.v); };
+  const area = cnt(r => anKArea === 'pref' ? r[12] : r[13]), areaT = area.reduce((n, r) => n + r.v, 0);
+  return anHead() + `<div style="margin:0 0 14px">${kgSel()}</div>${seasonBar}
+  <div class="grid4" style="margin-bottom:16px">${kpi('予約の件数', A.length, B && B.length)}${kpi('団体の数', tot(A, 2), B && tot(B, 2))}${later('リピート率', rep, '前の季にも受けた団体の割合')}${later('前の季の団体で予約がまだ', notYet == null ? null : `${notYet}社`, `前の季 ${pm.size}社のうち`)}</div>
+  <div class="card card-p" style="margin-bottom:16px"><div class="card-h"><h3>申し込みの入り具合</h3></div><div class="small muted" style="margin:-4px 0 8px">8/1の受付開始から12/20の締切まで、その週までに入っていた予約の数（最新更新日で数えるので目安）</div>${pace}</div>
+  <div class="grid2 an-grid an-ny">
+    ${card('日ごとの件数', `<div class="small muted" style="margin:0 0 10px">仕事始めの週（${md(parse(wA[0]))}〜${md(parse(wA[4]))}）に<b style="color:var(--text)">${nW}件（${pc(nW, A.length)}）</b>、ほかの日に${A.length - nW}件${nWB == null ? '' : `（前の季${live ? 'の同じ時点' : ''} ${pc(nWB, B.length)}）`}。多いのは<b style="color:var(--text)">${pk.t}</b>（${pk.v}件）</div>${bars(dRows)}`, '1/1〜2/3。仕事始めの週は三が日のあとの平日5日間。棒に触れると件数が出ます', 'an-wide')}
+    ${card('日付と時間帯の混み具合', `<div class="small muted" style="margin:0 0 10px">${hot ? `いちばん混むのは<b style="color:var(--text)">${hot.l} ${hot.h}時台</b>（${hot.v}件）` : ''}</div>${heat}`, '予約の開始時刻で数えた件数。5件以上の日は1日ずつ、ほかの日はまとめて', 'an-wide')}
+    <div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>地域</h3><span class="sp"></span><div class="seg">${[['city', '市区町村'], ['pref', '都道府県']].map(([k, l]) => `<button class="${k === anKArea ? 'on' : ''}" data-act="anKArea" data-v="${k}">${l}</button>`).join('')}</div></div><div class="small muted" style="margin:-4px 0 8px">会社・団体の住所で数えた件数と割合</div>${rank(area.slice(0, 10), areaT)}</div>
+  </div>`;
+}
 /* タスクのタブ：分析画面を完成させるまでにやること（2026-11-02 本人）。終わったら d を 1 にして作り直す。
    [見出し, 説明, [[やること, 担当, 終わったら1, 補足]]]。担当は 勝史・制作会社・Claude */
 const AN_TASKS = [
@@ -3905,8 +4015,9 @@ function anSoon(title, items, note) {
 }
 function vAnalyticsProd() {
   if (anTab === 'task') return anTaskView();   // タスクは数字を使わない
-  if (anTab === 'kigan' && AN.data && !kgDays(AN.data, 'p').length) return anHead() + `<div class="grid2 an-grid">
-    ${anSoon('祈願', ['個人の祈願数', '団体の祈願数', 'その他の件数'], '予約台帳ができると自動で入ります')}
+  if (anTab === 'kigan' && AN.data && anKg === 'ny') return kgNyView(AN.data);   // 正月団体は予約サイトのCSVから
+  if (anTab === 'kigan' && AN.data && !kgDays(AN.data, 'p').length) return anHead() + `<div style="margin:0 0 14px">${kgSel()}</div><div class="grid2 an-grid">
+    ${anSoon('祈願', ['個人の祈願数', '団体の祈願数', 'その他の件数'], '予約台帳ができると自動で入ります（正月団体は予約サイトのCSVから入ります）')}
   </div>`;
   if (anTab === 'map' && AN.data && !(AN.data.gbp && AN.data.gbp.daily.length)) return anHead() + `<div class="grid2 an-grid">
     ${anSoon('Google', ['表示回数', '経路検索', '電話', 'HP流入', '口コミの平均評価', '口コミの数'], 'Googleビジネスプロフィールの利用申請が通ると自動で入ります')}
@@ -4053,12 +4164,11 @@ function vAnalyticsProd() {
     // 曜日と開始時刻（10:00〜16:00の30分ごと。2026-11-02 本人。その他は時刻がまちまちなので曜日だけ）
     const dw = [1, 2, 3, 4, 5, 6, 0].map(i => ({ t: `${WD[i]}曜日`, l: WD[i], red: i === 0, v: A.filter(r => parse(r[0]).getDay() === i).length }));
     const sl = Array.from({ length: 13 }, (_, i) => `${pad(10 + Math.floor(i / 2))}:${i % 2 ? '30' : '00'}`).map(t => ({ t: t.replace(/^0/, ''), l: t.endsWith('00') ? `${Number(t.slice(0, 2))}時` : '', v: A.filter(r => r[1] === t).length }));
-    const kgSel = `<div style="margin:0 0 14px"><div class="seg">${KG_KIND.map(([k, l]) => `<button class="${k === anKg ? 'on' : ''}" data-act="anKg" data-v="${k}">${l}</button>`).join('')}</div></div>`;
     const areaCard = `<div class="card card-p"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>地域（${PL}）</h3><span class="sp"></span><div class="seg">${[['city', '市区町村'], ['pref', '都道府県']].map(([k, l]) => `<button class="${k === anKArea ? 'on' : ''}" data-act="anKArea" data-v="${k}">${l}</button>`).join('')}</div></div><div class="small muted" style="margin:-4px 0 8px">件数と割合（住所がわかるものだけ）</div>${kRank(r => anKArea === 'pref' ? r[5] : r[6], 10)}</div>`;
     return head + `
   <div class="row" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">${periodBar}</div>
-  <div class="grid4 an-k3 an-kg" style="margin-bottom:16px">${KG_KIND.map(([k, l]) => { const xs = kgRows(D, k), a = xs.filter(r => r[0] >= from && r[0] <= to).length, b = xs.filter(r => r[0] >= lyFrom && r[0] <= lyTo).length; return kpi(`${l}の${k === 'o' ? '件数' : '祈願数'}（${PL}）`, a.toLocaleString(), pct(a, b), '前年の記録なし'); }).join('')}</div>
-  <div class="row" style="margin:0 0 14px;gap:12px;flex-wrap:wrap">${kgSel.replace('margin:0 0 14px', 'margin:0')}${isGr ? `<span class="small muted">前の年にも受けた団体 <b class="num" style="color:var(--text);font-size:15px">${rt(A, r => r[7])}</b>（前年 ${rt(B, r => r[7])}）</span>` : ''}</div>
+  <div class="grid4 an-k3 an-kg" style="margin-bottom:16px">${KG_KIND.filter(x => x[0] !== 'ny').map(([k, l]) => { const xs = kgRows(D, k), a = xs.filter(r => r[0] >= from && r[0] <= to).length, b = xs.filter(r => r[0] >= lyFrom && r[0] <= lyTo).length; return kpi(`${l}の${k === 'o' ? '件数' : '祈願数'}（${PL}）`, a.toLocaleString(), pct(a, b), '前年の記録なし'); }).join('')}</div>
+  <div class="row" style="margin:0 0 14px;gap:12px;flex-wrap:wrap">${kgSel()}${isGr ? `<span class="small muted">前の年にも受けた団体 <b class="num" style="color:var(--text);font-size:15px">${rt(A, r => r[7])}</b>（前年 ${rt(B, r => r[7])}）</span>` : ''}</div>
   ${chartCard}
   <div class="grid2 an-grid">
     ${card(`${isO ? '内容' : '祈願内容'}（${PL}）`, kRank(r => r[3], 30), '件数と割合')}
@@ -4216,6 +4326,22 @@ if (PROD) {
     anMetric(el) { if (anTab === 'map') anGMetric = el.dataset.v; else if (anTab === 'sns') anSMetric = el.dataset.v; else anMetric = el.dataset.v; render(); },
     anKg(el) { anKg = el.dataset.v; render(); },
     anKArea(el) { anKArea = el.dataset.v; render(); },
+    anNyY(el) { anNyY = Number(el.dataset.v); render(); },
+    // 予約サイトのCSVを選ぶ → 端末の中で読んで、分析に要る数字だけを受け口に送る（管理者だけ）
+    anNyImport() {
+      if (!(P.me && P.me.isAdmin)) return toast('取り込みは管理者だけができます');
+      const inp = document.createElement('input'); inp.type = 'file'; inp.accept = '.csv,text/csv';
+      inp.onchange = async () => {
+        const f = inp.files[0]; if (!f) return;
+        try {
+          const s = await nyFromCsv(await f.arrayBuffer());
+          await api('kiganNyImport', { season: s });
+          const K = AN.data.kigan = AN.data.kigan || {}; K.ny = (K.ny || []).filter(x => x.y !== s.y).concat([s]);
+          anNyY = s.y; anKg = 'ny'; render(); toast(`${s.y}年の正月の予約 ${s.rows.length}件を取り込みました`);
+        } catch (e) { toast('取り込めませんでした：' + e.message); }
+      };
+      inp.click();
+    },
     anSns(el) { anSns = el.dataset.v; render(); },
     anRange(el) { anRange = el.dataset.v; render(); },
     anArea(el) { anArea = el.dataset.v; render(); },
