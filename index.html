@@ -627,7 +627,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
   .tabbar a .badge{position:absolute;top:2px;left:calc(50% + 6px);height:16px;min-width:16px;font-size:10px}
   .main{padding:14px 16px 96px}
   .page-h h1{font-size:21px}
-  .home{display:flex;flex-direction:column-reverse;gap:14px;align-items:stretch}
+  .home{display:flex;flex-direction:column;gap:14px;align-items:stretch}   /* スマホは月が上、日の予定が下（2026-11-02 本人。日付を押すと下の予定へ自動で動く） */
   .cell{min-height:66px;padding:4px 3px}
   .d-num{width:22px;height:22px;font-size:12.5px}
   .rokuyo{font-size:9px}
@@ -1300,7 +1300,7 @@ const ICON = {
    ========================================================= */
 const NAV = [
   ['g', '毎日'], ['home', 'ホーム', ICON.home], ['diary', '日報', ICON.diary], ['board', '掲示板', ICON.board],
-  ['g', '業務'], ['kigan', '祈願予約', ICON.kigan], ['tasks', 'タスク', ICON.task], ['juyo', '授与品', ICON.juyo], ['baito', 'アルバイト', ICON.baito], ['manual', 'マニュアル', ICON.manual], ['analytics', '分析', ICON.chart],
+  ['g', '業務'], ['kigan', '祈願予約', ICON.kigan], ['tasks', 'タスク', ICON.task], ['juyo', '授与品', ICON.juyo], ['analytics', '分析', ICON.chart], ['baito', 'アルバイト', ICON.baito], ['manual', 'マニュアル', ICON.manual],
   ['g', '設定'], ['seasons', '祭典の設定', ICON.season], ['ujiko', '氏子名簿', ICON.lock]
 ];
 const PHASE1_HIDE = ['kigan', 'tasks', 'analytics', 'ujiko'];
@@ -3177,7 +3177,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261102173517';
+const BUILD = '20261102174513';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
