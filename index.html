@@ -202,7 +202,7 @@ img.mark{object-fit:cover;border-radius:50% !important;background:none !importan
 .an-star{color:var(--brand);letter-spacing:1px;font-size:13px}
 .an-star span{color:var(--hair)}   /* 横いっぱいの枠（検索回数・曜日と時間帯） */
 .an-wide .an-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}
-.an-dh{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:28px}
+.an-dh{display:grid;grid-template-columns:1fr;gap:22px}
 .an-bars{display:flex;align-items:stretch;gap:3px;height:160px;border-bottom:1px solid var(--hair);margin-bottom:22px}
 .an-bar{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;position:relative;outline:none;cursor:default}
 .an-bar .c{flex:1;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
@@ -3177,7 +3177,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261102161517';
+const BUILD = '20261102164502';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3795,7 +3795,13 @@ async function loadAnalytics(force) {
 }
 const CH_LABEL = { 'Organic Search': '検索', 'Direct': '直接', 'Referral': '他サイト', 'Organic Social': 'SNS', 'Organic Maps': '地図', 'Organic Video': '動画', 'Paid Search': '検索広告', 'Paid Social': 'SNS広告', 'Display': 'ディスプレイ広告', 'Email': 'メール', 'Unassigned': '不明' };
 const DEV_LABEL = { mobile: 'スマホ', desktop: 'PC', tablet: 'タブレット' };
-const SRC_LABEL = { google: 'Google', yahoo: 'Yahoo!', bing: 'Bing', '(direct)': '直接', 'instagram.com': 'Instagram', 'l.instagram.com': 'Instagram', 'facebook.com': 'Facebook', 'm.facebook.com': 'Facebook', 'l.facebook.com': 'Facebook', 't.co': 'X', 'x.com': 'X', 'youtube.com': 'YouTube', 'm.youtube.com': 'YouTube', 'line.me': 'LINE', 'maps.google.com': 'Googleマップ', 'duckduckgo': 'DuckDuckGo', '(not set)': '不明' };
+const SRC_LABEL = { google: 'Google', yahoo: 'Yahoo!', bing: 'Bing', '(direct)': '直接', 'instagram.com': 'Instagram', 'l.instagram.com': 'Instagram', 'facebook.com': 'Facebook', 'm.facebook.com': 'Facebook', 'l.facebook.com': 'Facebook', 't.co': 'X', 'x.com': 'X', 'youtube.com': 'YouTube', 'm.youtube.com': 'YouTube', 'line.me': 'LINE', 'maps.google.com': 'Googleマップ', 'duckduckgo': 'DuckDuckGo', '(not set)': '不明',
+  /* 来る前にいたサイトを、アドレスではなく名前で出す（2026-11-02 本人「わかりやすい言葉に」）。載っていないものはアドレスのまま */
+  'chatgpt.com': 'ChatGPT', openai: 'ChatGPT', 'ja.wikipedia.org': 'Wikipedia', 'ja.m.wikipedia.org': 'Wikipedia', '10jinja.tokyo': '東京十社', 'tokyo-jinjacho.or.jp': '東京都神社庁', 'shinagawa-kanko.or.jp': '品川区観光協会', 'gotokyo.org': 'GO TOKYO', 'princehotels.co.jp': 'プリンスホテル',
+  'service.smt.docomo.ne.jp': 'ドコモの検索', 'websearch.rakuten.co.jp': '楽天の検索', 'sp-web.search.auone.jp': 'auの検索', 'search.portal.auone.jp': 'auの検索', 'map.yahoo.co.jp': 'Yahoo!地図', 'ameblo.jp': 'アメブロ', 'hatenablog-parts.com': 'はてなブログ', 'smartnews_article_relatedLink': 'SmartNews', ig: 'Instagram',
+  'guide.jr-odekake.net': 'JRおでかけネット', 'woman.mynavi.jp': 'マイナビウーマン', 'vogue.co.jp': 'VOGUE', 'crea.bunshun.jp': 'CREA' };
+/* HPのページの名前。主なページは短い名前、お知らせなどはGA4の題名から「｜品川神社」を除いたもの（2026-11-02 本人） */
+const PAGE_LABEL = { '/': 'トップページ', '/access/': '交通案内', '/prayer/': '御祈祷・七五三・結婚式', '/deity/': '御祭神・御由緒', '/shrine/': '東京十社・東海七福神', '/treasure/': '宝物・文化財', '/event/': '年間行事・例大祭', '/information/': 'お知らせ一覧', '/movie/': '御大典記念事業の動画' };
 const PREF_LABEL = { Hokkaido: '北海道', Aomori: '青森県', Iwate: '岩手県', Miyagi: '宮城県', Akita: '秋田県', Yamagata: '山形県', Fukushima: '福島県', Ibaraki: '茨城県', Tochigi: '栃木県', Gunma: '群馬県', Saitama: '埼玉県', Chiba: '千葉県', Tokyo: '東京都', Kanagawa: '神奈川県', Niigata: '新潟県', Toyama: '富山県', Ishikawa: '石川県', Fukui: '福井県', Yamanashi: '山梨県', Nagano: '長野県', Gifu: '岐阜県', Shizuoka: '静岡県', Aichi: '愛知県', Mie: '三重県', Shiga: '滋賀県', Kyoto: '京都府', Osaka: '大阪府', Hyogo: '兵庫県', Nara: '奈良県', Wakayama: '和歌山県', Tottori: '鳥取県', Shimane: '島根県', Okayama: '岡山県', Hiroshima: '広島県', Yamaguchi: '山口県', Tokushima: '徳島県', Kagawa: '香川県', Ehime: '愛媛県', Kochi: '高知県', Fukuoka: '福岡県', Saga: '佐賀県', Nagasaki: '長崎県', Kumamoto: '熊本県', Oita: '大分県', Miyazaki: '宮崎県', Kagoshima: '鹿児島県', Okinawa: '沖縄県', '(not set)': '不明' };
 Object.assign(SRC_LABEL, { 'lm.facebook.com': 'Facebook', 'threads.net': 'Threads', 'threads.com': 'Threads', 'l.threads.com': 'Threads', 'tiktok.com': 'TikTok', 'lin.ee': 'LINE', 'liff.line.me': 'LINE' });
 const CITY_LABEL = { Shinagawa: '品川区', Minato: '港区', Ota: '大田区', Meguro: '目黒区', Setagaya: '世田谷区', Shibuya: '渋谷区', Shinjuku: '新宿区', Chiyoda: '千代田区', Chuo: '中央区', Koto: '江東区', Bunkyo: '文京区', Taito: '台東区', Sumida: '墨田区', Toshima: '豊島区', Nakano: '中野区', Suginami: '杉並区', Kita: '北区', Arakawa: '荒川区', Itabashi: '板橋区', Nerima: '練馬区', Adachi: '足立区', Katsushika: '葛飾区', Edogawa: '江戸川区', Yokohama: '横浜市', Kawasaki: '川崎市', Sagamihara: '相模原市', Saitama: 'さいたま市', Chiba: '千葉市', Osaka: '大阪市', Nagoya: '名古屋市', Sapporo: '札幌市', Fukuoka: '福岡市', Kyoto: '京都市', Kobe: '神戸市', Sendai: '仙台市', Hiroshima: '広島市', '(not set)': '不明' };
@@ -3853,11 +3859,11 @@ const AN_TASKS = [
     ['祈願・HP・Google・SNSの画面を見本で作る', 'Claude', 1, '2026-11-02 見本 version 57'],
     ['本人が見本を触って直しを出す', '勝史', 1, '']]],
   ['2. 本番に出す（HPタブが動き出す）', 'GA4の数字は、これが終わった夜から毎晩取り込まれる', [
-    ['Apps Script の［サービス］に「Google Analytics Data API」を追加する', '勝史', 0, ''],
+    ['Apps Script の［サービス］に「Google Analytics Data API」を追加する', '勝史', 1, '2026-11-02'],
     ['appsscript.json に権限の一覧（oauthScopes）を足す', '勝史', 0, '中身は Claude が用意。Googleビジネスプロフィール用の権限も今のうちに入れる'],
-    ['受け口（Code.gs）を貼り直し、recordAnalytics を1回実行して「新バージョン」でデプロイ', '勝史', 0, '貼る中身は Claude が用意'],
-    ['画面のファイル（dist/index.html）を GitHub に上げる', '勝史', 0, 'ログインは本人。手順は Claude が案内'],
-    ['本物の数字が出ているか一緒に確かめる', 'Claude', 0, '']]],
+    ['受け口（Code.gs）を貼り直し、recordAnalytics を1回実行して「新バージョン」でデプロイ', '勝史', 1, '2026-11-02 バージョン6'],
+    ['画面のファイル（dist/index.html）を GitHub に上げる', '勝史', 1, '2026-11-02'],
+    ['本物の数字が出ているか一緒に確かめる', 'Claude', 1, '2026-11-02 本人の端末で表示を確認']]],
   ['3. HPタブを仕上げる', '検索された言葉と、HPで押されたボタンの数を出す', [
     ['Search Console に神社のGoogleアカウントで登録する（https://shinagawajinja.tokyo/）', '勝史', 0, ''],
     ['Search Console の所有権の確認', '制作会社', 0, '確認用のタグを1行入れてもらう／GTMの権限／DNS のどれか'],
@@ -3967,6 +3973,9 @@ function vAnalyticsProd() {
   const per = (a, b) => b ? a / b : 0, uA = sum(from, to, 'u'), uB = sum(lyFrom, lyTo, 'u');
   const ppA = per(sum(from, to, 'pv'), uA), ppB = per(sum(lyFrom, lyTo, 'pv'), uB), etA = per(sum(from, to, 'eng'), uA), etB = per(sum(lyFrom, lyTo, 'eng'), uB);
   // 月ごとの内訳（同じ名前にまとまるものは足す）
+  // 入口ページは末尾の「/」なしで来るので、人気ページの題名と合わせて名前を引く。題名のない共通の題名（品川神社【公式】…）はアドレスのまま。不明は出さない
+  const TITLE = {}; MONTHLY.forEach(r => { if (r[1] === 'page' && !TITLE[r[2]]) TITLE[r[2]] = String(r[3]).normalize('NFKC').replace(/\s*\|\s*品川神社$/, ''); });
+  const pageLab = k => { if (k === '(not set)') return null; const b = String(k).split('?')[0], c = [b, b + '/'].find(x => PAGE_LABEL[x] || TITLE[x]); return c ? PAGE_LABEL[c] || (/^品川神社【公式】/.test(TITLE[c]) ? k : TITLE[c]) : k; };
   const mon = (ks, kind, lab) => { const g = {}; MONTHLY.filter(r => ks.includes(r[0]) && r[1] === kind).forEach(r => { const l = lab ? lab(r[2]) : r[3]; if (l == null) return; (g[l] = g[l] || { key: r[2], label: l, v: 0 }).v += r[4]; }); return Object.values(g).sort((a, b) => b.v - a.v); };
   // 順位の横棒。tot を渡すと、全体に占める割合も出す
   const rankList = (kind, lab, n, note, tot) => { const rs = mon(curMs, kind, lab).slice(0, n), ly = {}; mon(lyMs, kind, lab).forEach(r => ly[r.label] = r.v); const max = rs[0] ? rs[0].v : 1;
@@ -4153,15 +4162,19 @@ function vAnalyticsProd() {
     ${actionsCard}
     ${resvCard}
     <div class="row" style="grid-column:1/-1;gap:8px;flex-wrap:wrap;margin:6px 0 -4px">${periodBar}</div>
-    ${card(`入口ページ（${PL}）`, rankList('landing', null, 15, '訪問数。'), '検索やリンクから最初に開かれたページ')}
-    ${card(`参照元（${PL}）`, rankList('source', k => SRC_LABEL[k] || k, 10, '上位10。訪問数。', sum(from, to, 's')), 'HPに来る前にいたサイト・アプリ')}
     <div class="an-pair">
-      ${card(`流入経路（${PL}）`, rankList('channel', chLab, 10, '', mon(curMs, 'channel', chLab).reduce((n, r) => n + r.v, 0)), '訪問数と割合')}
+    ${card(`最初に開かれたページ（${PL}）`, rankList('landing', pageLab, 15, '訪問数。'), '検索やリンクからHPに来た人が、最初に見たページ')}
+    ${card(`来る前にいたサイト（${PL}）`, rankList('source', k => SRC_LABEL[k] || k, 10, '上位10。訪問数。', sum(from, to, 's')), '「直接」はブックマーク・アドレスの入力・アプリからなど')}
+    </div>
+    <div class="an-pair">
+      ${card(`来た経路（${PL}）`, rankList('channel', chLab, 10, '', mon(curMs, 'channel', chLab).reduce((n, r) => n + r.v, 0)), '訪問数と割合')}
       ${card(`端末（${PL}）`, donut(devOf(curMs), devOf(lyMs)), '訪問の割合')}
     </div>
-    ${card(`人気ページ（${PL}）`, rankList('page', null, 15, 'ページ閲覧数。', sum(from, to, 'pv')), 'よく見られたページ')}
+    <div class="an-pair">
+    ${card(`人気ページ（${PL}）`, rankList('page', pageLab, 15, 'ページ閲覧数。', sum(from, to, 'pv')), 'よく見られたページ')}
     <div class="card card-p"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>地域（${PL}）</h3><span class="sp"></span><div class="seg">${[['city', '市区町村'], ['region', '都道府県']].map(([k, l]) => `<button class="${k === anArea ? 'on' : ''}" data-act="anArea" data-v="${k}">${l}</button>`).join('')}</div></div>
       ${anArea === 'city' ? rankList('city', cityLabel, 10, '上位10。訪問数（国内）。', mon(curMs, 'region', prefLabel).reduce((n, r) => n + r.v, 0)) : rankList('region', prefLabel, 10, '', mon(curMs, 'region', prefLabel).reduce((n, r) => n + r.v, 0))}</div>
+    </div>
     ${dhCard}
   </div>`;
 }
