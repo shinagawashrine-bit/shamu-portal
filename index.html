@@ -3177,7 +3177,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261102164502';
+const BUILD = '20261102165229';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -4163,11 +4163,11 @@ function vAnalyticsProd() {
     ${resvCard}
     <div class="row" style="grid-column:1/-1;gap:8px;flex-wrap:wrap;margin:6px 0 -4px">${periodBar}</div>
     <div class="an-pair">
-    ${card(`最初に開かれたページ（${PL}）`, rankList('landing', pageLab, 15, '訪問数。'), '検索やリンクからHPに来た人が、最初に見たページ')}
-    ${card(`来る前にいたサイト（${PL}）`, rankList('source', k => SRC_LABEL[k] || k, 10, '上位10。訪問数。', sum(from, to, 's')), '「直接」はブックマーク・アドレスの入力・アプリからなど')}
+    ${card(`入口ページ（${PL}）`, rankList('landing', pageLab, 15, '訪問数。'), '検索やリンクから最初に開かれたページ')}
+    ${card(`参照元（${PL}）`, rankList('source', k => SRC_LABEL[k] || k, 10, '上位10。訪問数。', sum(from, to, 's')), 'HPに来る前にいたサイト・アプリ')}
     </div>
     <div class="an-pair">
-      ${card(`来た経路（${PL}）`, rankList('channel', chLab, 10, '', mon(curMs, 'channel', chLab).reduce((n, r) => n + r.v, 0)), '訪問数と割合')}
+      ${card(`流入経路（${PL}）`, rankList('channel', chLab, 10, '', mon(curMs, 'channel', chLab).reduce((n, r) => n + r.v, 0)), '訪問数と割合')}
       ${card(`端末（${PL}）`, donut(devOf(curMs), devOf(lyMs)), '訪問の割合')}
     </div>
     <div class="an-pair">
