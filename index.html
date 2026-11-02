@@ -208,6 +208,8 @@ img.mark{object-fit:cover;border-radius:50% !important;background:none !importan
 .an-heat table{border-collapse:separate;border-spacing:2px;width:100%;min-width:520px;font-size:11px;table-layout:fixed}
 .an-heat th{font-weight:500;color:var(--text-3);padding:2px 0;text-align:center}
 .an-heat th.d{text-align:right;padding-right:6px;width:66px;white-space:nowrap}
+.an-heat th.d .fill{display:block;font-size:10px;color:var(--text-3);line-height:1.1}
+.an-open{list-style:none;margin:0;padding:0}.an-open li{display:grid;grid-template-columns:72px 1fr;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:13px}.an-open li:first-child{border-top:0}.an-open .d{color:var(--text-2)}.an-open .t{display:block;font-size:12px;color:var(--text-2);margin-top:2px;font-variant-numeric:tabular-nums}
 .an-heat td{height:26px;text-align:center;border-radius:4px;background:var(--bg-2);font-variant-numeric:tabular-nums;font-weight:600}
 @media (min-width:761px){.an-ny .rank.with-share li{grid-template-columns:20px minmax(6em,1fr) minmax(30px,80px) 64px 44px 46px}}
 .an-bars{display:flex;align-items:stretch;gap:3px;height:160px;border-bottom:1px solid var(--hair);margin-bottom:22px}
@@ -3184,7 +3186,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261103010231';
+const BUILD = '20261103011042';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3952,13 +3954,16 @@ function kgNyView(D) {
   // 3行それぞれの前年比（受付中は前年の同じ時点まで。ピークは日付が違っても件数で比べる）
   const pkB = nWB == null ? null : Math.max(0, ...Object.values(B.reduce((g, r) => { const k = r[0].slice(0, 10); g[k] = (g[k] || 0) + 1; return g; }, {})));
   const yoy = (a, b) => b == null ? '<span class="muted">前年比 —</span>' : `<span class="${pctCls(pct(a, b))}">前年比 ${pctTxt(pct(a, b))}</span>`;
-  // 日付×時間帯の混み具合。5件以上の日は1日ずつ、ほかの日はまとめる
-  const hs = A.map(r => Number(r[0].slice(11, 13))), h0 = Math.min(...hs), h1 = Math.max(...hs), hrs = Array.from({ length: h1 - h0 + 1 }, (_, i) => h0 + i);
-  const busy = days.filter(k => (byD[k] || 0) >= 5), cellOf = (pick, h) => A.filter(r => pick(r[0].slice(0, 10)) && Number(r[0].slice(11, 13)) === h).length;
-  const hrows = busy.map(k => [dlab(k), x => x === k]);
-  if (busy.length < days.filter(k => byD[k]).length) hrows.push(['そのほかの日', x => !busy.includes(x)]);
-  const grid = hrows.map(([l, pick]) => [l, hrs.map(h => cellOf(pick, h))]), hmax = Math.max(1, ...grid.flatMap(g => g[1]));
-  const heat = `<div class="an-heat"><table><thead><tr><th class="d"></th>${hrs.map(h => `<th>${h}時</th>`).join('')}</tr></thead><tbody>${grid.map(([l, vs]) => `<tr><th class="d">${l}</th>${vs.map((v, i) => `<td title="${l} ${hrs[i]}時台 ${v}件" style="${v ? `background:color-mix(in srgb,var(--brand) ${Math.round(14 + v / hmax * 86)}%,var(--card));color:${v / hmax > 0.5 ? '#fff' : 'var(--text)'}` : ''}">${v || ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+  // 日付×時間帯の埋まり具合。枠は7:00〜18:50の10分ごとに1つ（1時間6枠・1日72枠。2026-11-03 本人）。5件以上の日は1日ずつ、ほかの日は「それ以外」にまとめる
+  const SLOT_H0 = 7, SLOT_H1 = 18, SLOT_PER_H = 6, SLOT_DAY = (SLOT_H1 - SLOT_H0 + 1) * SLOT_PER_H, hrs = Array.from({ length: SLOT_H1 - SLOT_H0 + 1 }, (_, i) => SLOT_H0 + i);
+  const busy = days.filter(k => (byD[k] || 0) >= 5), rest = days.filter(k => byD[k] && !busy.includes(k)), cellOf = (pick, h) => A.filter(r => pick(r[0].slice(0, 10)) && Number(r[0].slice(11, 13)) === h).length;
+  const hrows = busy.map(k => [dlab(k), x => x === k, 1, k]);
+  if (rest.length) hrows.push(['それ以外', x => rest.includes(x), rest.length, null]);
+  const grid = hrows.map(([l, pick, nd, k]) => [l, hrs.map(h => cellOf(pick, h)), nd, k]);
+  const heat = `<div class="an-heat"><table><thead><tr><th class="d"></th>${hrs.map(h => `<th>${h}時</th>`).join('')}</tr></thead><tbody>${grid.map(([l, vs, nd, k]) => `<tr><th class="d">${l}${k ? `<span class="fill">${pc(byD[k], SLOT_DAY)}</span>` : ''}</th>${vs.map((v, i) => { const cap = SLOT_PER_H * nd, f = v / cap; return `<td title="${l} ${hrs[i]}時台 ${v}/${cap}枠" style="${v ? `background:color-mix(in srgb,var(--brand) ${Math.round(14 + f * 86)}%,var(--card));color:${f > 0.5 ? '#fff' : 'var(--text)'}` : ''}">${v ? (k && v >= cap ? '満' : v) : ''}</td>`; }).join('')}</tr>`).join('')}</tbody></table></div>`;
+  // 空き枠：5件以上の日の残りの枠（取り込んだ時点）。残りが12枠以下の日は時刻も出す
+  const SLOTS = hrs.flatMap(h => Array.from({ length: SLOT_PER_H }, (_, i) => `${String(h).padStart(2, '0')}:${i}0`));
+  const openList = busy.map(k => { const taken = new Set(A.filter(r => r[0].slice(0, 10) === k).map(r => r[0].slice(11, 16))), open = SLOTS.filter(t => !taken.has(t)); return `<li><span class="d">${dlab(k)}</span><span class="v"><b>残り${open.length}枠</b><span class="muted">（${pc(SLOT_DAY - open.length, SLOT_DAY)}）</span>${open.length && open.length <= 12 ? `<span class="t">${open.map(t => t.replace(/^0/, '')).join('　')}</span>` : ''}</span></li>`; }).join('');
   // 地域の「新規」＝前の季にいない会社の予約（会社の印で照らす。前の季がない今年は出せない。2026-11-03 本人「枠だけ」）
   const isNew = anNyWho === 'new', AR = isNew ? (rep != null ? A.filter(r => r[14] && !pm.has(r[14])) : []) : A;
   const cnt = f => { const g = {}; AR.forEach(r => { const l = f(r); if (l) g[l] = (g[l] || 0) + 1; }); return Object.entries(g).map(([label, v]) => ({ label, v })).sort((a, b) => b.v - a.v); };
@@ -3973,7 +3978,8 @@ function kgNyView(D) {
   <div class="card card-p" style="margin-bottom:16px"><div class="card-h"><h3>申込件数</h3></div>${pace}</div>
   <div class="grid2 an-grid an-ny">
     ${card('日ごとの件数', `<div class="small muted" style="display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin:0 0 12px"><span>1月第1週（${md(parse(wA[0]))}〜${md(parse(wA[4]))}）</span><span><b style="color:var(--text)">${nW}件（${pc(nW, A.length)}）</b>　${yoy(nW, nWB)}</span><span>それ以外</span><span><b style="color:var(--text)">${A.length - nW}件（${pc(A.length - nW, A.length)}）</b>　${yoy(A.length - nW, nWB == null ? null : B.length - nWB)}</span><span>ピーク</span><span><b style="color:var(--text)">${pk.t} ${pk.v}件</b>　${yoy(pk.v, pkB)}</span></div>${bars(dRows)}`, '', 'an-wide')}
-    ${card('日付と時間帯の混み具合', heat, '', 'an-wide')}
+    ${card('日付と時間帯の埋まり具合', heat, '', 'an-wide')}
+    ${busy.length ? card('空き枠', `<ul class="an-open">${openList}</ul>`, '', 'an-wide') : ''}
     <div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>地域</h3><span class="sp"></span><div class="seg">${[['all', '全体'], ['new', '新規']].map(([k, l]) => `<button class="${k === anNyWho ? 'on' : ''}" data-act="anNyWho" data-v="${k}">${l}</button>`).join('')}</div><div class="seg">${[['city', '市区町村'], ['pref', '都道府県']].map(([k, l]) => `<button class="${k === anKArea ? 'on' : ''}" data-act="anKArea" data-v="${k}">${l}</button>`).join('')}</div></div>${isNew && rep == null ? `<div class="empty small">${S.y + 1}年から</div>` : rank(area.slice(0, 10), areaT)}</div>
   </div>`;
 }
