@@ -3177,7 +3177,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261102165500';
+const BUILD = '20261102170320';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3860,7 +3860,7 @@ const AN_TASKS = [
     ['本人が見本を触って直しを出す', '勝史', 1, '']]],
   ['2. 本番に出す（HPタブが動き出す）', 'GA4の数字は、これが終わった夜から毎晩取り込まれる', [
     ['Apps Script の［サービス］に「Google Analytics Data API」を追加する', '勝史', 1, '2026-11-02'],
-    ['appsscript.json に権限の一覧（oauthScopes）を足す', '勝史', 0, '中身は Claude が用意。Googleビジネスプロフィール用の権限も今のうちに入れる'],
+    ['appsscript.json に権限の一覧（oauthScopes）を足す', '勝史', 1, '2026-11-02 Claudeが書き足し、本人が許可。ビジネスプロフィール用も入れた'],
     ['受け口（Code.gs）を貼り直し、recordAnalytics を1回実行して「新バージョン」でデプロイ', '勝史', 1, '2026-11-02 バージョン6'],
     ['画面のファイル（dist/index.html）を GitHub に上げる', '勝史', 1, '2026-11-02'],
     ['本物の数字が出ているか一緒に確かめる', 'Claude', 1, '2026-11-02 本人の端末で表示を確認']]],
