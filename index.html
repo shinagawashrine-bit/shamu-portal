@@ -3126,7 +3126,7 @@ async function refresh(force) {
   } catch (e) { if (e.code === 'session') expired(e.message); }
 }
 function syncBadge(on) { let b = document.getElementById('syncBadge'); if (!b) { b = document.createElement('div'); b.id = 'syncBadge'; b.className = 'sync-badge'; b.textContent = '保存中…'; document.body.appendChild(b); } b.hidden = !on; }
-function expired(msg) { P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; P.screen = 'login'; P.msg = msg || 'もう一度ログインしてください'; closeModal(); render(); }
+function expired(msg) { if (typeof anReset === 'function') anReset(); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; P.screen = 'login'; P.msg = msg || 'もう一度ログインしてください'; closeModal(); render(); }
 
 /* ── ログイン画面（端末登録・名前・暗証番号・暗証番号の変更） ── */
 const ROLE_LABEL = { guji: '宮司', staff: '職員', temp: '臨時職員', shuin: '御朱印', miko: '巫女' };
@@ -3177,7 +3177,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261102170320';
+const BUILD = '20261102173517';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3267,7 +3267,7 @@ if (PROD) Object.assign(ACT, {
     try { await api('changePin', { oldPin: P.oldPin, newPin: pin }); P.oldPin = null; const r = await api('data'); toast('暗証番号を変えました'); await afterLogin(Object.assign(r, { me: Object.assign(r.me, { mustChange: false }) })); }
     catch (e) { P.newPinStep = 0; P.msg = e.message; render(); }
   },
-  logout() { closeModal(); api('logout').catch(() => { }); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; loginWho = null; loginPin = ''; P.screen = 'login'; P.msg = ''; window.scrollTo(0, 0); loadPeople(); },
+  logout() { closeModal(); api('logout').catch(() => { }); if (typeof anReset === 'function') anReset(); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; loginWho = null; loginPin = ''; P.screen = 'login'; P.msg = ''; window.scrollTo(0, 0); loadPeople(); },
   reset() { toast('本番では使えません'); },
   // 人の登録・変更は管理画面で（暗証番号を発行するため）
   editRegular() { goAdmin(); }, saveRegular() { goAdmin(); }, editMember() { goAdmin(); }, saveMember() { goAdmin(); }, delMember() { goAdmin(); }, bulkMember() { goAdmin(); }, saveBulkMember() { goAdmin(); },
@@ -3758,10 +3758,12 @@ function lineChart(labels, series, o = {}) {
   const W = o.w || 640, H = o.h || 230, fmt = o.fmt || (v => Math.round(v).toLocaleString()), P = { l: 56, r: 10, t: 12, b: o.marks ? 40 : 26 }, n = labels.length;
   const all = series.flatMap(s => s.vals).filter(v => v != null);
   // 縦軸は0からではなく、数字の幅に合わせる（増え方・減り方が見えるように）
-  const hi = Math.max(...all, 1), lo0 = Math.min(...all.filter(v => v > 0), hi), span = Math.max(hi - lo0, hi * 0.1);
+  // 主役の線の0・マイナス（フォロワーの減少など）は範囲に入れる。前年の線の0は記録のない期間のことが多いので入れない（2026-11-02 Codex指摘）
+  const main = (series[0] ? series[0].vals : []).filter(v => v != null);
+  const hi = Math.max(...all, 1), lo0 = Math.min(...all.filter(v => v > 0), ...main, hi), span = Math.max(hi - lo0, hi * 0.1);
   const step0 = Math.pow(10, Math.floor(Math.log10(span / 4))) * ([1, 2, 5, 10].find(m => Math.pow(10, Math.floor(Math.log10(span / 4))) * m * 4 >= span) || 10);
   const step = !o.fmt && all.every(Number.isInteger) ? Math.max(1, step0) : step0;   // 件数のような整数は目盛りを1より細かくしない（「1・1・0」と重ならないように）
-  const min = Math.max(0, Math.floor((lo0 - span * 0.1) / step) * step), max = Math.ceil((hi + span * 0.05) / step) * step;
+  const min = lo0 < 0 ? Math.floor((lo0 - span * 0.1) / step) * step : Math.max(0, Math.floor((lo0 - span * 0.1) / step) * step), max = Math.ceil((hi + span * 0.05) / step) * step;
   const x = i => P.l + (W - P.l - P.r) * (n === 1 ? 0.5 : i / (n - 1)), y = v => P.t + (H - P.t - P.b) * (1 - (Math.max(v, min) - min) / (max - min || 1));
   let g = '';
   for (let v = min; v <= max + 1e-9; v += step) { const yy = y(v); g += `<line x1="${P.l}" x2="${W - P.r}" y1="${yy}" y2="${yy}" stroke="var(--grid)"/><text x="${P.l - 6}" y="${yy + 4}" font-size="10" text-anchor="end" fill="var(--text-3)">${fmt(v)}</text>`; }
@@ -3781,17 +3783,21 @@ function lineChart(labels, series, o = {}) {
 }
 /* 折れ線の期間（2026-11-02 本人決定：1か月・3か月・1年・3年。3年は今年と過去2年を重ねる） */
 const AN_RANGES = [['1m', '1か月'], ['3m', '3か月'], ['1y', '1年'], ['3y', '3年']];
+/* ログアウト・ログインの期限切れで、読み込んだ数字を消す（共有の端末で前の人の分が残らないように。2026-11-02 Codex指摘） */
+function anReset() { AN = { data: null, loading: false, err: '' }; }
 async function loadAnalytics(force) {
   if (AN.loading || (AN.data && !force)) return;
-  AN.loading = true;
+  const a = AN;   // 途中で anReset されたら、この返事は捨てる
+  a.loading = true;
   try {
-    AN.data = await api('analytics'); AN.err = '';
+    const d = await api('analytics'); if (a !== AN) return;
+    a.data = d; a.err = '';
     // 最初に開いたときは、取り込み済みの最後の日の月。月の初め（7日まで）は数字が少ないので前の月を出す
-    const dl = AN.data.daily, last = dl.length ? parse(dl[dl.length - 1][0]) : null;
+    const dl = a.data.daily, last = dl.length ? parse(dl[dl.length - 1][0]) : null;
     if (last && !anPicked) anMonth = ym(last.getDate() <= 7 ? new Date(last.getFullYear(), last.getMonth() - 1, 1) : last);
-    if (!AN.tabSet) { AN.tabSet = true; if (kgDays(AN.data, 'p').length) anTab = 'kigan'; }   // 最初に開くタブ：祈願の記録があれば祈願、なければHP
-  } catch (e) { AN.err = e.code === 'bad_action' ? '分析の受け口はまだ入っていません。次に受け口（Code.gs）を貼り直したときに使えるようになります。' : '読み込めませんでした（' + e.message + '）'; }
-  finally { AN.loading = false; AN.at = Date.now(); if (route().r === 'analytics') render(); }   // 失敗しても時刻を残す（続けて読み直さない）
+    if (!a.tabSet) { a.tabSet = true; if (kgDays(a.data, 'p').length) anTab = 'kigan'; }   // 最初に開くタブ：祈願の記録があれば祈願、なければHP
+  } catch (e) { if (a !== AN) return; a.err = e.code === 'bad_action' ? '分析の受け口はまだ入っていません。次に受け口（Code.gs）を貼り直したときに使えるようになります。' : '読み込めませんでした（' + e.message + '）'; }
+  finally { a.loading = false; a.at = Date.now(); if (a === AN && route().r === 'analytics') render(); }   // 失敗しても時刻を残す（続けて読み直さない）
 }
 const CH_LABEL = { 'Organic Search': '検索', 'Direct': '直接', 'Referral': '他サイト', 'Organic Social': 'SNS', 'Organic Maps': '地図', 'Organic Video': '動画', 'Paid Search': '検索広告', 'Paid Social': 'SNS広告', 'Display': 'ディスプレイ広告', 'Email': 'メール', 'Unassigned': '不明' };
 const DEV_LABEL = { mobile: 'スマホ', desktop: 'PC', tablet: 'タブレット' };
@@ -3868,7 +3874,7 @@ const AN_TASKS = [
     ['Search Console に神社のGoogleアカウントで登録する（https://shinagawajinja.tokyo/）', '勝史', 0, ''],
     ['Search Console の所有権の確認', '制作会社', 0, '確認用のタグを1行入れてもらう／GTMの権限／DNS のどれか'],
     ['確認できたら recordSearchConsole を1回実行する', '勝史', 0, ''],
-    ['電話・地図・祈願の問い合わせボタンに計測を入れてもらう', '制作会社', 0, 'イベント名 tel_click・map_click・kigan_click。公式HPの刷新のときに']]],
+    ['電話・地図・祈願の問い合わせボタンに計測を入れてもらう', '制作会社', 0, 'イベント名 tel_click・map_click・kigan_kojin_click（個人祈願）・kigan_dantai_click（団体祈願）。公式HPの刷新のときに']]],
   ['4. Googleタブを動かす', 'Googleマップ・検索での表示回数や口コミを取り込む', [
     ['business.google.com で、神社のアカウントがオーナーか確かめる', '勝史', 0, ''],
     ['Googleビジネスプロフィールの利用を Google に申請する', '勝史', 0, '審査に数週間かかることがある'],
@@ -3978,8 +3984,10 @@ function vAnalyticsProd() {
   const pageLab = k => { if (k === '(not set)') return null; const b = String(k).split('?')[0], c = [b, b + '/'].find(x => PAGE_LABEL[x] || TITLE[x]); return c ? PAGE_LABEL[c] || (/^品川神社【公式】/.test(TITLE[c]) ? k : TITLE[c]) : k; };
   const mon = (ks, kind, lab) => { const g = {}; MONTHLY.filter(r => ks.includes(r[0]) && r[1] === kind).forEach(r => { const l = lab ? lab(r[2]) : r[3]; if (l == null) return; (g[l] = g[l] || { key: r[2], label: l, v: 0 }).v += r[4]; }); return Object.values(g).sort((a, b) => b.v - a.v); };
   // 順位の横棒。tot を渡すと、全体に占める割合も出す
+  // 月（年）の途中は、表の前年比を「—」にする。表は月ごとの数字しかなく、前年側は1か月まるごとになって比べられないため（2026-11-02 Codex指摘）
+  const partial = to < mEnd;
   const rankList = (kind, lab, n, note, tot) => { const rs = mon(curMs, kind, lab).slice(0, n), ly = {}; mon(lyMs, kind, lab).forEach(r => ly[r.label] = r.v); const max = rs[0] ? rs[0].v : 1;
-    return rs.length ? `<ul class="rank${tot ? ' with-share' : ''}">${rs.map((r, i) => { const p = pct(r.v, ly[r.label]); return `<li title="${esc(r.key)}"><span class="n">${i + 1}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(r.label)}</b></span><span class="bar"><i style="width:${r.v / max * 100}%"></i></span><span class="r num">${r.v.toLocaleString()}</span>${tot ? `<span class="r num small muted">${r.v / tot < 0.005 ? '&lt;1' : Math.round(r.v / tot * 100)}%</span>` : ''}<span class="r num small ${pctCls(p)}">${pctTxt(p)}</span></li>`; }).join('')}</ul>` : `<div class="empty small">${isY ? 'この期間' : 'この月'}の記録はありません</div>`; };
+    return rs.length ? `<ul class="rank${tot ? ' with-share' : ''}">${rs.map((r, i) => { const p = partial ? null : pct(r.v, ly[r.label]); return `<li title="${esc(r.key)}"><span class="n">${i + 1}</span><span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${esc(r.label)}</b></span><span class="bar"><i style="width:${r.v / max * 100}%"></i></span><span class="r num">${r.v.toLocaleString()}</span>${tot ? `<span class="r num small muted">${r.v / tot < 0.005 ? '&lt;1' : Math.round(r.v / tot * 100)}%</span>` : ''}<span class="r num small ${pctCls(p)}">${pctTxt(p)}</span></li>`; }).join('')}</ul>${partial ? `<div class="small muted" style="margin-top:8px">${isY ? '年' : '月'}の途中なので、前年比は出していません</div>` : ''}` : `<div class="empty small">${isY ? 'この期間' : 'この月'}の記録はありません</div>`; };
   const share = (kind, lab) => { const rs = mon(curMs, kind, lab), tot = rs.reduce((s, r) => s + r.v, 0) || 1; return rs.map(r => ({ label: r.label, v: r.v, p: Math.round(r.v / tot * 100) })); };
   // 割合は円グラフ（ドーナツ）。項目が2〜3つのものだけに使う（4つ目からは「その他」）。渡された順に決まった色をつけ、ly を渡すと前年の割合も添える
   const donut = (rows, ly) => { rows = rows.filter(r => r.v); if (!rows.length) return `<div class="empty small">${isY ? 'この期間' : 'この月'}の記録はありません</div>`;
