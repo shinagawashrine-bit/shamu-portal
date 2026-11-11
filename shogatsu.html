@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+</head>
+<body>
+<title>正月</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Shippori+Mincho:wght@600;700&display=swap">
+<style>
+/* 社務ポータル「神社くん」の配色に合わせた業務画面。上に要約、下に表。表だけ横にスクロール */
+:root {
+  --bg: #f7f4f4; --card: #ffffff; --bg-2: #efe9ea; --line: #e2d8da;
+  --text: #2a2224; --text-2: #5f5357; --text-3: #8e8185;
+  --brand: #9c545b; --sat: #2f62b0; --brand-soft: #f3e3e5; --brand-ink: #ffffff;
+  --rokuji: #6b3a63; --rokuji-soft: #efe2ec;
+  --vet: #9c545b; --vet-soft: #f3e3e5;
+  --mid: #9a6b12; --mid-soft: #f6ecd6;
+  --new: #2f6f6a; --new-soft: #dcefec;
+  --ok: #2f7d4a; --ok-soft: #e1f1e6; --warn: #a86a00; --warn-soft: #fbefd6; --ng: #b23a3a; --ng-soft: #f8e0e0;
+  --f-body: "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --f-disp: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #171314; --card: #211b1d; --bg-2: #2b2326; --line: #3a3034;
+  --text: #f1e9eb; --text-2: #c7b9bd; --text-3: #94858a;
+  --brand: #d38a92; --sat: #8fb0ea; --brand-soft: #3b2629; --brand-ink: #1b1214;
+  --rokuji: #d6a4cc; --rokuji-soft: #3a2537; --vet: #d38a92; --vet-soft: #3b2629;
+  --mid: #e0b45a; --mid-soft: #3a2f1a; --new: #6cc1b8; --new-soft: #1c3533;
+  --ok: #6cc58a; --ok-soft: #1d3324; --warn: #e6b04a; --warn-soft: #3a2e16; --ng: #ee8a8a; --ng-soft: #3d2121; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #171314; --card: #211b1d; --bg-2: #2b2326; --line: #3a3034;
+  --text: #f1e9eb; --text-2: #c7b9bd; --text-3: #94858a;
+  --brand: #d38a92; --sat: #8fb0ea; --brand-soft: #3b2629; --brand-ink: #1b1214;
+  --rokuji: #d6a4cc; --rokuji-soft: #3a2537; --vet: #d38a92; --vet-soft: #3b2629;
+  --mid: #e0b45a; --mid-soft: #3a2f1a; --new: #6cc1b8; --new-soft: #1c3533;
+  --ok: #6cc58a; --ok-soft: #1d3324; --warn: #e6b04a; --warn-soft: #3a2e16; --ng: #ee8a8a; --ng-soft: #3d2121; color-scheme: dark }
+body { background: var(--bg); color: var(--text); font-family: var(--f-body); font-size: 14px; line-height: 1.6 }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr) }
+#view { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); min-width: 0 }
+h1 { font-family: var(--f-disp); font-size: 26px; margin: 0; letter-spacing: .04em }
+h2 { font-size: 16px; margin: 0 }
+.head { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: baseline }
+.sub { color: var(--text-3); font-size: 13px }
+.demo { font-size: 12px; background: var(--warn-soft); color: var(--warn); border-radius: 6px; padding: 2px 8px; font-weight: 700 }
+.tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto }
+.tabs button { border: 0; background: none; font: inherit; font-size: 15px; font-weight: 700; color: var(--text-3); padding: 8px 14px; border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap }
+.tabs button.on { color: var(--brand); border-bottom-color: var(--brand) }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; min-width: 0 }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center }
+.sp { flex: 1 }
+.btn { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 6px 12px; cursor: pointer }
+.btn.pri { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) }
+.btn:focus-visible, .tabs button:focus-visible, td.c:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px }
+.kpi .l { font-size: 12px; color: var(--text-3) }
+.kpi .v { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums }
+.kpi .s { font-size: 12px; color: var(--text-2) }
+.badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 5px; font-size: 11px; font-weight: 700 }
+.r-rokuji { background: var(--rokuji-soft); color: var(--rokuji) } .r-vet { background: var(--vet-soft); color: var(--vet) }
+.r-mid { background: var(--mid-soft); color: var(--mid) } .r-new { background: var(--new-soft); color: var(--new) }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--text-2); align-items: center }
+.legend span { display: inline-flex; gap: 5px; align-items: center }
+.scroll { overflow-x: auto; max-width: 100% }
+table.g { border-collapse: separate; border-spacing: 0; font-size: 12px; font-variant-numeric: tabular-nums }
+table.g th, table.g td { border-bottom: 1px solid var(--line); padding: 4px 3px; text-align: center; white-space: nowrap }
+table.g th.name, table.g td.name { position: sticky; left: 0; background: var(--card); text-align: left; padding-right: 10px; z-index: 1; min-width: 132px }
+table.g thead th { color: var(--text-2); font-weight: 500 }
+table.g .dh { min-width: 46px; line-height: 1.25 }
+.sun, .hol { color: var(--ng) } .sat { color: var(--sat) }
+.dh.sun { color: var(--ng); font-weight: 700 } .dh.sat { color: var(--sat); font-weight: 700 }
+.kind { font-size: 10px; color: var(--text-3) }
+.need { display: inline-flex; align-items: center; gap: 2px }
+.need button { border: 0; background: var(--bg-2); color: var(--text-2); width: 16px; height: 16px; border-radius: 4px; font-size: 11px; line-height: 1; cursor: pointer; padding: 0 }
+.src { font-size: 9px; color: var(--brand); display: block }
+.chk { font-size: 11px; font-weight: 700 }
+.chk.good { color: var(--ok) } .chk.bad { color: var(--ng) }
+td.c { cursor: pointer; width: 46px; height: 28px }
+td.c .m { display: inline-flex; width: 26px; height: 22px; align-items: center; justify-content: center; border-radius: 5px; font-weight: 700 }
+.m.as { background: var(--brand); color: var(--brand-ink) }
+.m.as.ngas { background: var(--ng); color: #fff }
+.m.ok { color: var(--ok) } .m.ng { color: var(--ng) } .m.no { color: var(--text-3) }
+tr.grp td { background: var(--bg-2); font-weight: 700; color: var(--text-2); text-align: left; font-size: 12px }
+tr.grp td.name { background: var(--bg-2) }
+.warnlist { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none }
+.warnlist li { background: var(--warn-soft); color: var(--warn); border-radius: 8px; padding: 6px 10px; font-size: 13px }
+.goodnote { background: var(--ok-soft); color: var(--ok); border-radius: 8px; padding: 6px 10px; font-size: 13px }
+.note { font-size: 12px; color: var(--text-3) }
+.tag { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 5px; padding: 0 6px; background: var(--bg-2); color: var(--text-2) }
+.tag.kari { background: var(--warn-soft); color: var(--warn) }
+.size { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; background: var(--brand-soft); color: var(--brand) }
+.size.none { background: var(--bg-2); color: var(--text-3) }
+table.t { border-collapse: collapse; width: 100%; font-size: 13px; font-variant-numeric: tabular-nums }
+table.t th, table.t td { border-bottom: 1px solid var(--line); padding: 7px 8px; text-align: left; vertical-align: top }
+table.t th { color: var(--text-3); font-weight: 500; font-size: 12px; white-space: nowrap }
+table.t td.n { text-align: right; white-space: nowrap }
+.short { color: var(--ng); font-weight: 700 }
+.chips { display: flex; flex-wrap: wrap; gap: 4px }
+.chip { font-size: 12px; background: var(--bg-2); border-radius: 5px; padding: 0 6px }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px }
+@media (max-width: 760px) { .grid2 { grid-template-columns: minmax(0, 1fr) } }
+.f { display: grid; gap: 4px }
+.f label { font-size: 12px; color: var(--text-3) }
+.in { font: inherit; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px 9px; width: 100%; min-width: 0; box-sizing: border-box }
+.in.s { width: 72px }
+.fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 10px }
+.fields > .f, .dlg > .f { min-width: 0 }
+.fields .in { height: 34px }
+.rules { display: grid; gap: 10px }
+.rules-wrap { display: grid; gap: 16px; max-width: 880px }
+.rules h3 { font-size: 13px; color: var(--text-3); margin: 6px 0 0; letter-spacing: .04em }
+.rule { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); padding-bottom: 10px }
+.rule > :first-child { flex: 1 1 300px; min-width: 0 }
+.rule > :last-child:not(:first-child) { flex: 0 0 auto; margin-left: auto }
+.rule:last-child { border-bottom: 0; padding-bottom: 0 }
+.rule .val { font-weight: 700; white-space: nowrap; color: var(--text) }
+.rule .val:empty { display: none }
+.rule .row { flex-wrap: nowrap; white-space: nowrap }
+.rule .d { font-size: 12px; color: var(--text-3) }
+.overlay { position: fixed; inset: 0; background: rgba(20, 12, 14, .45); display: grid; place-items: center; z-index: 20; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+.dlg { background: var(--card); border-radius: 14px; width: min(560px, 100%); max-height: 90vh; overflow: auto; padding: 18px; display: grid; gap: 12px }
+textarea.in { min-height: 140px; font-size: 13px }
+.pairs { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px }
+.pair { border: 1px solid var(--line); border-radius: 10px; padding: 8px; display: grid; gap: 4px; background: var(--bg) }
+.pair.bad { border-color: var(--ng); background: var(--ng-soft) }
+.pn { font-size: 12px; color: var(--text-3); font-weight: 700 }
+.pm { font: inherit; text-align: left; border: 1px solid transparent; background: var(--card); color: var(--text); border-radius: 7px; padding: 4px 6px; cursor: pointer; display: flex; gap: 6px; align-items: center }
+.pm.sel { border-color: var(--brand); box-shadow: 0 0 0 2px var(--brand-soft) }
+.tag.ngt { background: var(--ng-soft); color: var(--ng) }
+.friends { display: flex; flex-wrap: wrap; gap: 4px 12px; max-height: 120px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; font-size: 13px }
+.friends label { display: inline-flex; gap: 4px; align-items: center; color: var(--text) }
+.dbtn { font: inherit; background: none; border: 0; color: inherit; cursor: pointer; padding: 0; line-height: 1.25 }
+.dbtn:hover { text-decoration: underline; text-underline-offset: 3px }
+.dchips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px }
+.dchip { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid var(--line); background: var(--card); color: var(--text); border-radius: 8px; padding: 4px 9px; cursor: pointer; white-space: nowrap; display: grid; text-align: center; line-height: 1.2 }
+.dchip small { font-size: 10px; font-weight: 500 }
+.dchip.sun { color: var(--ng) } .dchip.sat { color: var(--sat) }
+.dchip.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) }
+table.tl { border-collapse: separate; border-spacing: 0; font-size: 12px; width: 100% }
+table.tl th, table.tl td { border-bottom: 1px solid var(--line); padding: 3px 1px; text-align: center; white-space: nowrap }
+table.tl th.hr { text-align: left; font-weight: 500; color: var(--text-2); font-variant-numeric: tabular-nums; min-width: 38px }
+table.tl td.pname { position: sticky; left: 0; z-index: 1; background: var(--card); text-align: left; padding: 4px 8px 4px 0; min-width: 150px }
+table.tl td.slot { cursor: pointer; padding: 3px 0 }
+.pl { display: flex; align-items: center; justify-content: center; height: 30px; font-size: 11px; font-weight: 700 }
+.pl.s { border-top-left-radius: 6px; border-bottom-left-radius: 6px }
+.pl.e { border-top-right-radius: 6px; border-bottom-right-radius: 6px; margin-right: 2px }
+.pl.p0 { background: var(--brand-soft); color: var(--brand) } .pl.p1 { background: var(--new-soft); color: var(--new) }
+.pl.p2 { background: var(--mid-soft); color: var(--mid) } .pl.p3 { background: var(--rokuji-soft); color: var(--rokuji) }
+.pl.rest { background: var(--bg-2); color: var(--text-3) }
+.pname .pm { padding: 2px 5px; font-size: 13px }
+.pname .pn { margin-bottom: 2px }
+.sheetwrap { overflow-x: auto; max-width: 100% }
+.sheet { min-width: 960px; aspect-ratio: 297 / 210; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 18px 22px; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; box-shadow: 0 2px 8px rgba(42, 34, 36, .08) }
+.sh-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; border-bottom: 2px solid var(--brand); padding-bottom: 6px }
+.sh-title { font-family: var(--f-disp); font-size: 30px; font-weight: 700; letter-spacing: .08em; line-height: 1.2 }
+.yearsel { width: auto; font-weight: 700 }
+.sh-head { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px }
+.sh-date { font-size: 15px; font-weight: 700 }
+.sh-dbig, .sh-dbig.sun, .sh-dbig.sat { font-family: var(--f-disp); font-size: 30px; font-weight: 700; letter-spacing: .04em; line-height: 1.2; color: var(--text) }   /* 日付は黒（2026-11-11 本人） */
+.sh-lunch { display: flex; align-items: baseline; gap: 8px; padding: 4px 12px; border: 1.5px solid var(--brand); border-radius: 8px; white-space: nowrap; max-width: 46%; overflow: hidden }
+.sh-lunch-l { font-size: 13px; font-weight: 700; color: var(--brand) } .sh-lunch b { font-size: 20px; overflow: hidden; text-overflow: ellipsis } .sh-lunch-v { font-size: 13px; color: var(--text-2) }
+.sh-meta { text-align: right; font-size: 13px; color: var(--text-2); line-height: 1.5 }
+.sh-grid { display: grid; grid-template-columns: 48px repeat(var(--np), minmax(0, 1fr)); grid-template-rows: auto repeat(var(--ns), minmax(0, 1fr)); column-gap: 6px; min-height: 0 }
+.sh-h { padding: 2px 4px 6px; border-bottom: 1px solid var(--line); display: grid; gap: 2px; align-content: end }
+.sh-h .pm { font-size: 13px; padding: 1px 4px; background: transparent }
+.sh-h .sz { font-size: 10px; color: var(--text-3); font-weight: 700 }
+.sh-time { font-size: 11px; color: var(--text-3); text-align: right; padding: 1px 6px 0 0; font-variant-numeric: tabular-nums; line-height: 1; border-top: 1px solid transparent }
+.sh-time.hr { color: var(--text); font-weight: 700; border-top-color: var(--line) }
+.sh-c { font: inherit; border: 0; margin: 0; padding: 3px 8px 0; text-align: left; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: flex-start; min-height: 0; overflow: hidden }
+.sh-c.s { border-top-left-radius: 6px; border-top-right-radius: 6px; margin-top: 2px }
+.sh-c.e { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; margin-bottom: 2px }
+.sh-c.p0 { background: var(--brand-soft); color: var(--brand) } .sh-c.p1 { background: var(--new-soft); color: var(--new) }
+.sh-c.p2 { background: var(--mid-soft); color: var(--mid) } .sh-c.p3 { background: var(--rokuji-soft); color: var(--rokuji) }
+.sh-c.rest { background: var(--bg-2); color: var(--text-3) }
+.sh-c.none { background: transparent; box-shadow: none !important }
+.sh-c:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px }
+.sh-foot { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--text-2); align-items: center }
+.sh-foot .key { display: inline-flex; align-items: center; gap: 5px }
+.sh-foot .key i { width: 16px; height: 12px; border-radius: 3px; display: inline-block }
+.btn:disabled { opacity: .5; cursor: not-allowed }
+.sh-grid { grid-template-rows: auto auto repeat(var(--ns), minmax(0, 1fr)); column-gap: 3px }
+.sh-ph { font-size: 12px; font-weight: 700; color: var(--text-2); border-bottom: 2px solid var(--brand-soft); padding: 0 4px 2px; align-self: end }
+.sh-cnth { text-align: center; font-size: 10px; padding: 0 }
+.sh-h { padding: 3px 1px 4px; align-content: start; min-width: 0 }
+.sh-h .pm { font-size: 12px; padding: 1px 2px; gap: 4px; white-space: nowrap; overflow: hidden; max-width: 100% }
+.sh-sub { display: flex; gap: 4px; font-size: 10px; padding-left: 2px; min-height: 13px }
+.sh-sub .sz { margin-left: 0 }
+.kgm { color: var(--new); font-weight: 700 }
+.sh-grid .sh-c { font-size: 12px; padding: 0; line-height: 1.15; position: relative; overflow: visible }
+.sh-grid .sh-c .lb { position: absolute; left: 6px; top: 3px; z-index: 2; white-space: nowrap; pointer-events: none }
+.sh-grid .sh-c.s { margin-top: 1px } .sh-grid .sh-c.e { margin-bottom: 1px }
+/* 10分ごとの境目に細い線が出ないよう、同じ色で1px重ねる */
+.sh-grid .sh-c.p0:not(.e) { box-shadow: 0 1px 0 var(--brand-soft) } .sh-grid .sh-c.p1:not(.e) { box-shadow: 0 1px 0 var(--new-soft) }
+.sh-grid .sh-c.p2:not(.e) { box-shadow: 0 1px 0 var(--mid-soft) } .sh-grid .sh-c.p3:not(.e) { box-shadow: 0 1px 0 var(--rokuji-soft) }
+.sh-grid .sh-c.rest:not(.e) { box-shadow: 0 1px 0 var(--bg-2) }
+.sh-time { font-size: 11px }
+.sh-time.rt { text-align: left; padding: 1px 0 0 6px }
+.sh-time.q, .sh-cnt.q { border-top: 1px dotted var(--line) }
+.sh-cnt { font-size: 10px; text-align: center; color: var(--text-2); font-variant-numeric: tabular-nums; border-top: 1px solid transparent; line-height: 1.1 }
+.sh-cnt.hr { border-top-color: var(--line) }
+.sh-cnt.short { background: var(--ng-soft); color: var(--ng); font-weight: 700 }
+.sh-cnt.lunch { background: var(--warn-soft); color: var(--warn); font-weight: 700 }
+.kgt { font: inherit; font-size: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text-2); border-radius: 999px; padding: 2px 10px; cursor: pointer }
+.kgt.on { background: var(--new-soft); border-color: var(--new); color: var(--new); font-weight: 700 }
+@page { size: A4 landscape; margin: 8mm }
+@media print {
+  body { background: #fff !important }
+  .head, .tabs, .noprint, #dlg { display: none !important }
+  .wrap, #view { padding: 0 !important; max-width: none !important; gap: 0 !important; display: block !important }
+  #view > .card { border: 0 !important; padding: 0 !important; background: none !important }
+  .sheetwrap { overflow: visible }
+  .sheet { --card: #fff; --text: #2a2224; --text-2: #5f5357; --text-3: #8e8185; --line: #d9cfd1; --bg-2: #efe9ea; --brand: #9c545b; --brand-soft: #f3e3e5; --new: #2f6f6a; --new-soft: #dcefec; --mid: #9a6b12; --mid-soft: #f6ecd6; --rokuji: #6b3a63; --rokuji-soft: #efe2ec; --vet: #9c545b; --vet-soft: #f3e3e5; --ng: #b23a3a; --ng-soft: #f8e0e0; --warn: #a86a00; --warn-soft: #fbefd6; --sat: #2f62b0;
+    min-width: 0; width: 281mm; height: 194mm; aspect-ratio: auto; border: 0; border-radius: 0; padding: 0; box-shadow: none; background: #fff; color: var(--text); -webkit-print-color-adjust: exact; print-color-adjust: exact; break-inside: avoid }
+  .sh-h .pm { border: 0; padding: 0 }
+}
+.delday { display: block; margin: 2px auto 0; border: 0; background: none; color: var(--text-3); font-size: 12px; cursor: pointer; line-height: 1 }
+.delday:hover { color: var(--ng) }
+.pdfdlg { width: min(1180px, 100%) }
+.ss-prev { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 8px }
+.ss-prev > .ss, .ss-prev > .pdfsheet { position: absolute; left: 0; top: 0; transform-origin: 0 0 }
+.seg { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 4px 0 2px }
+.seg label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer }
+.ss-host { position: fixed; left: -20000px; top: 0 }
+/* 配置表のPDF：テーマによらず白い紙の色、A4横の大きさで */
+.pdfsheet { --card: #fff; --text: #2a2224; --text-2: #5f5357; --text-3: #8e8185; --line: #d9cfd1; --bg-2: #efe9ea; --brand: #9c545b; --brand-soft: #f3e3e5; --new: #2f6f6a; --new-soft: #dcefec; --mid: #9a6b12; --mid-soft: #f6ecd6; --rokuji: #6b3a63; --rokuji-soft: #efe2ec; --vet: #9c545b; --vet-soft: #f3e3e5; --ng: #b23a3a; --ng-soft: #f8e0e0; --warn: #a86a00; --warn-soft: #fbefd6; --sat: #2f62b0;
+  width: 1123px !important; height: 794px !important; min-width: 0 !important; aspect-ratio: auto !important; box-sizing: border-box; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; padding: 34px 38px 26px !important; background: #fff !important; color: var(--text) }
+.pdfsheet .sh-h .pm { border: 0; padding: 0; background: none }
+/* 配るシフト表：テーマによらず白い紙の色 */
+.ss { width: 1123px; height: 794px; box-sizing: border-box; padding: 40px 44px 30px; background: #fff; color: #2a2224; font-family: 'Noto Sans JP', system-ui, sans-serif; display: flex; flex-direction: column; gap: 14px }
+.ss-top { display: flex; align-items: flex-end; gap: 16px; border-bottom: 2px solid #9c545b; padding-bottom: 10px }
+.ss-top > div:first-child { flex: 1 }
+.ss-t { font-family: 'Shippori Mincho', serif; font-size: 28px; font-weight: 700; letter-spacing: .06em; color: #2a2224 }
+.ss-p { font-size: 14px; color: #5f5357; margin-top: 2px }
+.ss-s { font-family: 'Shippori Mincho', serif; font-size: 18px; color: #9c545b; font-weight: 700 }
+.ss-g { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14px }
+.ss-g th { font-weight: 700; font-size: 14px; padding: 4px 0 6px; border-bottom: 1.5px solid #2a2224; line-height: 1.2 }
+.ss-g th small { display: block; font-size: 11px; font-weight: 500 }
+.ss-g td { text-align: center; border-bottom: 1px solid #e4dadc; border-left: 1px solid #efe7e8; padding: 0 }
+.ss-g .nm { width: 128px; text-align: left; padding-left: 6px; border-left: 0; font-weight: 500; white-space: nowrap; overflow: hidden }
+.ss-g .cnt { width: 44px; color: #5f5357; font-variant-numeric: tabular-nums }
+.ss-sum td { border-top: 1.5px solid #2a2224; font-weight: 700; color: #2a2224; background: #f3e3e5 }
+.ss .on { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #9c545b; vertical-align: middle }
+.ss .late { display: inline-block; width: 14px; height: 14px; border-radius: 50%; background: #2f62b0; vertical-align: middle }
+.ss-f { margin-top: auto; display: flex; flex-wrap: wrap; gap: 18px; align-items: center; font-size: 12px; color: #5f5357 }
+.ss-f > span { display: inline-flex; align-items: center; gap: 6px }
+.ss-f .sp { flex: 1 }
+/* 巫女の入力画面（スマホ） */
+.input-mode .head, .input-mode .tabs { display: none }
+.in-send { flex-wrap: wrap } .in-send #apiMsg { flex-basis: 100%; order: -1; margin: 0 }   /* 本番のURL：送れなかったときの知らせ */
+.input-mode .wrap { max-width: 480px; padding-block: 12px 110px }
+.in-top { display: grid; gap: 2px; padding: 4px 2px 6px }
+.gteams { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 16px }
+.glist { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 2px }
+.glist li { display: flex; gap: 8px; align-items: baseline; padding: 6px 2px; border-bottom: 1px solid var(--line) }
+.linkish { font: inherit; font-weight: 700; color: var(--text); background: none; border: 0; padding: 0; cursor: pointer; text-align: left }
+.linkish:hover { color: var(--brand) } .linkish.sun { color: var(--ng) } .linkish.sat { color: var(--sat) }
+.mstats { display: grid; grid-template-columns: repeat(auto-fit, minmax(108px, 1fr)); gap: 8px }
+.mstat { display: grid; gap: 2px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg) }
+.mstat span { font-size: 12px; color: var(--text-3); font-weight: 700 } .mstat b { font-family: var(--f-disp); font-size: 22px; font-variant-numeric: tabular-nums }
+.mstat.ok b { color: var(--ok) } .mstat.kaini b { color: var(--warn) } .mstat.mi b { color: var(--ng) }
+table.plan th.mh { text-align: center; border-bottom: 1px solid var(--line) } table.plan td, table.plan th { vertical-align: middle; white-space: nowrap }
+table.plan td.pd { font-weight: 700 } table.plan .in { padding: 4px 7px; height: 30px }
+.hsel { width: 138px } .hsel.nashi, .hw.nashi, .mstat.nb b { color: var(--text-2) } .nodash { display: inline-block; text-align: center; color: var(--text-3) } .hsel.mi { color: var(--ng) } .hsel.yoyaku { color: var(--ok) } .hsel.kaini { color: var(--warn) }
+.orders { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 12px }
+.order { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg) }
+.order-h { display: flex; align-items: baseline; justify-content: space-between } .order-h > b { font-size: 16px }
+.oinfo { display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; margin: 0 } .oinfo dt { font-size: 12px; color: var(--text-3); font-weight: 700; padding-top: 2px } .oinfo dd { margin: 0; font-weight: 700; overflow-wrap: anywhere }
+.ov-mi { color: var(--ng); font-weight: 500 } .hw.yoyaku { color: var(--ok) } .hw.kaini { color: var(--warn) }
+.order-n { font-size: 13px; color: var(--text-2) } .order-n b { font-family: var(--f-disp); font-size: 28px; color: var(--text); margin-right: 2px; font-variant-numeric: tabular-nums }
+.how { display: flex; gap: 8px; flex-wrap: wrap }
+.btdlg { width: min(560px, 100%) }
+.ss-prev > .bt { position: absolute; left: 0; top: 0; transform-origin: 0 0 }
+/* お弁当の手配表（A4縦・白い紙） */
+.bt { width: 794px; height: 1123px; box-sizing: border-box; padding: 56px 60px 44px; background: #fff; color: #2a2224; font-family: 'Noto Sans JP', system-ui, sans-serif; display: flex; flex-direction: column; gap: 22px }
+.bt-top { display: flex; align-items: flex-end; gap: 16px; border-bottom: 3px solid #9c545b; padding-bottom: 12px }
+.bt-top > div:first-child { flex: 1 }
+.bt-t { font-size: 20px; font-weight: 700; color: #9c545b; letter-spacing: .1em }
+.bt-d { font-size: 34px; font-weight: 700; letter-spacing: .04em; margin-top: 2px }
+.bt-s { font-size: 14px; color: #5f5357 }
+.bt-b { border: 2px solid #d9cfd1; border-radius: 12px; padding: 18px 22px; display: grid; gap: 12px }
+.bt-b.none { padding: 12px 22px; color: #8e8185 }
+.bt-h { display: flex; align-items: center; gap: 16px }
+.bt-m { font-size: 26px; font-weight: 700 }
+.bt-n { font-size: 18px; color: #5f5357 } .bt-n b { font-size: 48px; color: #2a2224; margin-right: 4px; line-height: 1 }
+.bt-how { margin-left: auto; font-size: 20px; font-weight: 700; padding: 6px 16px; border-radius: 8px; border: 2px solid currentColor }
+.bt-how.yoyaku { color: #2f6f6a; background: #dcefec } .bt-how.kaini { color: #a86a00; background: #fbefd6 } .bt-how.mi { color: #b23a3a; background: #f8e0e0 } .bt-how.nashi { color: #5f5357; background: #efe9ea }
+.bt-kv { border-collapse: collapse; width: 100%; font-size: 20px }
+.bt-kv th { width: 90px; text-align: left; color: #5f5357; font-weight: 500; font-size: 15px; padding: 8px 0; border-top: 1px solid #efe9ea; vertical-align: top }
+.bt-kv td { padding: 8px 0; border-top: 1px solid #efe9ea; font-weight: 700 }
+.bt-none { color: #b8adb0; font-weight: 400 }
+.bt-sub { font-size: 14px; color: #5f5357; line-height: 1.7 } .bt-sub b { color: #2a2224 }
+.bt-f { margin-top: auto; display: flex; align-items: flex-end; gap: 8px; font-size: 13px; color: #5f5357 }
+.bt-line { display: inline-block; width: 180px; border-bottom: 1px solid #8e8185; height: 18px }
+.bt-f .sp { flex: 1 }
+.bt.yk { gap: 16px }
+.bt-d.sm { font-size: 22px }
+.yk-g { display: grid; gap: 6px }
+.yk-h { display: flex; align-items: baseline; gap: 12px; border-left: 5px solid #9c545b; padding-left: 10px }
+.yk-h > b { font-size: 20px } .yk-c { font-size: 13px; color: #8e8185 } .yk-p { font-size: 14px; color: #5f5357 }
+.yk-t { margin-left: auto; font-size: 14px; color: #5f5357 } .yk-t b { font-size: 20px; color: #2a2224 }
+.yk-tb { width: 100%; border-collapse: collapse; font-size: 15px; table-layout: fixed }
+.yk-tb th:nth-child(2) { width: 110px } .yk-tb th:nth-child(3) { width: 60px } .yk-tb th:nth-child(5) { width: 56px }
+.yk-tb th { text-align: left; font-size: 12px; font-weight: 500; color: #8e8185; padding: 4px 8px; border-bottom: 1.5px solid #d9cfd1 }
+.yk-tb td { padding: 6px 8px; border-bottom: 1px solid #efe9ea; height: 22px }
+.yk-tb .r { text-align: right } .yk-tb .ck { width: 44px; text-align: center } .yk-tb .memo { width: 170px }
+.yk-tb td.sun { color: #b23a3a } .yk-tb td.sat { color: #2f62b0 }
+.box { display: inline-grid; place-items: center; width: 20px; height: 20px; border: 2px solid #5f5357; border-radius: 4px; font-size: 14px; font-weight: 700; color: #2f6f6a }
+.box.on { border-color: #2f6f6a }
+
+.meal-top { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end }
+.meal-top .f { flex: 1 1 220px; max-width: 360px }
+.meal-tot { display: flex; gap: 20px } .meal-tot div { display: flex; align-items: baseline; gap: 4px; font-size: 13px; color: var(--text-2) }
+.meal-tot b { font-family: var(--f-disp); font-size: 30px; color: var(--text); font-variant-numeric: tabular-nums } .meal-tot span { font-weight: 700; margin-right: 4px }
+table.meal td, table.meal th { vertical-align: middle }
+table.meal tr.grp td { background: var(--bg-2); font-weight: 700; font-size: 12px; color: var(--text-2) }
+table.meal tr.off td { color: var(--text-3) }
+.tog { font: inherit; font-size: 13px; font-weight: 700; min-width: 56px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); background: var(--card); color: var(--text-3); cursor: pointer }
+.tog.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink) }
+.tog.sm { min-width: 0; font-size: 11px; padding: 1px 8px; margin-left: 4px }
+.linkish.del { font-size: 11px; font-weight: 500; color: var(--ng); margin-left: 4px }
+.need.big button { width: 26px; height: 26px; font-size: 15px } .need.big b { min-width: 24px; text-align: center }
+tr.cur td { background: var(--brand-soft) }
+.in-steps.two { grid-template-columns: repeat(2, 1fr) }
+.in-grp { font-size: 13px; font-weight: 700; color: var(--text-3); margin-top: 4px }
+.in-yn.wide { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
+.in-radio { position: relative; cursor: pointer } .in-radio input { position: absolute; opacity: 0; pointer-events: none }
+.in-radio span { display: grid; place-items: center; min-height: 48px; border: 1px solid var(--line); border-radius: 12px; font-size: 16px; font-weight: 700; color: var(--text); background: var(--card) }
+.in-radio input:checked + span { background: var(--brand); border-color: var(--brand); color: #fff }
+.in-radio input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px }
+.urlbox { display: grid; gap: 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg) }
+.urlbox-h { font-weight: 700 }
+.urlrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap }
+.url { flex: 1 1 260px; min-width: 0; overflow-wrap: anywhere; font-family: ui-monospace, Menlo, monospace; font-size: 13px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--text); text-decoration: none; user-select: all }
+.in-t { font-family: var(--f-disp); font-size: 24px; font-weight: 700; letter-spacing: .06em; color: var(--brand) }
+.in-s { font-size: 14px; color: var(--text-2) }
+.in-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; font-size: 12px; font-weight: 700; color: var(--text-3); counter-reset: st }
+.in-steps li { border-top: 3px solid var(--line); padding-top: 4px; counter-increment: st }
+.in-steps li::before { content: counter(st) ". " }
+.in-steps li.on { border-color: var(--brand); color: var(--brand) } .in-steps li.done { border-color: var(--brand-soft); color: var(--text-2) }
+.in-card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 18px 16px; display: grid; gap: 14px }
+.in-card h2 { font-size: 18px; margin: 0 }
+.in-note { font-size: 13px; color: var(--text-2); margin: 0 }
+.in-names { display: grid; gap: 8px }
+.in-name { display: flex; justify-content: space-between; align-items: center; min-height: 52px; padding: 0 16px; font: inherit; font-size: 17px; font-weight: 700; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 12px; cursor: pointer; text-align: left }
+.in-name small { font-size: 12px; color: var(--new); font-weight: 700 }
+.in-new { min-height: 48px; font: inherit; font-size: 15px; font-weight: 700; color: var(--brand); background: none; border: 1.5px dashed var(--brand); border-radius: 12px; cursor: pointer }
+.in-dl { display: grid; grid-template-columns: 7em 1fr; gap: 10px 12px; margin: 0; font-size: 15px }
+.in-dl dt { color: var(--text-3); font-size: 13px; padding-top: 2px } .in-dl dd { margin: 0; font-weight: 700; min-width: 0; overflow-wrap: anywhere }
+.in-btns { display: flex; gap: 10px } .in-btns > * { flex: 1 }
+.in-btn { min-height: 50px; font: inherit; font-size: 16px; font-weight: 700; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text); cursor: pointer; padding: 0 12px }
+.in-btn.pri { background: var(--brand); border-color: var(--brand); color: #fff }
+.in-btn:disabled { opacity: .45; cursor: default }
+.in-f { display: grid; gap: 6px; font-size: 13px; font-weight: 700; color: var(--text-2); min-width: 0 }
+.in-f .in { font-size: 16px; min-height: 46px; width: 100% }
+.in-two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px }
+.in-chips { display: flex; flex-wrap: wrap; gap: 6px }
+.in-picked { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.in-pk { display: inline-flex; align-items: center; gap: 2px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 14px; font-weight: 700 }
+.in-pk button { width: 28px; height: 28px; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 16px; cursor: pointer }
+.in-add { padding: 8px 14px; border: 1px dashed var(--brand); border-radius: 999px; background: transparent; color: var(--brand); font-size: 14px; font-weight: 700; cursor: pointer }
+.in-list { border: 1px solid var(--line); border-radius: 12px; background: var(--bg); max-height: 300px; overflow-y: auto; display: grid }
+.in-list-h { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 6px 6px 6px 14px; background: var(--bg); border-bottom: 1px solid var(--line); font-size: 13px; color: var(--text-2) }
+.in-x { width: 36px; height: 36px; border: 0; background: transparent; color: var(--text-2); font-size: 18px; cursor: pointer }
+.in-li { text-align: left; padding: 12px 14px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--text); font-size: 15px; font-weight: 500; cursor: pointer }
+.in-li:last-child { border-bottom: 0 }
+.in-chip { position: relative; cursor: pointer }
+.in-chip input { position: absolute; opacity: 0; pointer-events: none }
+.in-chip span { display: inline-block; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 14px; font-weight: 500; color: var(--text); background: var(--bg) }
+.in-chip input:checked + span { background: var(--brand); border-color: var(--brand); color: #fff; font-weight: 700 }
+.in-chip input:focus-visible + span { outline: 2px solid var(--brand); outline-offset: 2px }
+.in-msg { color: var(--ng); font-weight: 700; margin: 0; min-height: 0 } .in-msg:empty { display: none }
+.in-all { min-height: 44px; font: inherit; font-size: 14px; font-weight: 700; color: var(--brand); background: var(--brand-soft); border: 0; border-radius: 10px; cursor: pointer }
+.in-days { display: grid; gap: 0 }
+.in-day { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line) }
+.in-day:last-child { border-bottom: 0 }
+.in-d { flex: 1; min-width: 0; display: grid } .in-d b { font-size: 18px } .in-d b small { font-size: 13px } .in-d span { font-size: 12px; color: var(--text-3) }
+.in-day.todo .in-d b::after { content: "未入力"; font-size: 11px; color: var(--warn); margin-left: 8px; font-weight: 700 }
+.in-yn { display: flex; gap: 6px }
+.in-yn button { width: 56px; height: 48px; font: inherit; font-size: 22px; font-weight: 700; border-radius: 12px; border: 1px solid var(--line); background: var(--card); color: var(--text-3); cursor: pointer }
+.in-yn button.on.ok { background: var(--new); border-color: var(--new); color: #fff }
+.in-yn button.on.ng { background: var(--ng); border-color: var(--ng); color: #fff }
+.in-send { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; gap: 12px; background: var(--card); border-top: 1px solid var(--line); padding: 10px max(16px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)) }
+.in-send span { font-weight: 700; color: var(--text-2); white-space: nowrap } .in-send .in-btn { flex: 1; max-width: 360px; margin-left: auto }
+.in-done { text-align: center; justify-items: center }
+.in-check { width: 56px; height: 56px; border-radius: 50%; background: var(--new); color: #fff; display: grid; place-items: center; font-size: 28px; font-weight: 700 }
+.in-sum { width: 100%; text-align: left; display: grid; gap: 6px; background: var(--bg); border-radius: 10px; padding: 12px }
+.in-sum div { display: flex; flex-wrap: wrap; gap: 6px } .in-sum span { font-size: 13px; padding: 2px 8px; border-radius: 6px; background: var(--card); border: 1px solid var(--line) }
+.in-done .in-btns { width: 100% } .in-done .in-new { width: 100% }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important } }
+</style>
+
+<div class="wrap">
+  <div class="head">
+    <h1>正月</h1>
+    <select class="in yearsel" id="yearSel" aria-label="年を選ぶ"></select>
+    <span class="demo" id="demoTag">見本：名前・人数・希望はテスト用の作り物です</span>
+  </div>
+  <nav class="tabs" role="tablist">
+    <button data-tab="shift" class="on">シフト</button>
+    <button data-tab="day">配置</button>
+    <button data-tab="shozoku">装束</button>
+    <button data-tab="members">巫女</button>
+    <button data-tab="goshuin">御朱印</button>
+    <button data-tab="meal">食事</button>
+    <button data-tab="rules">ルール</button>
+  </nav>
+  <main id="view"></main>
+</div>
+<div id="dlg"></div>
+
+<script>
+'use strict';
+/* ---- 保存先（2026-11-12 神社くんに結合。仕様：20261112_正月システム結合_仕様書.md）----
+   host ：神社くんの「正月」に埋め込まれたとき。神社くんの表 shogatsu に保存（神社くんが受け口に送る）
+   api  ：本番のシフト登録URL（#nyuryoku・#goshuin・#daidokoro）を直接開いたとき。受け口に直接送る
+   local：見本（この端末にだけ保存） */
+const API_URL = 'https://script.google.com/macros/s/AKfycbx-QNVOKsc6rMszEqwt9BjpfjqU0sIm2wOtfTBnyazvxA4PJHhNqOkaMszVWZi-JUWLgw/exec';
+const HOST = (() => { try { return window.parent !== window && window.parent.SG_HOST ? window.parent.SG_HOST : null; } catch (e) { return null; } })();
+const INPUT_HASHES = ['#nyuryoku', '#goshuin', '#daidokoro'];
+const MODE = HOST ? 'host' : API_URL ? 'api' : 'local';
+const PROD = HOST ? !!HOST.prod : !!API_URL;
+/* ---- 期間と日の種類 ---- */
+let Y = (() => { const t = new Date(); return t.getMonth() >= 2 ? t.getFullYear() + 1 : t.getFullYear(); })();   // 正月の年（12/31の夜から1月の第3日曜まで）。3月からは翌年の正月
+const WD = '日月火水木金土';
+const holOf = k => k === `${Y}-01-01` ? '元日' : k === key(secondMonday(Y)) ? '成人の日' : '';   // 祝日（年に合わせて）
+const pad = n => String(n).padStart(2, '0');
+const key = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const addD = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+function secondMonday(y) { let d = new Date(y, 0, 1); while (d.getDay() !== 1) d = addD(d, 1); return addD(d, 7); }
+function thirdSunday(y) { let d = new Date(y, 0, 1); while (d.getDay() !== 0) d = addD(d, 1); return addD(d, 14); }
+const KINDS = [
+  ['eve', '大晦日の夜', '12/31 24:00〜1/1 3:00'],
+  ['sanga', '三が日', '1/1〜1/3'],
+  ['shigoto', '仕事始めの平日', '1/4から、成人の日の三連休の前まで'],
+  ['seijin', '成人の日の三連休', '土・日・成人の日'],
+  ['weekend', 'その後の土日', ''],
+];
+function buildDays() {
+  const out = [{ k: 'eve', label: '12/31', sub: '夜', kind: 'eve', wd: 4 }];
+  const sm = secondMonday(Y), satB = addD(sm, -2), end = thirdSunday(Y);
+  for (let d = new Date(Y, 0, 1); d <= end; d = addD(d, 1)) {
+    const k = key(d), dd = d.getDate(), w = d.getDay();
+    let kind;
+    if (dd <= 3) kind = 'sanga';
+    else if (d >= satB && d <= sm) kind = 'seijin';
+    else if (w === 0 || w === 6) kind = 'weekend';
+    else if (d < satB) kind = 'shigoto';
+    else continue;               // 成人の日の後の平日は巫女なし（2026-11-11 本人）
+    out.push({ k, label: `1/${dd}`, sub: WD[w], kind, wd: w, hol: holOf(k) });
+  }
+  // 手で追加した日（1月の中だけ）。日付順に並べる
+  let extra = []; try { extra = (S && S.extraDays) || []; } catch (e) {}   // 最初の読み込みのときは S がまだない
+  extra.forEach(x => {
+    if (out.some(o => o.k === x.k)) return;
+    const d = new Date(x.k + 'T00:00:00'), w = d.getDay();
+    out.push({ k: x.k, label: `1/${d.getDate()}`, sub: WD[w], kind: x.kind, wd: w, hol: holOf(x.k), extra: true });
+  });
+  return [out[0], ...out.slice(1).sort((a, b) => a.k.localeCompare(b.k))];
+}
+let DAYS = buildDays();
+
+/* 団体（正月）の予約数：神社くんに取り込んだ2027年分（2026-11-03時点の件数） */
+const BOOK = { '2027-01-01': 2, '2027-01-03': 1, '2027-01-04': 54, '2027-01-05': 60, '2027-01-06': 39, '2027-01-07': 15, '2027-01-08': 20, '2027-01-09': 1, '2027-01-13': 10, '2027-01-14': 3, '2027-01-15': 3 };
+
+/* ---- 初期データ（見本） ---- */
+const DEFAULT_RULES = {
+  need: { eve: 8, sanga: 9, shigoto: 6, seijin: 6, weekend: 4, weekday: 0 },
+  bookOn: true, perPerson: 10,
+  rokujiBy: 'grad',          // grad=大学を卒業した人 / age25=25歳以上 / either=どちらか
+  mixMode: 'auto',           // auto=その年の巫女の割合に合わせる / manual=割合を手で決める
+  vetMin: 30, newMax: 50,    // 手で決めるときの値
+  friendNew: false,          // 新人どうしの友達もペアにするか
+  sizeSM: 155, sizeML: 163,  // 仮の境目
+  stock: { S: '', M: '', L: '' },
+  // 配置表（三が日。2026-11-11 本人）。amStart・pmStart・kiganTurn は仮
+  groupSize: 3,
+  groupSizeOther: 2,          // 4日以降の組の人数（2026-11-11 本人：2人1組）               // 組の人数（2026-11-11 本人：昼食を変な時間にしないため3人組）
+  haichi: { shigotoTo: '19:00', osobanFrom: '10:00', osobanN: 2,   // 仕事始めの平日は会社祈願が19:00まで（2026-11-11 本人）。1組が遅番（10:00からは仮）
+    juyoMin: 6, lunchShortOK: true, amStart: '10:00', amMin: 20, lunchStart: '11:40', lunchMin: 40, pmStart: '15:00', pmMin: 20, kiganFrom: '9:00', kiganTo: '17:00', kiganN: 2, kiganTurn: 60, extraMin: 30, juyoMax: 7, helpMin: 5, lateFrom: '15:00', lateMin: 4, uketsukeN: 1 },   // 4日以降は祈願受付＋授与所。受付は常に1人。録事がメイン、2人目は一番長いベテラン（2026-11-11 本人）   // 授与所の最低人数：ふだん6・助っ人の時間5・15:00から4（2026-11-11 本人）   // juyoMax：授与所は7人まで。8人になる時間だけ掃除・お焚き上げへ（2026-11-11 本人）
+};
+const SEED = [
+  ['佐藤 美咲', 2020, '1999-05', 'grad', 161, 24],
+  ['高橋 彩花', 2021, '2002-11', 'grad', 157, 23.5],
+  ['田中 優奈', 2023, '2004-03', 'student', 153, 23],
+  ['伊藤 千尋', 2024, '2005-08', 'student', 166, 24.5],
+  ['渡辺 葵', 2025, '2005-01', 'student', 159, 23.5],
+  ['山本 結衣', 2024, '2004-12', 'student', 162, 24],
+  ['中村 紗希', 2026, '2006-06', 'student', 150, 22.5],
+  ['小林 杏奈', 2026, '2005-10', 'student', 156, 23],
+  ['加藤 真央', 2026, '2006-02', 'student', 164, 24.5],
+  ['吉田 莉子', 2025, '2006-04', 'student', 158, 23.5],
+  ['山田 遥', 2027, '2007-01', 'student', 154, 23],
+  ['佐々木 楓', 2027, '2006-09', 'student', 160, 24],
+  ['山口 咲良', 2027, '2007-03', 'student', 167, 25],
+  ['松本 菜々', 2027, '2006-07', 'student', 152, 22.5],
+  ['井上 日向', 2027, '2006-12', 'student', 158, 23.5],
+  ['木村 花音', 2027, '2007-02', 'student', 163, 24],
+  ['林 心春', 2027, '2006-05', 'student', 156, 23],
+];
+const SEED_FRIENDS = [[3, 5], [4, 9], [10, 11], [6, 7]];   // 見本の友達（SEEDの番号）
+function rnd(seed) { let s = seed; return () => (s = (s * 9301 + 49297) % 233280) / 233280; }
+function seedState() {
+  const r = rnd(7), members = SEED.map(([name, first, birth, school, height, tabi], i) => ({ id: 'm' + (i + 1), name, first, birth, school, height, tabi, rank: 'auto', note: '', friends: [] }));
+  members.forEach(m => m.kigan = m.first <= Y - 1);
+  members.forEach(m => { m.univ = ''; const a = age(m); m.grade = m.school === 'grad' ? 'grad' : a ? String(Math.min(4, Math.max(1, a - 17))) : ''; });   // 見本：学年は年齢から仮に   // 見本：2年目以上を「祈願巫女」に（実際は登録で決める）
+  SEED_FRIENDS.forEach(([a, b]) => { members[a].friends.push(members[b].id); members[b].friends.push(members[a].id); });
+  const avail = {};
+  members.forEach((m, i) => {
+    avail[m.id] = {};
+    const sub = i !== 15;                    // 1人は未提出
+    if (!sub) return;
+    DAYS.forEach(d => {
+      let p = d.kind === 'eve' || d.kind === 'sanga' ? 0.8 : d.kind === 'weekday' ? 0.45 : 0.62;
+      if (i < 2) p = 0.9;
+      avail[m.id][d.k] = r() < p ? 'ok' : 'ng';
+    });
+  });
+  const st = { rules: JSON.parse(JSON.stringify(DEFAULT_RULES)), members, avail, assign: {}, adj: {}, pairs: {}, time: {}, kigan: {} };
+  seedG(st); return st;
+}
+const SKEY = 'miko-shogatsu-demo-v21';
+let S;   // 読み込みは一番下（関数と定数がそろってから）
+const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps'];
+function switchYear(y) {   // 2026-11-11 本人：来年以降も使えるように。巫女の登録は続けて使い、シフト・希望・配置は年ごとに分ける
+  if (!y || y === Y) return;
+  S.years = S.years || {};
+  S.years[Y] = Object.fromEntries(YEAR_FIELDS.map(f => [f, S[f]]));
+  const b = S.years[y] || {}; delete S.years[y];
+  YEAR_FIELDS.forEach(f => S[f] = b[f] || (f === 'extraDays' ? [] : {}));
+  inp = { step: 'name' }; ginp = { step: 'name' }; mealK = null;
+  Y = y; S.year = y; DAYS = buildDays(); dayK = null; pairSel = null;
+  DAYS.forEach(d => { if (!S.pairs[d.k]) makePairs(d.k); });
+  save(); render();
+}
+function save() {
+  if (MODE === 'host') { hostPut(); try { localStorage.setItem('sg-year', String(Y)); } catch (e) {} return; }
+  if (MODE === 'api') return;   // シフト登録URL：送信ボタンで受け口に送る
+  try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {}
+}
+/* 神社くんの表 shogatsu の行 ⇔ 画面のデータ（S）
+   rules／m|巫女id／g|人id／年|項目／年|time|日付（配置は日ごと）／r|年|人id（希望） */
+const REQ = { avail: ['sent', 'miko'], goAvail: ['goSent', 'g'] };
+const NOT_ROW = ['avail', 'sent', 'goAvail', 'goSent', 'time', 'temps'];
+let baseRows = {};   // 最後に神社くんから読んだ（または渡した）行。id → JSON の文字
+const rowStr = v => JSON.stringify(v);
+/* 変えた行だけ神社くんに渡す。読み直す前の古い画面のままでも、URLから届いた希望や、ほかの人が直した行を消したり上書きしたりしない */
+function hostPut() {
+  const cur = toRows(), set = {}, del = [];
+  Object.entries(cur).forEach(([k, v]) => { const t = rowStr(v); if (baseRows[k] !== t) { set[k] = JSON.parse(t); baseRows[k] = t; } });
+  Object.keys(baseRows).forEach(k => { if (!(k in cur)) { del.push(k); delete baseRows[k]; } });
+  if (Object.keys(set).length || del.length) HOST.put({ set, del });
+}
+const hostSame = rows => { const ks = Object.keys(rows); return ks.length === Object.keys(baseRows).length && ks.every(k => baseRows[k] === rowStr(rows[k])); };
+function yearBlob(y) { return y === Y ? Object.fromEntries(YEAR_FIELDS.map(f => [f, S[f]])) : (S.years || {})[y] || {}; }
+function toRows() {
+  const R = { rules: S.rules };
+  S.members.forEach(m => R['m|' + m.id] = m);
+  (S.goMembers || []).forEach(g => R['g|' + g.id] = g);
+  new Set([Y, ...Object.keys(S.years || {}).map(Number)]).forEach(y => {
+    const b = yearBlob(y);
+    Object.entries(REQ).forEach(([f, [sf, team]]) => Object.entries(b[f] || {}).forEach(([id, days]) => {
+      const at = (b[sf] || {})[id] || null;
+      if (Object.keys(days || {}).length || at) R[`r|${y}|${id}`] = { team, days: days || {}, at };
+    }));
+    Object.entries(b.time || {}).forEach(([k, v]) => { if (v && Object.keys(v).length) R[`${y}|time|${k}`] = v; });
+    YEAR_FIELDS.filter(f => !NOT_ROW.includes(f)).forEach(f => { const v = b[f]; if (v && (Array.isArray(v) ? v.length : Object.keys(v).length)) R[`${y}|${f}`] = v; });
+  });
+  return R;
+}
+function fromRows(map) {
+  const st = { rules: Object.assign(JSON.parse(JSON.stringify(DEFAULT_RULES)), map.rules || {}), members: [], goMembers: [], years: {} };
+  const yb = y => st.years[y] = st.years[y] || {};
+  Object.entries(map).forEach(([id, v]) => {
+    let m;
+    if (id.startsWith('m|')) st.members.push(v);
+    else if (id.startsWith('g|')) st.goMembers.push(v);
+    else if ((m = id.match(/^r\|(\d{4})\|(.+)$/))) { const b = yb(m[1]), [f, sf] = v.team === 'miko' ? ['avail', 'sent'] : ['goAvail', 'goSent']; (b[f] = b[f] || {})[m[2]] = v.days || {}; if (v.at) (b[sf] = b[sf] || {})[m[2]] = v.at; }
+    else if ((m = id.match(/^(\d{4})\|time\|(.+)$/))) { const b = yb(m[1]); (b.time = b.time || {})[m[2]] = v; }
+    else if ((m = id.match(/^(\d{4})\|(\w+)$/))) yb(m[1])[m[2]] = v;
+  });
+  const cur = st.years[Y] || {}; delete st.years[Y];
+  YEAR_FIELDS.forEach(f => st[f] = cur[f] || (f === 'extraDays' ? [] : {}));
+  st.members.forEach(m => { st.avail[m.id] = st.avail[m.id] || {}; });
+  st.goMembers.forEach(g => { st.goAvail[g.id] = st.goAvail[g.id] || {}; });
+  st.year = Y;
+  return st;
+}
+/* 神社くんから読む：正月のデータ・神職の休み・臨時職員の出勤 */
+function hostLoad() {
+  const rows = HOST.rows();
+  baseRows = Object.fromEntries(Object.entries(rows).map(([k, v]) => [k, rowStr(v)]));
+  S = fromRows(rows);
+  S.tomari = KOIZUMI.slice(); S.temps = {};
+  S.leaves = HOST.leaves(); S.homeTemp = HOST.temps();
+  DAYS = buildDays();
+}
+/* 神社くんが読み直したとき（1分ごと）。入力中・画面を開いている間は待つ */
+let sgPending = false;
+window.sgHostUpdated = () => {
+  if (MODE !== 'host') return;
+  const ae = document.activeElement;
+  if (document.getElementById('dlg').innerHTML || (ae && ['INPUT', 'SELECT', 'TEXTAREA'].includes(ae.tagName))) { sgPending = true; return; }
+  sgPending = false;
+  const leaves = JSON.stringify([HOST.leaves(), HOST.temps()]);
+  if (hostSame(HOST.rows()) && leaves === JSON.stringify([S.leaves, S.homeTemp])) return;   // 変わっていなければ作り直さない
+  hostLoad(); DAYS.filter(d => !S.pairs[d.k] && assigned(d.k).length).forEach(d => makePairs(d.k)); render();
+};
+
+/* ---- 経験・装束の判定 ---- */
+const RANKS = { rokuji: ['録事', '録', 'r-rokuji'], vet: ['ベテラン', 'ベ', 'r-vet'], mid: ['中堅', '中', 'r-mid'], new: ['新人', '新', 'r-new'] };
+const ORDER = ['rokuji', 'vet', 'mid', 'new'];
+const years = m => Y - Number(m.first) + 1;
+const GRADES = [['1', '1年'], ['2', '2年'], ['3', '3年'], ['4', '4年'], ['院', '大学院'], ['grad', '卒業']];   // 学年（2026-11-11 本人：大学名と学年を表記）
+const gradeOf = m => m.grade || (m.school === 'grad' ? 'grad' : '');
+const schoolLabel = m => { const g = gradeOf(m), gl = (GRADES.find(x => x[0] === g) || [])[1] || (m.school === 'grad' ? '卒業' : '在学'); return `${m.univ ? esc(m.univ) + ' ' : ''}${gl}`; };
+function age(m) { if (!m.birth) return m.ageAt && m.ageAt.age !== '' && m.ageAt.age != null ? Number(m.ageAt.age) + (Y - Number(m.ageAt.year || Y)) : null; const [by, bm] = m.birth.split('-').map(Number); return Y - by - (bm > 1 ? 1 : 0); }  // 1/1時点
+function isRokuji(m) {
+  const g = m.school === 'grad', a = (age(m) || 0) >= 25;
+  return S.rules.rokujiBy === 'grad' ? g : S.rules.rokujiBy === 'age25' ? a : g || a;
+}
+function autoRank(m) { if (isRokuji(m)) return 'rokuji'; const n = years(m); return n >= 3 ? 'vet' : n === 2 ? 'mid' : 'new'; }
+const rankOf = m => m.rank && m.rank !== 'auto' ? m.rank : autoRank(m);
+const badge = r => `<span class="badge ${RANKS[r][2]}" title="${RANKS[r][0]}">${RANKS[r][1]}</span>`;
+// 人の印：録事は「録」、ほかは何年目かの数字（色は経験ごとのまま。2026-11-11 本人）
+const mbadge = m => { const r = rankOf(m); return `<span class="badge ${RANKS[r][2]}" title="${RANKS[r][0]}・${years(m)}年目">${r === 'rokuji' ? '録' : years(m)}</span>`; };
+function sizeOf(m) {
+  const h = Number(m.height), a = Number(S.rules.sizeSM), b = Number(S.rules.sizeML);
+  if (!h || !a || !b) return null; return h < a ? 'S' : h < b ? 'M' : 'L';
+}
+
+/* ---- 必要人数 ---- */
+function needOf(d) {
+  const rule = Number(S.rules.need[d.kind]) || 0;
+  const bookN = S.rules.bookOn && BOOK[d.k] ? Math.ceil(BOOK[d.k] / (Number(S.rules.perPerson) || 10)) : 0;
+  const base = Math.max(rule, bookN), adj = S.adj[d.k] || 0;
+  return { n: Math.max(0, base + adj), rule, bookN, byBook: bookN > rule, adj };
+}
+const assigned = k => S.assign[k] || [];
+const isLead = r => r !== 'new';
+const byId = id => S.members.find(m => m.id === id);
+
+/* その年の巫女の割合（希望を出した人）から、1日の目安を出す */
+function yearMix() {
+  const ms = S.members.filter(m => Object.keys(S.avail[m.id] || {}).length), n = ms.length || 1;
+  const c = { rokuji: 0, vet: 0, mid: 0, new: 0 }; ms.forEach(m => c[rankOf(m)]++);
+  return { c, n, vetShare: (c.rokuji + c.vet) / n, newShare: c.new / n };
+}
+function mixTarget(need) {
+  if (!need) return { vet: 0, mid: 0, newMax: 0 };
+  if (S.rules.mixMode === 'manual') { const v = Math.ceil(need * S.rules.vetMin / 100), nw = Math.min(Math.floor(need * S.rules.newMax / 100), Math.floor(need / 2)); return { vet: v, mid: Math.max(0, need - v - nw), newMax: nw }; }
+  // その年の割合で人数を配る（端数は大きい順に）。新人はペアの相手が全員に付くよう、半分まで
+  const y = yearMix(), sh = [y.vetShare, 1 - y.vetShare - y.newShare, y.newShare].map(s => s * need);
+  const t = sh.map(Math.floor); let left = need - t.reduce((a, b) => a + b, 0);
+  sh.map((s, i) => [s - t[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (left > 0) { t[i]++; left--; } });
+  if (t[0] < 1) { t[0] = 1; t[t[2] > t[1] ? 2 : 1]--; }
+  const cap = Math.floor(need / 2); if (t[2] > cap) { t[1] += t[2] - cap; t[2] = cap; }
+  return { vet: t[0], mid: t[1], newMax: t[2] };
+}
+
+/* ペア：新人には新人以外を付ける。友達は組める範囲で組む。奇数なら1組を3人にする */
+const RANK_FOR_PAIR = ['vet', 'rokuji', 'mid'];
+/* 3人組：経験の順に並べて組へ折り返しで配る（各組に上の人が入る）。友達は同じ経験の人と入れ替えられるときだけ同じ組に */
+function makeGroups(k, size) {
+  const o = m => ORDER.indexOf(rankOf(m));
+  const ms = assigned(k).map(byId).filter(Boolean).sort((a, b) => o(a) - o(b));
+  const n = Math.max(1, Math.round(ms.length / size)), g = Array.from({ length: n }, () => []);
+  ms.forEach((m, i) => { const r = Math.floor(i / n), c = r % 2 ? n - 1 - (i % n) : i % n; g[c].push(m.id); });
+  ms.forEach(a => (a.friends || []).forEach(fid => {
+    const ga = g.findIndex(x => x.includes(a.id)), gb = g.findIndex(x => x.includes(fid)); if (ga < 0 || gb < 0 || ga === gb) return;
+    const sw = g[ga].find(id => id !== a.id && rankOf(byId(id)) === rankOf(byId(fid)) && !(byId(id).friends || []).some(f => g[ga].includes(f)));
+    if (sw) { g[ga][g[ga].indexOf(sw)] = fid; g[gb][g[gb].indexOf(fid)] = sw; }
+  }));
+  S.pairs[k] = g.filter(x => x.length);
+  makeTime(k);
+}
+const groupSizeOf = k => { const d = DAYS.find(x => x.k === k); return d && d.kind === 'sanga' ? Number(S.rules.groupSize) || 3 : Number(S.rules.groupSizeOther) || 2; };
+function makePairs(k) {
+  const gsz = groupSizeOf(k);
+  if (gsz >= 3) return makeGroups(k, gsz);
+  const ms = assigned(k).map(byId).filter(Boolean);
+  let news = ms.filter(m => rankOf(m) === 'new'), leads = ms.filter(m => isLead(rankOf(m))).sort((a, b) => RANK_FOR_PAIR.indexOf(rankOf(a)) - RANK_FOR_PAIR.indexOf(rankOf(b)));
+  const pairs = [], used = new Set();
+  const free = m => !used.has(m.id);
+  // 1) 友達
+  ms.forEach(a => (a.friends || []).forEach(fid => {
+    const b = ms.find(m => m.id === fid); if (!b || !free(a) || !free(b)) return;
+    const ra = rankOf(a), rb = rankOf(b), bothNew = ra === 'new' && rb === 'new', bothLead = isLead(ra) && isLead(rb);
+    if (bothNew && !S.rules.friendNew) return;
+    const restNew = news.filter(m => free(m) && m !== a && m !== b).length, restLead = leads.filter(m => free(m) && m !== a && m !== b).length;
+    if (bothLead && restLead < restNew) return;   // 新人の相手が足りなくなるなら組まない
+    pairs.push([a.id, b.id]); used.add(a.id); used.add(b.id);
+  }));
+  // 2) 新人 ＋ ベテラン（いなければ録事・中堅）
+  news.filter(free).forEach(n => { const l = leads.find(free); if (l) { pairs.push([l.id, n.id]); used.add(l.id); used.add(n.id); } });
+  // 3) 残り：経験の多い人と少ない人を組む
+  const rest = ms.filter(free).sort((a, b) => ORDER.indexOf(rankOf(a)) - ORDER.indexOf(rankOf(b)));
+  while (rest.length >= 2) { const a = rest.shift(), b = rest.pop(); pairs.push([a.id, b.id]); }
+  if (rest.length) { if (pairs.length) pairs[pairs.length - 1].push(rest[0].id); else pairs.push([rest[0].id]); }
+  S.pairs[k] = pairs;
+  makeTime(k);
+}
+/* 配置表：1人ずつ。休憩は組ごとに一緒（午前20分・昼食40分・午後20分）。
+   祈願は担当2〜3人の交代で常に1人。授与所が最低人数より多い時間が30分以上続けば、1人が掃除・お焚き上げへ */
+const JOBS = { X: ['', 'none'], J: ['授与所', 'p0'], K: ['祈願', 'p1'], U: ['祈願受付', 'p1'], S: ['掃除', 'p2'], O: ['お焚き上げ', 'p3'], R: ['休憩', 'rest'], L: ['昼食', 'rest'] };
+const JOB_ORDER = ['J', 'K', 'S', 'O', 'R', 'L'], JOB_ORDER_LATER = ['J', 'U', 'R', 'L'];   // 4日以降は祈願受付と授与所だけ
+const STEP = 20;   // 20分刻み（2026-11-11 本人：時計を見る暇がないので分かりやすく）。祈願の30分は準備・片付けを含めて20分の枠に広げる
+const hm = t => `${Math.floor(t / 60) % 24}:${pad(t % 60)}`;
+const toMin = s => { const [h, m] = String(s).split(':').map(Number); return h * 60 + (m || 0); };
+/* 授与所の最低人数（時刻ごと。2026-11-11 本人）：ふだん juyoMin（6）、助っ人の時間 helpMin（5）、lateFrom（15:00）から lateMin（4） */
+function juyoFloor(k, t) {
+  const H = S.rules.haichi, base = Number(H.juyoMin) || 0, [a, b] = helperWin(k); let m = base;
+  if (H.lunchShortOK !== false && t >= a && t < b) m = Math.min(m, Number(H.helpMin) || base);
+  if (H.lateFrom && t >= toMin(H.lateFrom)) m = Math.min(m, Number(H.lateMin) || base);
+  return m;
+}
+function helperWin(k) { const H = S.rules.haichi, ls = toMin(H.lunchStart); return [ls - (Number(H.amMin) || 20), ls + pairsOf(k).length * (Number(H.lunchMin) || 0)]; }   // 助っ人の時間（2026-11-11 本人）
+const dayEnd = d => d && d.kind === 'shigoto' ? toMin(S.rules.haichi.shigotoTo || '19:00') : 18 * 60;   // 仕事始めの平日は会社祈願が19:00まで
+function slotsOf(d) { const a = [], e = dayEnd(d); for (let t = 9 * 60; t < e; t += STEP) a.push(t); return a; }
+/* 遅番の組（仕事始めの平日）：受付の2人目（ベテラン）の組。19:00まで受付を受け持てるように。昼食がいちばん遅くなるよう最後の組にする */
+function lateGroupOf(k) {
+  const d = DAYS.find(x => x.k === k); if (!d || d.kind !== 'shigoto' || !S.pairs[k]) return null;
+  const sub = uketsukeOf(k)[1]; if (!sub) return null;
+  const i = S.pairs[k].findIndex(g => g.includes(sub)); if (i < 0) return null;
+  if (i !== S.pairs[k].length - 1) S.pairs[k].push(S.pairs[k].splice(i, 1)[0]);
+  return pairsOf(k).find(g => g.includes(sub)) || null;
+}
+/* 遅番の人（2026-11-11 本人：遅番は来る時刻と人数だけ決める）：受付の2人目から、その組の人、足りなければ前の組から */
+function lateMembersOf(k) {
+  const g = lateGroupOf(k); if (!g) return [];
+  const sub = uketsukeOf(k)[1], main = uketsukeOf(k)[0], ps = pairsOf(k), n = Number(S.rules.haichi.osobanN) || g.length;
+  const cand = [sub, ...g.filter(id => id !== sub)];
+  for (let i = ps.length - 1; i >= 0; i--) ps[i].forEach(id => { if (!cand.includes(id) && id !== main) cand.push(id); });
+  return cand.slice(0, Math.max(0, n));
+}
+const canKigan = m => !!(m && m.kigan && rankOf(m) !== 'rokuji');   // 祈願巫女（巫女の登録で決める。録事は授与所だけ）
+/* 祈願受付の担当（4日以降。2026-11-11 本人）：受付はベテランなら全員できる。録事がメイン、2人目はその次に長いベテラン。
+   2人目は録事と別の組から選ぶ（同じ組だと昼食・休憩が重なり受付が空くため）。録事がいない日は長いベテランから2人 */
+const canUketsuke = m => !!m && (rankOf(m) === 'rokuji' || rankOf(m) === 'vet');
+function uketsukeOf(k) {
+  const dd = DAYS.find(x => x.k === k); if (!dd || dd.kind !== 'shigoto') return [];   // 受付は仕事始めの平日だけ（三連休・土日は授与所と休憩だけ）
+  const ms = assigned(k).map(byId).filter(Boolean), gs = pairsOf(k), gOf = m => gs.findIndex(g => g.includes(m.id)), longer = (a, b) => years(b) - years(a);
+  const rok = ms.filter(m => rankOf(m) === 'rokuji').sort(longer), vet = ms.filter(m => rankOf(m) === 'vet').sort(longer);
+  const main = rok[0] || vet[0]; if (!main) return [];
+  const sub = vet.concat(rok).find(m => m !== main && gOf(m) !== gOf(main));
+  return [main, sub].filter(Boolean).map(m => m.id);
+}
+function kiganOf(k) {
+  const dd = DAYS.find(x => x.k === k); if (!dd || dd.kind !== 'sanga') return [];   // 4日以降は祈願担当なし（受付だけ）
+  // 祈願担当は自動（2026-11-11 本人）。「祈願巫女」人から、別々の組で1人ずつ（ベテラン→中堅→新人の順）。
+  // 組は 1組目→最後の組→2組目… の順に選ぶ。昼食が続けて並ぶ組どうしだと、片方の昼食明け（準備が要る）ともう片方の昼食が重なり、祈願が空くため
+  S.kigan = S.kigan || {};
+  const n = Number(S.rules.haichi.kiganN) || 2, pref = ['vet', 'mid', 'new'], o = m => pref.indexOf(rankOf(m));
+  const gs = pairsOf(k), order = []; for (let a = 0, b = gs.length - 1; a <= b; a++, b--) { order.push(a); if (b !== a) order.push(b); }
+  const best = order.map(i => gs[i].map(byId).filter(canKigan).sort((a, b) => o(a) - o(b))[0]).filter(Boolean);
+  const rest = order.flatMap(i => gs[i].map(byId).filter(canKigan)).filter(m => !best.includes(m)).sort((a, b) => o(a) - o(b));   // 組で足りなければ同じ組から
+  return S.kigan[k] = best.concat(rest).slice(0, n).map(m => m.id);
+}
+function makeTime(k) {
+  const d = DAYS.find(x => x.k === k); if (!d || d.kind === 'eve') return;
+  const lateM = lateMembersOf(k), lateG = lateM.length ? lateM : null, lateF = toMin(S.rules.haichi.osobanFrom || '10:00'), isLate = g => g.some(id => lateM.includes(id));
+  const H = S.rules.haichi, slots = slotsOf(d), ps = pairsOf(k), ids = ps.flat(), grid = {};
+  S.time = S.time || {};
+  ids.forEach(id => grid[id] = slots.map(() => 'J'));
+  // 勤務外（X）：遅番は来るまで、ほかの人は18:00から
+  if (lateG) ids.forEach(id => slots.forEach((t, j) => { if (lateG.includes(id) ? t < lateF : t >= 18 * 60) grid[id][j] = 'X'; }));
+  const put = (id, from, len, v) => slots.forEach((t, j) => { if (t >= from && t < from + len) grid[id][j] = v; });
+  const lunchOf = i => toMin(H.lunchStart) + i * H.lunchMin;
+  const off = v => v === 'R' || v === 'L';
+  ps.forEach((g, i) => g.forEach(id => put(id, lunchOf(i), H.lunchMin, 'L')));
+  // 祈願：毎時0分・30分に始まる30分ごと（2026-11-11 本人）。表では20分の枠に広げる：
+  //   :00〜:30 の祈願 → :00〜:40（:30〜:40 は片付け）、:30〜:00 の祈願 → :20〜:00（:20〜:30 は着替え・準備）
+  // :00に始まる祈願の直前には休憩・昼食を置けない（着替え・準備5分）。:30始まりなら :20〜:30 が準備になる
+  // 朝は昼食の遅い組の担当から始める（先に昼食の組の担当が朝いちばんだと、もう1人が10時から昼食まで祈願続きで休憩が取れないため）
+  const gIdx = id => ps.findIndex(g => g.includes(id)), juyoOnly = id => rankOf(byId(id)) === 'rokuji';   // 録事は授与所だけ
+  const kg = [...kiganOf(k)].filter(id => !juyoOnly(id)).sort((a, b) => gIdx(b) - gIdx(a)), turn = Math.max(30, Math.round((Number(H.kiganTurn) || 60) / 30) * 30), kf = toMin(H.kiganFrom), kt = toMin(H.kiganTo);
+  const unitSlots = t0 => slots.map((t, j) => j).filter(j => slots[j] + STEP > t0 && slots[j] < t0 + 30);
+  // 担当2人のときは、祈願と2人の休憩をまとめて決める（2026-11-11 本人：午前の祈願と休憩のバランス）。
+  // 30分ごとの祈願をどちらが受け持つかを全部ためし、2人の休憩もいちばん良い時刻に置いて、
+  // 「休憩なしで続けて働く長さ（の2乗の合計）」が小さく、交代と引き継ぎの重なりが少ない形を選ぶ
+  const units = []; for (let t0 = kf; t0 + 30 <= kt; t0 += 30) { const js = unitSlots(t0); if (js.length) units.push(js); }
+  const planKigan = () => {
+    const P = kg, [A, B] = P, n = slots.length, NS = Math.ceil((Number(H.amMin) || 0) / STEP), NP = Math.ceil((Number(H.pmMin) || 0) / STEP);
+    const can = (id, js) => js.every(j => grid[id][j] === 'J');
+    const sq = row => { let c = 0, x = 0; row.forEach(v => { if (off(v)) { c += x * x; x = 0; } else x++; }); return c + x * x; };
+    const bestBreak = (row, len, lo, hi, target) => {   // 同じ良さなら、働く時間のまん中に近い時刻
+      if (!len) return { c: sq(row), j: -1 };
+      let best = { c: sq(row) + 40, j: -1 };   // 置けないときは減点
+      for (let j = 0; j + len <= n; j++) {
+        if (slots[j] < lo || slots[j] + len * STEP > hi) continue;
+        let ok = true; for (let x = j; x < j + len; x++) if (row[x] !== 'J') ok = false;
+        const a = j + len; if (a < n && row[a] === 'K' && slots[a] % 60 === 0) ok = false;   // :00の祈願の直前は準備
+        if (!ok) continue;
+        const r = row.slice(); for (let x = j; x < j + len; x++) r[x] = 'R';
+        const c = sq(r) + Math.abs(slots[j] - target) / 1000; if (c < best.c) best = { c, j };
+      }
+      return best;
+    };
+    const asg = new Array(units.length).fill(null); let best = null;
+    const evalPlan = () => {
+      const rows = {}; let cost = 0, over = 0, hand = 0;
+      P.forEach(id => rows[id] = grid[id].slice());
+      units.forEach((js, i) => { if (asg[i]) js.forEach(j => rows[asg[i]][j] = 'K'); if (i && asg[i] && asg[i - 1] && asg[i] !== asg[i - 1]) hand++; });
+      for (let j = 0; j < n; j++) if (rows[A][j] === 'K' && rows[B][j] === 'K') over++;
+      for (const id of P) {
+        const row = rows[id], ls = lunchOf(gIdx(id)), le = ls + Number(H.lunchMin);
+        for (let j = 1; j < n; j++) if (row[j] === 'K' && row[j - 1] === 'L' && slots[j] % 60 === 0) return;   // 昼食の直後に :00 の祈願は不可
+        const am = bestBreak(row, NS, 9 * 60 + 30, ls - 20, (9 * 60 + ls) / 2); if (am.j >= 0) for (let x = am.j; x < am.j + NS; x++) row[x] = 'R';
+        const pm = bestBreak(row, NP, le + 40, 17 * 60 + 40, (le + 18 * 60) / 2); if (pm.j >= 0) for (let x = pm.j; x < pm.j + NP; x++) row[x] = 'R';
+        cost += pm.c + (NS && am.j < 0 ? 40 : 0);
+      }
+      const ka = asg.filter(x => x === A).length, kb = asg.filter(x => x === B).length;
+      cost += 3 * hand + 10 * over + 0.3 * (ka - kb) ** 2;
+      if (!best || cost < best.cost) best = { cost, rows, asg: asg.slice() };
+    };
+    const dfs = (i, hand) => {
+      if (hand > 6) return;
+      if (i === units.length) return evalPlan();
+      const opts = P.filter(id => can(id, units[i]));
+      if (!opts.length) { asg[i] = null; return dfs(i + 1, hand); }
+      for (const id of opts) { asg[i] = id; dfs(i + 1, hand + (i && asg[i - 1] && asg[i - 1] !== id ? 1 : 0)); }
+    };
+    dfs(0, 0);
+    if (!best) return false;
+    P.forEach(id => grid[id] = best.rows[id]);
+    // 2人とも入れない時間は、授与所の人（録事以外）が代わりに
+    units.forEach((js, i) => { if (best.asg[i]) return;
+      const c = ids.find(id => !P.includes(id) && !juyoOnly(id) && js.every(j => grid[id][j] === 'J') && (slots[js[0]] % 60 !== 0 || js[0] === 0 || !off(grid[id][js[0] - 1])));
+      if (c) js.forEach(j => grid[c][j] = 'K'); });
+    return true;
+  };
+  const planned = kg.length === 2 && planKigan();
+  let prev = null;
+  for (let t0 = kf; !planned && d.kind === 'sanga' && t0 + 30 <= kt; t0 += 30) {
+    const js = unitSlots(t0);
+    if (!js.length) continue;
+    const free = id => js.every(j => grid[id][j] === 'J' || (id === prev && grid[id][j] === 'K'));
+    const prepOK = id => id === prev || t0 % 60 !== 0 || js[0] === 0 || !off(grid[id][js[0] - 1]);
+    const base = kg.length ? Math.floor((t0 - kf) / turn) % kg.length : 0, boundary = (t0 - kf) % turn === 0;
+    let pick = !boundary && prev && kg.includes(prev) && free(prev) ? prev : null;
+    // 交代の時刻には、その回（例：60分）を最後まで通せる担当を優先。途中の :30 で交代すると、引き継ぎの20分に2人が祈願へ取られるため
+    if (boundary) {
+      const units = []; for (let u = t0; u < Math.min(t0 + turn, kt); u += 30) units.push(u);
+      const whole = id => units.every(u => unitSlots(u).every(j => grid[id][j] === 'J' || (id === prev && grid[id][j] === 'K')));
+      for (let x = 0; !pick && x < kg.length; x++) { const id = kg[(base + x) % kg.length]; if (whole(id) && prepOK(id)) pick = id; }
+    }
+    for (let x = 0; !pick && x < kg.length; x++) { const id = kg[(base + x) % kg.length]; if (free(id) && prepOK(id)) pick = id; }
+    if (!pick) pick = ids.find(id => !juyoOnly(id) && free(id) && prepOK(id)) || null;   // 担当が入れないときは授与所の人
+    if (pick) js.forEach(j => grid[pick][j] = 'K');
+    prev = pick;
+  }
+  // 20分休憩は組ではなく1人ずつ。同時に休める人数＝授与所が最低人数を割らない人数（三が日以外は3分の1まで）
+  // 祈願の時間とは重ねず、祈願の直前にも置かない（準備の時間）
+  const minJ = d.kind === 'sanga' ? Number(H.juyoMin) || 0 : 0;
+  const cap = d.kind === 'sanga' ? Math.max(1, ids.length - 1 - minJ) : Math.max(1, Math.floor(ids.length / 3));
+  const brk = j => ids.filter(id => off(grid[id][j])).length;
+  const [hw0, hw1] = helperWin(k), inHelp = j => H.lunchShortOK !== false && slots[j] >= hw0 && slots[j] < hw1;
+  const capAt = j => d.kind === 'sanga' ? Math.max(1, ids.length - ids.filter(id => grid[id][j] === 'K').length - juyoFloor(k, slots[j])) : cap;   // 時刻ごとの最低人数を割らない範囲で休憩
+  const place = (id, len, lo, hi, target) => {
+    if (!len) return;
+    const all = slots.filter(t => t >= lo && t + len <= hi).sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
+    for (const starts of [all.filter(t => t % 20 === 0), all.filter(t => t % 20 !== 0)]) {   // まず :00 :20 :40 始まり
+      for (const st of starts) {
+        const js = slots.map((t, j) => j).filter(j => slots[j] >= st && slots[j] < st + len), after = js[js.length - 1] + 1;
+        if (js.every(j => grid[id][j] === 'J' && brk(j) < capAt(j)) && !(after < slots.length && grid[id][after] === 'K' && slots[after] % 60 === 0)) { js.forEach(j => grid[id][j] = 'R'); return; }
+      }
+    }
+  };
+  const r10 = t => Math.round(t / 10) * 10;
+  const jobs = [];
+  ps.forEach((g, i) => g.forEach(id => {
+    if (d.kind !== 'sanga') return;   // 4日以降はペアで（下）
+    if (planned && kg.includes(id)) return;
+    const ls = lunchOf(i), le = ls + Number(H.lunchMin);
+    jobs.push({ id, len: Number(H.amMin), lo: 9 * 60 + 30, hi: ls - 20, target: r10((9 * 60 + ls) / 2) });
+    jobs.push({ id, len: Number(H.pmMin), lo: le + 40, hi: 17 * 60 + 40, target: r10((le + 18 * 60) / 2) });
+  }));
+  jobs.sort((a, b) => a.target - b.target).forEach(x => place(x.id, x.len, x.lo, x.hi, x.target));
+  if (d.kind !== 'sanga') {   // 4日以降：休憩もペアで一緒に。休むペアは同時に1組だけ（2026-11-11 本人：2人1組）
+    const pairOff = (g, j) => g.some(id => off(grid[id][j]));
+    ps.forEach((g, i) => {
+      const ls = lunchOf(i), le = ls + Number(H.lunchMin);
+      const st = isLate(g) ? lateF : 9 * 60, en = isLate(g) ? dayEnd(d) : 18 * 60;   // 遅番は来てから帰るまでの間で
+      [[Number(H.amMin), st + 30, ls - 20, r10((st + ls) / 2)], [Number(H.pmMin), le + 40, en - 20, r10((le + en) / 2)]].forEach(([len, lo, hi, target]) => {
+        if (!len) return;
+        const starts = slots.map((t, j) => j).filter(j => slots[j] >= lo && slots[j] + len <= hi).sort((a, b) => Math.abs(slots[a] - target) - Math.abs(slots[b] - target));
+        for (const j0 of starts) {
+          const js = slots.map((t, j) => j).filter(j => slots[j] >= slots[j0] && slots[j] < slots[j0] + len);
+          if (js.every(j => g.every(id => grid[id][j] === 'J') && !ps.some((h, q) => q !== i && pairOff(h, j)))) { js.forEach(j => g.forEach(id => grid[id][j] = 'R')); break; }
+        }
+      });
+    });
+  }
+  // 4日以降：祈願受付は常に1人（9:00〜17:00）。録事がメインで受け持ち、休憩・昼食で抜けるときは2人目（一番長いベテラン）が入る（2026-11-11 本人）。
+  // 祈願担当のような準備・区切りの決まりはない。2人とも入れないときだけ、ほかのベテラン→ほかの人が代わりに
+  if (d.kind === 'shigoto') {   // 受付は仕事始めの平日だけ。三連休・土日は授与所と休憩だけ（2026-11-11 本人）
+    const team = uketsukeOf(k), need = Number(H.uketsukeN) || 1, cnt = {};
+    ids.forEach(id => cnt[id] = 0);
+    const freeAt = (id, j) => grid[id][j] === 'J';
+    slots.forEach((t, j) => {
+      if (t < kf || t >= (d.kind === 'shigoto' ? dayEnd(d) : kt)) return;   // 仕事始めの平日は会社祈願の19:00まで
+      const needJ = Math.max(0, Math.min(need, ids.filter(id => grid[id][j] === 'J').length - 1));   // 授与所に最低1人は残す
+      const hold = team.filter(id => freeAt(id, j)).slice(0, needJ);
+      const rest = ids.filter(id => freeAt(id, j) && !hold.includes(id)).sort((a, b) => (canUketsuke(byId(b)) - canUketsuke(byId(a))) || cnt[a] - cnt[b]);
+      rest.forEach(id => { if (hold.length < needJ) hold.push(id); });
+      hold.forEach(id => { grid[id][j] = 'U'; cnt[id]++; });
+    });
+  }
+  // 掃除・お焚き上げ（三が日だけ）：授与所は7人まで。8人以上になる時間が30分以上続くときだけ1人ずつ出す（2026-11-11 本人）
+  // 午前（12:00まで）は掃除だけ（朝のお焚き上げは不要）。午後はお焚き上げ・掃除を交互に。録事・祈願担当は出さない
+  if (d.kind === 'sanga') {
+    const max = Number(H.juyoMax) || 7, nslot = Math.ceil((Number(H.extraMin) || 30) / STEP), used = {}, noon = 12 * 60;
+    const juyo = j => ids.filter(id => grid[id][j] === 'J').length;
+    ids.forEach(id => used[id] = 0); let pmJob = 'O';
+    for (let round = 0; round < 3; round++) {
+      let j = 0;
+      while (j < slots.length) {
+        if (juyo(j) <= max) { j++; continue; }
+        let e = j; while (e < slots.length && juyo(e) > max && (slots[j] < noon) === (slots[e] < noon)) e++;
+        if (e - j >= nslot) {
+          const c = ids.filter(id => !kg.includes(id) && !juyoOnly(id) && grid[id].slice(j, e).every(v => v === 'J')).sort((a, b) => used[a] - used[b])[0];
+          const job = slots[j] < noon ? 'S' : pmJob;
+          if (c) { for (let x = j; x < e; x++) grid[c][x] = job; used[c] += e - j; if (slots[j] >= noon) pmJob = pmJob === 'S' ? 'O' : 'S'; }
+        }
+        j = e;
+      }
+    }
+  }
+  S.time[k] = grid;
+}
+const pairsOf = k => { const p = (S.pairs[k] || []).map(g => g.filter(id => assigned(k).includes(id))).filter(g => g.length); return p; };
+function checkDay(d) {
+  const need = needOf(d).n, ids = assigned(d.k), ms = ids.map(id => S.members.find(m => m.id === id)).filter(Boolean);
+  const rk = ms.map(rankOf), out = [];
+  if (!need && !ids.length) return out;
+  if (ids.length < need) out.push(`${need - ids.length}人足りません`);
+  ms.forEach((a, i) => ms.slice(i + 1).forEach(b => { if ((a.ng || []).includes(b.id) || (b.ng || []).includes(a.id)) out.push(`${a.name}さんと${b.name}さんはNG（同じ日に入っています）`); }));
+  if (ids.length > need) out.push(`${ids.length - need}人多く入っています`);
+  if (need && !rk.includes('rokuji')) out.push('録事がいません');
+  const t = mixTarget(need), vet = rk.filter(r => r === 'rokuji' || r === 'vet').length;
+  if (need && vet < t.vet) out.push(`ベテラン以上が${vet}人（目安${t.vet}人）`);
+  const nw = rk.filter(r => r === 'new').length;
+  if (need && nw > t.newMax) out.push(`新人が${nw}人（目安${t.newMax}人まで）`);
+  const nn = pairsOf(d.k).filter(g => g.every(id => rankOf(byId(id)) === 'new')).length;
+  if (nn) out.push(`新人だけの組が${nn}組`);
+  const kn = Number(S.rules.haichi.kiganN) || 2, kc = ms.filter(canKigan).length;
+  if (d.kind === 'shigoto' && ids.length && uketsukeOf(d.k).length < 2) out.push('祈願受付ができる人（録事・ベテラン）が別々の組に2人いません');
+  if (d.kind === 'sanga' && ids.length && kc < kn) out.push(`祈願巫女が${kc}人（${kn}人必要）`);
+  ms.forEach(m => { if (S.avail[m.id]?.[d.k] !== 'ok') out.push(`${m.name}さんは希望が○ではありません`); });
+  return out;
+}
+
+/* ---- 下書き：録事 → ベテラン → 残り（出勤日数が少ない人から。新人は上限まで） ---- */
+function draft() {
+  S.assign = {};
+  const cnt = {}; S.members.forEach(m => cnt[m.id] = 0);
+  const can = (m, d) => S.avail[m.id]?.[d.k] === 'ok';
+  const order = DAYS.map(d => ({ d, need: needOf(d).n, pool: S.members.filter(m => can(m, d)).length })).filter(x => x.need > 0).sort((a, b) => a.pool / a.need - b.pool / b.need);
+  order.forEach(({ d, need }) => {
+    const pick = [], cand = S.members.filter(m => can(m, d));
+    // 出勤日数が少ない人を優先。同じなら、友達がもう入っている人を優先
+    const sc = m => cnt[m.id] - (pick.some(p => (m.friends || []).includes(p.id)) ? 0.5 : 0);
+    const take = f => { const c = cand.filter(m => !pick.includes(m) && !pick.some(p => (m.ng || []).includes(p.id) || (p.ng || []).includes(m.id)) && f(m)).sort((a, b) => sc(a) - sc(b) || ORDER.indexOf(rankOf(a)) - ORDER.indexOf(rankOf(b))); if (c[0]) pick.push(c[0]); return !!c[0]; };
+    take(m => rankOf(m) === 'rokuji');
+    if (d.kind === 'sanga') { const kn = Number(S.rules.haichi.kiganN) || 2; while (pick.length < need && pick.filter(canKigan).length < kn && take(canKigan)); }   // 祈願巫女
+    const tg = mixTarget(need), vetNeed = tg.vet, newMax = tg.newMax;
+    while (pick.filter(m => ['rokuji', 'vet'].includes(rankOf(m))).length < vetNeed && pick.length < need && take(m => rankOf(m) === 'vet'));
+    // 新人は今年の割合の分まで入れる（新人にも経験を積ませる）。残りを中堅・ベテランで埋め、足りなければ誰でも
+    while (pick.length < need && pick.filter(m => rankOf(m) === 'mid').length < tg.mid && take(m => rankOf(m) === 'mid'));
+    while (pick.length < need && pick.filter(m => rankOf(m) === 'new').length < newMax && take(m => rankOf(m) === 'new'));
+    while (pick.length < need && (take(m => rankOf(m) === 'mid' || rankOf(m) === 'vet') || take(() => true)));
+    S.assign[d.k] = pick.map(m => m.id);
+    pick.forEach(m => cnt[m.id]++);
+  });
+  S.pairs = {}; DAYS.forEach(d => makePairs(d.k));
+}
+
+/* ---- 画面 ---- */
+let tab = 'shift';
+try { tab = localStorage.getItem('miko-shogatsu-tab') || 'shift'; } catch (e) {}
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const dayCls = d => d.kind === 'eve' || d.kind === 'sanga' || d.hol || d.wd === 0 ? 'sun' : d.wd === 6 ? 'sat' : '';
+const kindShort = { eve: '大晦日', sanga: '三が日', shigoto: '仕事始め', seijin: '三連休', weekend: '土日', weekday: '平日' };
+const daysOf = id => DAYS.filter(d => assigned(d.k).includes(id));
+/* 装束の番号（2026-11-11 本人）：「装束M①」のように何番を着るかまで。装束は使い回す。
+   ただし前の日も入った人は、前の日と同じ番号をそのまま着る。それ以外の人は、前に着た番号が空いていればそれ、なければ空いている一番小さい番号。
+   戻り値：{ 日付: { id: 番号 } } */
+const circ = n => n >= 1 && n <= 20 ? String.fromCharCode(0x245F + n) : n ? `(${n})` : '';
+function shozokuNos() {
+  const out = {}, last = {}, lastDay = {};
+  const prevDay = k => { const t = new Date(k + 'T00:00:00'); t.setDate(t.getDate() - 1); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
+  DAYS.forEach(d => {
+    const dk = d.k === 'eve' ? `${Y - 1}-12-31` : d.k;   // 大晦日の夜は12/31として数える
+    const today = out[d.k] = {}, used = { S: new Set(), M: new Set(), L: new Set() }, y = prevDay(dk);
+    const ms = assigned(d.k).map(byId).filter(m => m && sizeOf(m));
+    const rank = m => lastDay[m.id] === y ? 0 : last[m.id] ? 1 : 2;   // 前の日も入った人 → 前に着た番号のある人 → 初めての人
+    ms.sort((a, b) => rank(a) - rank(b) || ORDER.indexOf(rankOf(a)) - ORDER.indexOf(rankOf(b))).forEach(m => {
+      const sz = sizeOf(m), u = used[sz]; let no = last[m.id] && last[m.id].sz === sz && !u.has(last[m.id].no) ? last[m.id].no : 0;
+      if (!no) { no = 1; while (u.has(no)) no++; }
+      u.add(no); today[m.id] = no; last[m.id] = { sz, no }; lastDay[m.id] = dk;
+    });
+  });
+  return out;
+}
+
+const dayName = d => d.kind === 'eve' ? '12/31（夜）' : `${d.label}（${d.sub}）`;
+function vIssues(days) {
+  const issues = days.map(d => [d, checkDay(d)]).filter(([, x]) => x.length);
+  if (!issues.length) return '';
+  return `<div class="card noprint" style="display:grid;gap:10px"><h2>直すところ（${issues.length}日）</h2><ul class="warnlist">${issues.map(([d, x]) => `<li><b>${dayName(d)}</b>　${x.join('／')}</li>`).join('')}</ul></div>`;
+}
+let mkSure = false;
+function vShift() {
+  const head = DAYS.map(d => `<th class="dh ${dayCls(d)}">${d.kind === 'eve' ? `${d.label}<br>${d.sub}` : `<button class="dbtn" data-goday="${d.k}" title="${dayName(d)}の配置表を見る">${d.label}<br>${d.sub}</button>`}<div class="kind">${kindShort[d.kind]}</div>${d.extra ? `<button class="delday" data-delday="${d.k}" title="${dayName(d)}を日程から外す" aria-label="${dayName(d)}を日程から外す">×</button>` : ''}</th>`).join('');
+  const needRow = DAYS.map(d => { const x = needOf(d); return `<td><span class="need"><button data-adj="-1" data-k="${d.k}" aria-label="${d.label}の人数を減らす">−</button><b>${x.n}</b><button data-adj="1" data-k="${d.k}" aria-label="${d.label}の人数を増やす">＋</button></span>${x.byBook ? `<span class="src" title="予約${BOOK[d.k]}件から">予約から</span>` : x.adj ? '<span class="src">手直し</span>' : ''}</td>`; }).join('');
+  const gotRow = DAYS.map(d => { const n = needOf(d).n, a = assigned(d.k).length, bad = checkDay(d).length; return `<td><span class="chk ${!n && !a ? '' : bad ? 'bad' : 'good'}">${n || a ? `${a}/${n}${bad ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
+  const bookRow = DAYS.map(d => `<td class="kind">${BOOK[d.k] ? BOOK[d.k] + '件' : ''}</td>`).join('');
+  const groups = ORDER.map(r => [r, S.members.filter(m => rankOf(m) === r)]).filter(([, ms]) => ms.length);
+  const body = groups.map(([r, ms]) => `<tr class="grp"><td class="name">${RANKS[r][0]}（${ms.length}人）</td><td colspan="${DAYS.length}"></td></tr>` + ms.map(m => `<tr><td class="name">${mbadge(m)} ${esc(m.name)} <span class="kind">${daysOf(m.id).length}日</span></td>${DAYS.map(d => {
+    const as = assigned(d.k).includes(m.id), a = S.avail[m.id]?.[d.k];
+    const inner = as ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}">奉</span>` : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>';
+    return `<td class="c" tabindex="0" data-cell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${inner}</td>`; }).join('')}</tr>`).join('')).join('');
+  return `${vIssues(DAYS)}
+  <div class="card" style="display:grid;gap:12px">
+    <div class="row"><h2>シフト表</h2><span class="sp"></span><button class="btn" id="addday">＋ 日程を追加</button><button class="btn" id="pdf">PDFにする</button><button class="btn pri" id="mk">${mkSure ? 'もう一度押すと作り直します（手で直した分は消えます）' : 'シフトを作る'}</button></div>
+    <div class="legend"><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">奉</span>奉仕</span><span><span class="m ok">○</span>可</span><span><span class="m ng">×</span>不可</span><span><span class="m no">・</span>未</span></div>
+    <div class="scroll"><table class="g">
+      <thead><tr><th class="name">名前</th>${head}</tr></thead>
+      <tbody>
+        <tr><td class="name"><b>必要人数</b></td>${needRow}</tr>
+        <tr><td class="name kind">団体（正月）の予約</td>${bookRow}</tr>
+        <tr><td class="name"><b>奉仕</b></td>${gotRow}</tr>
+        ${body}
+      </tbody></table></div>
+  </div>`;
+}
+
+let dayK = null, pairSel = null;
+const wareki = y => y >= 2019 ? `令和${y - 2018 === 1 ? '元' : y - 2018}年` : `平成${y - 1988}年`;   // 配置表の日付は和暦（2026-11-11 本人）
+function wafuDate(d) { return d.kind === 'eve' ? `${wareki(Y - 1)}12月31日（${WD[d.wd]}）の夜` : `${wareki(Y)}${d.label.replace('/', '月')}日（${d.sub}）`; }
+function fullDate(d) { return wafuDate(d); }
+const wafuYM = ym => { if (!ym) return ''; const [y, m] = ym.split('-').map(Number); return `${wareki(y)}${m}月`; };
+const wafuToday = () => { const t = new Date(); return `${wareki(t.getFullYear())}${t.getMonth() + 1}月${t.getDate()}日`; };
+function ranges(slots, f) { const out = []; let s0 = null; slots.forEach((t, j) => { if (f(j)) { if (s0 == null) s0 = t; } else if (s0 != null) { out.push(`${hm(s0)}〜${hm(t)}`); s0 = null; } }); if (s0 != null) out.push(`${hm(s0)}〜${hm(slots[slots.length - 1] + STEP)}`); return out; }
+function vDay() {
+  const days = DAYS.filter(d => d.kind !== 'eve' && (needOf(d).n || assigned(d.k).length));   // 大晦日は全員授与所なので配置表なし
+  if (!days.length) return '<div class="card">シフトがまだありません</div>';
+  if (!days.some(d => d.k === dayK)) dayK = days[0].k;
+  const d = DAYS.find(x => x.k === dayK), ps = pairsOf(dayK), slots = slotsOf(d), H = S.rules.haichi, ids = ps.flat();
+  if (!S.time[dayK] || Array.isArray(S.time[dayK]) || ids.some(id => !S.time[dayK][id])) makeTime(dayK);
+  const tm = S.time[dayK], kg = kiganOf(dayK), ukT = uketsukeOf(dayK), sno = shozokuNos();
+  const isSanga = d.kind === 'sanga', min = isSanga ? Number(H.juyoMin) || 0 : 0;
+  const juyo = j => ids.filter(id => tm[id][j] === 'J').length;
+  const lunchOK = H.lunchShortOK !== false, [hw0, hw1] = helperWin(dayK), atLunch = j => slots[j] >= hw0 && slots[j] < hw1;   // 助っ人の時間
+  const floorAt = j => juyoFloor(dayK, slots[j]);
+  const short = isSanga ? ranges(slots, j => juyo(j) < floorAt(j)) : [];
+  const lunchShort = isSanga && lunchOK ? ranges(slots, j => juyo(j) >= floorAt(j) && juyo(j) < min && atLunch(j)) : [];
+  const ukN = Number(H.uketsukeN) || 2, ukShort = d.kind !== 'shigoto' ? [] : ranges(slots, j => slots[j] >= toMin(H.kiganFrom) && slots[j] < (d.kind === 'shigoto' ? dayEnd(d) : toMin(H.kiganTo)) && ids.filter(id => tm[id][j] === 'U').length < ukN);
+  const noKigan = !isSanga ? [] : ranges(slots, j => slots[j] >= toMin(H.kiganFrom) && slots[j] < toMin(H.kiganTo) && !ids.some(id => tm[id][j] === 'K'));
+  const prepNG = [], alignNG = [];
+  ids.forEach(id => tm[id].forEach((v, j) => { if (v !== 'K') return; const nm = byId(id).name;
+    if (tm[id][j - 1] !== 'K' && j && slots[j] % 60 === 0 && (tm[id][j - 1] === 'R' || tm[id][j - 1] === 'L')) prepNG.push(`${nm}さん ${hm(slots[j])}`); }));
+  const chips = days.map(x => `<button class="dchip ${dayCls(x)} ${x.k === dayK ? 'on' : ''}" data-day="${x.k}">${x.label}<small>${x.sub}・${assigned(x.k).length}人</small></button>`).join('');
+  const rok = assigned(d.k).map(byId).filter(m => m && rankOf(m) === 'rokuji').map(m => esc(m.name));
+  // 列：時刻｜組ごとに1人1列（組の間に少し隙間）｜授与所の人数｜時刻（右側にも：2026-11-11 本人）
+  const cols = ['44px']; ps.forEach((g, i) => { if (i) cols.push('8px'); g.forEach(() => cols.push('minmax(0, 1fr)')); }); cols.push('40px', '44px');
+  let h1 = '<div></div>', h2 = '<div class="sh-h"></div>';
+  ps.forEach((g, i) => {
+    if (i) { h1 += '<div></div>'; h2 += '<div></div>'; }
+    const lm = lateMembersOf(dayK), late = g.length && g.every(id => lm.includes(id));
+    h1 += `<div class="sh-ph" style="grid-column: span ${g.length}">${i + 1}組${late ? `（遅番 ${esc(H.osobanFrom || '10:00')}〜${hm(dayEnd(d))}）` : ''}</div>`;
+    h2 += g.map(id => { const m = byId(id); return `<div class="sh-h"><button class="pm ${pairSel === id ? 'sel' : ''}" data-pm="${id}">${mbadge(m)} ${esc(m.name)}</button><div class="sh-sub">${ukT.includes(id) ? '<span class="kgm">受付担当</span>' : ''}${!late && lateMembersOf(dayK).includes(id) ? `<span class="kgm">遅番 ${esc(H.osobanFrom || '10:00')}〜</span>` : ''}${sizeOf(m) ? `<span class="sz">装束${sizeOf(m)}${circ((sno[dayK] || {})[m.id])}</span>` : ''}</div></div>`; }).join('');
+  });
+  h1 += '<div class="sh-ph sh-cnth">授与所</div><div></div>'; h2 += '<div class="sh-h"></div><div class="sh-h"></div>';
+  let body = '';
+  slots.forEach((t, j) => {
+    const hr = t % 60 === 0;
+    const mm = t % 60, q = [20, 40].includes(mm);
+    body += `<div class="sh-time ${hr ? 'hr' : q ? 'q' : ''}">${hr ? hm(t) : q ? ':' + pad(mm) : ''}</div>`;
+    ps.forEach((g, i) => {
+      if (i) body += '<div></div>';
+      g.forEach(id => { const row = tm[id], v = row[j], pv = row[j - 1], nv = row[j + 1], [lab, cls] = JOBS[v] || ['—', 'rest'];
+        body += `<button class="sh-c ${cls} ${pv !== v ? 's' : ''} ${nv !== v ? 'e' : ''}" data-tc="${id},${j}" title="${esc(byId(id).name)} ${hm(t)} ${lab}">${pv !== v ? `<span class="lb">${lab}</span>` : ''}</button>`; });
+    });
+    const n = juyo(j), pn = j ? juyo(j - 1) : null;
+    body += `<div class="sh-cnt ${isSanga ? (n < floorAt(j) ? 'short' : n < min && atLunch(j) ? 'lunch' : '') : ''} ${hr ? 'hr' : q ? 'q' : ''}">${n !== pn ? n + '人' : ''}</div>`;
+    body += `<div class="sh-time rt ${hr ? 'hr' : q ? 'q' : ''}">${hr ? hm(t) : q ? ':' + pad(mm) : ''}</div>`;
+  });
+  const keys = (isSanga ? ['J', 'K', 'S', 'O'] : d.kind !== 'shigoto' ? ['J'] : ['J', 'U']).map(c => `<span class="key"><i class="sh-c ${JOBS[c][1]}"></i>${JOBS[c][0]}</span>`).join('') + '<span class="key"><i class="sh-c rest"></i>休憩・昼食</span>';
+  const warn = [...(short.length ? [`授与所が決めた最低人数より少ない時間：${short.join('、')}`] : []), ...(ukShort.length ? [`祈願受付が${ukN}人より少ない時間：${ukShort.join('、')}`] : []), ...(noKigan.length ? [`祈願がいない時間：${noKigan.join('、')}`] : []), ...(prepNG.length ? [`休憩・昼食のすぐ後に祈願（着替え・準備の時間がない）：${prepNG.join('、')}`] : []), ...(alignNG.length ? [`祈願が0分・30分の区切りに合っていない：${alignNG.join('、')}`] : [])];
+  return `${vIssues([d])}
+  <div class="card noprint" style="display:grid;gap:12px">
+    <div class="dchips">${chips}</div>
+    <div class="row"><button class="btn" id="repair">シフトを作る</button><span class="sp"></span>
+      <button class="btn pri" id="hpdf">PDFにする</button></div>
+    ${warn.length ? `<ul class="warnlist">${warn.map(w => `<li>${w}</li>`).join('')}</ul>` : ''}
+  </div>
+  <div class="sheetwrap"><div class="sheet" style="--ns:${slots.length}">
+    <div class="sh-top">
+      <div class="sh-head"><span class="sh-title">巫女 配置表</span><span class="sh-dbig ${dayCls(d)}">${wafuDate(d)}</span><span class="sh-date">9:00〜${hm(dayEnd(d))}</span></div>
+      ${lunchTag(d.k)}
+    </div>
+    <div class="sh-grid" style="grid-template-columns:${cols.join(' ')}">${h1}${h2}${body}</div>
+    <div class="sh-foot">${keys}<span class="sp"></span><span>品川神社</span></div>
+  </div></div>`;
+}
+
+/* その日のお昼のお弁当（食事タブで業者かお弁当が書かれていれば出す） */
+function lunchTag(k) { const o = ordOf(k, 'L'), menu = (o.menu || '').trim(), v = (o.vendor || '').trim(); if (!menu && !v) return '';
+  return `<div class="sh-lunch"><span class="sh-lunch-l">お昼</span><b>${esc(menu || v)}</b>${menu && v ? `<span class="sh-lunch-v">${esc(v)}</span>` : ''}</div>`; }
+function vShozoku() {
+  const sizes = ['S', 'M', 'L'], stock = S.rules.stock, sno = shozokuNos();
+  const rows = DAYS.filter(d => assigned(d.k).length).map(d => {
+    const ms = assigned(d.k).map(id => S.members.find(m => m.id === id)).filter(Boolean);
+    const by = { S: [], M: [], L: [], '?': [] }; ms.forEach(m => by[sizeOf(m) || '?'].push(m));
+    return `<tr><td style="white-space:nowrap"><b class="${dayCls(d)}">${d.label}${d.kind === 'eve' ? ' 夜' : `（${d.sub}）`}</b></td>${sizes.map(s => { const n = by[s].length, st = stock[s] === '' ? null : Number(stock[s]); return `<td class="n ${st != null && n > st ? 'short' : ''}">${n}${st != null && n > st ? `（${n - st}着不足）` : ''}</td>`; }).join('')}<td><div class="chips">${sizes.concat('?').map(s => by[s].map(m => `<span class="chip">${s === '?' ? '' : s + circ((sno[d.k] || {})[m.id]) + ' '}${esc(m.name)}</span>`).join('')).join('')}</div></td></tr>`;
+  }).join('');
+  const workers = S.members.filter(m => daysOf(m.id).length);
+  const tabi = {}; workers.forEach(m => { const t = m.tabi ? Number(m.tabi).toFixed(1) : '未登録'; tabi[t] = (tabi[t] || 0) + 1; });
+  const tabiRows = Object.keys(tabi).sort().map(t => `<tr><td>${t === '未登録' ? t : t + ' cm'}</td><td class="n">${tabi[t]}足</td></tr>`).join('');
+  const person = S.members.slice().sort((a, b) => (sizeOf(a) || 'Z').localeCompare(sizeOf(b) || 'Z') || a.height - b.height).map(m => `<tr><td>${mbadge(m)} ${esc(m.name)}</td><td class="n">${m.height || '—'} cm</td><td>${sizeOf(m) ? `<span class="size">${sizeOf(m)}${[...new Set(daysOf(m.id).map(d => (sno[d.k] || {})[m.id]))].filter(Boolean).map(circ).join('')}</span>` : '<span class="size none">?</span>'}</td><td class="n">${m.tabi ? Number(m.tabi).toFixed(1) + ' cm' : '—'}</td><td class="n">${daysOf(m.id).length}日</td></tr>`).join('');
+  return `
+  <div class="card" style="display:grid;gap:10px">
+    <div class="row"><h2>日ごとの装束</h2><span class="sp"></span><span class="tag kari">サイズの境目は仮：S ${S.rules.sizeSM}cm未満・M ${S.rules.sizeSM}〜${S.rules.sizeML - 1}cm・L ${S.rules.sizeML}cm以上</span></div>
+    <div class="scroll"><table class="t"><thead><tr><th>日付</th><th>S</th><th>M</th><th>L</th><th>着る人</th></tr></thead><tbody>${rows || '<tr><td colspan="5">シフトがまだありません</td></tr>'}</tbody></table></div>
+  </div>
+  <div class="grid2" style="align-items:start">
+    <div class="card" style="display:grid;gap:10px"><h2>足袋の支給（1人1足）</h2>
+      <table class="t"><thead><tr><th>大きさ</th><th style="text-align:right">数</th></tr></thead><tbody>${tabiRows}</tbody><tfoot><tr><td><b>合計</b></td><td class="n"><b>${workers.length}足</b></td></tr></tfoot></table></div>
+    <div class="card" style="display:grid;gap:10px;min-width:0"><h2>人ごとのサイズ</h2>
+      <div class="scroll"><table class="t"><thead><tr><th>名前</th><th style="text-align:right">身長</th><th>装束</th><th style="text-align:right">足袋</th><th style="text-align:right">出勤</th></tr></thead><tbody>${person}</tbody></table></div></div>
+  </div>`;
+}
+
+const PAGE_URL = MODE === 'host' ? location.href.split('#')[0] : 'https://claude.ai/artifact/Hh8PVyaZbNjfWQq2GG2iFQ';   // 神社くんの中ではこのページ（shogatsu.html）
+const IN_URL = PAGE_URL + '#nyuryoku';
+function vMembers() {
+  const rows = ORDER.flatMap(r => S.members.filter(m => rankOf(m) === r)).map(m => { const a = age(m); return `<tr><td>${mbadge(m)}</td><td><b>${esc(m.name)}</b>${m.rank !== 'auto' ? ' <span class="tag">手で変更</span>' : ''}</td><td class="n">${years(m)}年目</td><td class="n">${a == null ? '—' : a + '歳'}</td><td>${schoolLabel(m)}</td><td class="n">${m.height || '—'} cm</td><td class="n">${m.tabi ? Number(m.tabi).toFixed(1) : '—'}</td><td>${m.kigan ? (rankOf(m) === 'rokuji' ? '<span class="note">録事は授与所</span>' : '<span class="tag">祈願巫女</span>') : '—'}</td><td>${(m.friends || []).map(byId).filter(Boolean).map(f => esc(f.name)).join('、') || '—'}</td><td>${S.members.filter(x => x.id !== m.id && ngEither(m.id, x.id)).map(f => esc(f.name)).join('、') || '—'}</td><td>${S.sent && S.sent[m.id] ? `<span class="note">送信 ${sentLabel(S.sent[m.id])}</span>` : '<span class="tag ngt">未提出</span>'}</td><td><button class="btn" data-edit="${m.id}">編集</button></td></tr>`; }).join('');
+  return `
+  <div class="card" style="display:grid;gap:12px">
+    <div class="row"><h2>巫女（${S.members.length}人）</h2><span class="sp"></span><button class="btn pri" data-edit="">＋ 登録</button></div>
+    <div class="scroll"><table class="t"><thead><tr><th></th><th>名前</th><th style="text-align:right">経験</th><th style="text-align:right">年齢</th><th>大学・学年</th><th style="text-align:right">身長</th><th style="text-align:right">足袋</th><th>祈願巫女</th><th>友達</th><th>NG</th><th>希望</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="urlbox"><div class="urlbox-h">シフト登録URL</div>
+      <div class="urlrow"><a class="url" id="inurl" href="${IN_URL}" target="_blank" rel="noopener">${IN_URL}</a><button type="button" class="btn" id="incopy">コピー</button></div></div>
+  </div>`;
+}
+
+function vRules() {
+  const R = S.rules, H = R.haichi;
+  const tm = id => `<input class="in" type="time" id="h-${id}" value="${pad(Math.floor(toMin(H[id]) / 60))}:${pad(toMin(H[id]) % 60)}" step="1200" style="width:auto">`;
+  const nm = (id, w = 56) => `<input class="in s" type="number" min="0" id="h-${id}" value="${H[id]}" style="width:${w}px">`;
+  const sel = (id, v, opts) => `<select class="in" id="${id}" style="width:auto">${opts.map(([o, l]) => `<option value="${o}" ${String(v) === String(o) ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  const y = yearMix(), t8 = mixTarget(8), t6 = mixTarget(6), t4 = mixTarget(4);
+  return `
+  <div class="rules-wrap">
+    <div class="card rules"><h2>日の種類と巫女の人数</h2>
+      ${KINDS.map(([k, l, d]) => `<div class="rule"><div><b>${l}</b><div class="d">${d}</div></div><div class="row"><input class="in s" type="number" min="0" id="need-${k}" data-need="${k}" value="${R.need[k]}"> 人</div></div>`).join('')}
+      <h3>予約から人数を増やす</h3>
+      <label class="rule"><div><b>団体（正月）の予約数を使う</b></div><input type="checkbox" id="bookOn" ${R.bookOn ? 'checked' : ''}></label>
+    </div>
+
+    <div class="card rules"><h2>御朱印の人数</h2>
+      ${KINDS.map(([k, l]) => `<div class="rule"><div><b>${l}</b></div><div class="row"><input class="in s" type="number" min="0" data-goneed="${k}" value="${(R.goNeed || {})[k] ?? 2}"> 人</div></div>`).join('')}
+    </div>
+
+    <div class="card rules"><h2>経験と顔ぶれ</h2>
+      <div class="rule"><div><b>録事</b></div>${sel('rokujiBy', R.rokujiBy, [['grad', '大学を卒業した人'], ['age25', '25歳以上'], ['either', 'どちらか']])}</div>
+      <h3>ベテランと新人の混ぜ方（今年の巫女 ${y.n}人：録事${y.c.rokuji}・ベテラン${y.c.vet}・中堅${y.c.mid}・新人${y.c.new}）</h3>
+      <div class="rule"><div><b>その年の割合に合わせる</b></div></div>
+    </div>
+
+    <div class="card rules"><h2>三が日の配置</h2>
+      <div class="rule"><div><b>組の人数</b><div class="d">昼食は組ごとに一緒に取ります</div></div>${sel('groupSize', Number(R.groupSize) === 2 ? 2 : 3, [[2, '2人'], [3, '3人']])}</div>
+      <h3>授与所</h3>
+      <div class="rule"><div><b>最低人数（ふだん）</b><div class="d">これより少ない時間は配置表の右の欄が赤くなります</div></div><div class="row">${nm('juyoMin')} 人</div></div>
+      <div class="rule"><div><b>助っ人が必要な最低人数</b></div><div class="row">${nm('helpMin')} 人</div></div>
+      <div class="rule"><div><b>最低人数（夕方）</b><div class="d">この時刻からは人数を減らしてよい</div></div><div class="row">${tm('lateFrom')} から ${nm('lateMin')} 人</div></div>
+      <div class="rule"><div><b>授与所最大人数</b></div><div class="row">${nm('juyoMax')} 人まで</div></div>
+      <div class="rule"><div><b>掃除・お焚き上げ</b></div><div class="row">${nm('extraMin')} 分以上</div></div>
+      <h3>祈願</h3>
+      <div class="rule"><div><b>祈願の時間と担当</b></div><div class="row">${tm('kiganFrom')}〜${tm('kiganTo')} ${nm('kiganN', 48)} 人で交代</div></div>
+      <h3>休憩</h3>
+      <div class="rule"><div><b>昼食</b></div><div class="row">${tm('lunchStart')} から各組 ${nm('lunchMin')} 分</div></div>
+      <div class="rule"><div><b>20分休憩（午前・午後）</b></div><div class="row">午前 ${nm('amMin')} 分・午後 ${nm('pmMin')} 分</div></div>
+    </div>
+
+    <div class="card rules"><h2>1/4以降の配置</h2>
+      <div class="rule"><div><b>組の人数</b></div>${sel('groupSizeOther', Number(R.groupSizeOther) === 3 ? 3 : 2, [[2, '2人'], [3, '3人']])}</div>
+      <div class="rule"><div><b>仕事始めの平日の遅番</b></div><div class="row">${tm('osobanFrom')} から ${nm('osobanN', 48)} 人</div></div>
+    </div>
+
+    <div class="card rules"><h2>装束 <span class="tag kari">仮</span></h2>
+      <div class="rule"><div><b>SとMの境目</b><div class="d">この身長からM</div></div><div class="row"><input class="in s" type="number" id="sizeSM" value="${R.sizeSM}"> cm</div></div>
+      <div class="rule"><div><b>MとLの境目</b><div class="d">この身長からL</div></div><div class="row"><input class="in s" type="number" id="sizeML" value="${R.sizeML}"> cm</div></div>
+      <div class="rule"><div><b>装束の数（在庫）</b><div class="d">空欄なら足りるかの確認はしません</div></div><div class="row">${['S', 'M', 'L'].map(s => `${s}<input class="in s" type="number" min="0" id="stock-${s}" data-stock="${s}" value="${R.stock[s]}" style="width:56px">`).join(' ')}</div></div>
+    </div>
+    <div class="row"><span class="sp"></span><button class="btn" id="reset">見本を最初に戻す</button></div>
+  </div>`;
+}
+
+function editDlg(id) {
+  const m = S.members.find(x => x.id === id) || { id: '', name: '', first: Y, birth: '', school: 'student', univ: '', grade: '', height: '', tabi: '', rank: 'auto', note: '' };
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><form class="dlg" id="mf">
+    <h2>${m.id ? '編集' : '巫女を登録'}</h2>
+    <div class="fields">
+      <div class="f"><label for="f-name">名前</label><input class="in" id="f-name" value="${esc(m.name)}" required></div>
+      <div class="f"><label for="f-first">初めて来た正月</label><select class="in" id="f-first">${Array.from({ length: 16 }, (_, i) => Y - i).concat(Number(m.first) < Y - 15 ? [Number(m.first)] : []).map(y => `<option value="${y}" ${Number(m.first) === y ? 'selected' : ''}>${wareki(y)}</option>`).join('')}</select></div>
+      <div class="f"><label for="f-age">年齢</label><input class="in" id="f-age" type="number" inputmode="numeric" min="15" max="40" value="${m.id ? age(m) ?? '' : ''}"></div>
+      <div class="f"><label for="f-univ">大学名</label><input class="in" id="f-univ" value="${esc(m.univ || '')}"></div>
+      <div class="f"><label for="f-grade">学年</label><select class="in" id="f-grade"><option value="">—</option>${GRADES.map(([v, l]) => `<option value="${v}" ${gradeOf(m) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="f"><label for="f-height">身長（cm）</label><input class="in" id="f-height" type="number" value="${m.height}"></div>
+      <div class="f"><label for="f-tabi">足袋（cm）</label><input class="in" id="f-tabi" type="number" step="0.5" value="${m.tabi}"></div>
+      <div class="f"><label for="f-rank">経験</label><select class="in" id="f-rank"><option value="auto">自動${m.id ? `（${RANKS[autoRank(m)][0]}）` : ''}</option>${ORDER.map(r => `<option value="${r}" ${m.rank === r ? 'selected' : ''}>${RANKS[r][0]}にする</option>`).join('')}</select></div>
+    </div>
+    <label class="f" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="f-kigan" ${m.kigan ? 'checked' : ''}><span><b>祈願巫女</b>　<span class="note">配置表の祈願担当は、この人たちから自動で選びます（録事は授与所だけ）</span></span></label>
+    <div class="f"><label>友達（ペアにしたい人）</label><div class="friends">${S.members.filter(x => x.id !== m.id).map(x => `<label><input type="checkbox" name="fr" value="${x.id}" ${(m.friends || []).includes(x.id) ? 'checked' : ''}>${esc(x.name)}</label>`).join('')}</div></div>
+    <div class="f"><label>NG（同じ日にシフトに入れない人）</label><div class="friends">${S.members.filter(x => x.id !== m.id).map(x => `<label><input type="checkbox" name="ng" value="${x.id}" ${(m.ng || []).includes(x.id) ? 'checked' : ''}>${esc(x.name)}</label>`).join('')}</div></div>
+    <div class="f"><label for="f-note">メモ（職員だけ）</label><input class="in" id="f-note" value="${esc(m.note)}"></div>
+    <div class="row">${m.id ? `<button type="button" class="btn" id="del" style="color:var(--ng)">削除</button>` : ''}<span class="sp"></span><button type="button" class="btn" id="cancel">戻る</button><button class="btn pri">保存</button></div>
+  </form></div>`;
+  const f = document.getElementById('mf');
+  f.onsubmit = e => { e.preventDefault(); const v = i => document.getElementById(i).value.trim();
+    const nm = { id: m.id || 'm' + Date.now(), name: v('f-name'), first: Number(v('f-first')) || Y, birth: m.birth || '', ageAt: m.ageAt, univ: v('f-univ'), grade: v('f-grade'), school: v('f-grade') === 'grad' ? 'grad' : 'student', height: Number(v('f-height')) || '', tabi: Number(v('f-tabi')) || '', rank: v('f-rank'), note: v('f-note'), kigan: document.getElementById('f-kigan').checked };
+    const ag = v('f-age'); if (String((m.id ? age(m) : null) ?? '') !== ag) { nm.birth = ''; nm.ageAt = { age: ag === '' ? '' : Number(ag), year: Y }; }
+    const ng = [...f.querySelectorAll('input[name=ng]:checked')].map(x => x.value);
+    const fr = [...f.querySelectorAll('input[name=fr]:checked')].map(x => x.value).filter(x => !ng.includes(x));   // NGにした人は友達から外す
+    if (m.id) Object.assign(m, nm); else { S.members.push(nm); S.avail[nm.id] = {}; }
+    const me = byId(nm.id); S.kigan = {}; DAYS.forEach(d => makeTime(d.k));
+    me.ng = ng;   // NGはその人が付けた分だけ持つ（巫女の画面で相手のNGが見えないように）。シフトでは両方向に効く
+    const fr2 = fr.filter(id => !ngEither(me.id, id)); me.friends = fr2;
+    S.members.forEach(x => { if (x.id === me.id) return; x.friends = (x.friends || []).filter(y => y !== me.id); if (fr2.includes(x.id)) x.friends.push(me.id); });   // 友達は両方向。どちらかがNGなら友達にしない
+    DAYS.forEach(d => makePairs(d.k));
+    close(); save(); render(); };
+  document.getElementById('cancel').onclick = close;
+  const del = document.getElementById('del'); if (del) del.onclick = () => { if (del.dataset.sure) { S.members = S.members.filter(x => x.id !== m.id); S.members.forEach(x => { x.friends = (x.friends || []).filter(y => y !== m.id); x.ng = (x.ng || []).filter(y => y !== m.id); }); Object.keys(S.assign).forEach(k => S.assign[k] = S.assign[k].filter(x => x !== m.id)); Object.values(S.years || {}).forEach(b => Object.keys(b.assign || {}).forEach(k => b.assign[k] = b.assign[k].filter(x => x !== m.id))); DAYS.forEach(d => makePairs(d.k)); close(); save(); render(); } else { del.dataset.sure = 1; del.textContent = 'もう一度押すと削除'; } };
+}
+function addDayDlg() {
+  const opts = KINDS.filter(([k]) => k !== 'eve' && k !== 'sanga');
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><form class="dlg" id="adf"><h2>日程を追加</h2>
+    <div class="f"><label for="ad-date">日付（${wareki(Y)}1月）</label><input class="in" id="ad-date" type="date" min="${Y}-01-01" max="${Y}-01-31" required></div>
+    <div class="f"><label for="ad-kind">日の種類</label><select class="in" id="ad-kind">${opts.map(([k, l]) => `<option value="${k}">${l}</option>`).join('')}</select></div>
+    <div class="note" id="ad-msg">日の種類で、必要人数と配置の決まり（祈願受付や19:00までなど）が決まります。</div>
+    <div class="row"><span class="sp"></span><button type="button" class="btn" id="cancel">やめる</button><button class="btn pri">追加する</button></div></form></div>`;
+  const dt = document.getElementById('ad-date'), kd = document.getElementById('ad-kind');
+  dt.onchange = () => { if (!dt.value) return; const w = new Date(dt.value + 'T00:00:00').getDay(); kd.value = w === 0 || w === 6 || holOf(dt.value) ? 'weekend' : 'shigoto'; };
+  document.getElementById('adf').onsubmit = e => { e.preventDefault();
+    const k = dt.value, msg = document.getElementById('ad-msg');
+    if (!k || !k.startsWith(`${Y}-01-`)) { msg.textContent = `${wareki(Y)}1月の日付を選んでください。`; return; }
+    if (DAYS.some(d => d.k === k)) { msg.textContent = 'その日はもう日程に入っています。'; return; }
+    (S.extraDays = S.extraDays || []).push({ k, kind: kd.value });
+    DAYS = buildDays(); makePairs(k); close(); save(); render(); };
+  document.getElementById('cancel').onclick = close;
+}
+function delDay(k) {
+  S.extraDays = (S.extraDays || []).filter(x => x.k !== k);
+  [S.assign, S.pairs, S.time, S.kigan, S.adj].forEach(o => { if (o) delete o[k]; });
+  DAYS = buildDays(); if (dayK === k) dayK = DAYS[1] ? DAYS[1].k : DAYS[0].k; save(); render();
+}
+
+/* 巫女に配るシフト表（A4横のPDF）。名前と奉仕する日だけ（身長・年齢などは載せない） */
+function shareSheetHTML() {
+  const H = S.rules.haichi, ws = S.members.filter(m => daysOf(m.id).length);
+  const ms = ORDER.flatMap(r => ws.filter(m => rankOf(m) === r));
+  const rowH = Math.max(18, Math.min(30, Math.floor(560 / Math.max(1, ms.length + 1))));
+  const col = d => d.kind === 'eve' || d.kind === 'sanga' || d.hol || d.wd === 0 ? '#b23a3a' : d.wd === 6 ? '#2f62b0' : '#2a2224';
+  const lateOf = {}; DAYS.forEach(d => { if (d.kind === 'shigoto') lateOf[d.k] = lateMembersOf(d.k); });
+  const anyLate = Object.values(lateOf).some(a => a.length);
+  const head = DAYS.map(d => `<th style="color:${col(d)}">${d.label}<small>${d.kind === 'eve' ? '夜' : d.sub}</small></th>`).join('');
+  const body = ms.map((m, i) => `<tr style="height:${rowH}px;${i % 2 ? 'background:#faf6f6' : ''}"><td class="nm">${esc(m.name)}</td>${DAYS.map(d => {
+    if (!assigned(d.k).includes(m.id)) return '<td></td>';
+    return (lateOf[d.k] || []).includes(m.id) ? '<td><span class="late"></span></td>' : '<td><span class="on"></span></td>';
+  }).join('')}<td class="cnt">${daysOf(m.id).length}</td></tr>`).join('');
+  const total = DAYS.map(d => `<td class="cnt">${assigned(d.k).length}</td>`).join('');
+  const last = DAYS[DAYS.length - 1];
+  return `<div class="ss">
+    <div class="ss-top"><div><div class="ss-t">${wareki(Y)} 正月 巫女シフト表</div><div class="ss-p">${wareki(Y - 1)}12月31日（夜）〜 ${wareki(Y)}${last.label.replace('/', '月')}日（${last.sub}）</div></div><div class="ss-s">品川神社</div></div>
+    <table class="ss-g"><thead><tr><th class="nm">名前</th>${head}<th class="cnt">日数</th></tr></thead>
+      <tbody>${body}<tr class="ss-sum" style="height:${rowH}px"><td class="nm">人数</td>${total}<td></td></tr></tbody></table>
+    <div class="ss-f"><span><span class="on"></span>奉仕</span>${anyLate ? `<span><span class="late"></span>遅番（${hm(toMin(H.osobanFrom || '10:00'))}〜${hm(toMin(H.shigotoTo || '19:00'))}）</span>` : ''}<span>大晦日の夜は ${KINDS[0][2]}</span><span class="sp"></span><span>${wafuToday()} 作成</span></div>
+  </div>`;
+}
+const loadScript = src => new Promise((ok, ng) => { if (document.querySelector(`script[src="${src}"]`)) return ok(); const t = document.createElement('script'); t.src = src; t.onload = ok; t.onerror = ng; document.head.appendChild(t); });
+async function pdfLibs() {
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+}
+/* pages：1ページずつ「画面に置く要素」を返す関数の配列。各要素はA4横（1123×794px）で描く */
+async function savePdf(pages, filename, btn, msg, portrait) {
+  btn.disabled = true; msg.textContent = 'PDFを作っています…';
+  const host = document.createElement('div'); host.className = 'ss-host'; document.body.appendChild(host);
+  try {
+    await pdfLibs(); try { await document.fonts.ready; } catch (e) {}
+    const ori = portrait ? 'portrait' : 'landscape', pdf = new window.jspdf.jsPDF({ orientation: ori, unit: 'mm', format: 'a4' });
+    for (let i = 0; i < pages.length; i++) {
+      host.innerHTML = ''; host.appendChild(pages[i]());
+      if (pages.length > 1) msg.textContent = `PDFを作っています…（${i + 1}/${pages.length}）`;
+      const cv = await html2canvas(host.firstElementChild, { scale: 2, backgroundColor: '#ffffff', logging: false });
+      if (i) pdf.addPage('a4', ori);
+      pdf.addImage(cv.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, portrait ? 210 : 297, portrait ? 297 : 210);
+    }
+    const blob = pdf.output('blob');
+    const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (!dl) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000); msg.textContent = 'PDFを保存しました。'; return; }
+    await dl.save({ filename, data: blob });
+    msg.textContent = 'PDFを保存しました。';
+  } catch (e) {
+    msg.textContent = e && e.code === 'declined' ? '保存をやめました。' : e && e.code === 'rate_limited' ? '少し待ってからもう一度押してください。' : 'PDFを作れませんでした。もう一度押してください。';
+  } finally { host.remove(); btn.disabled = false; }
+}
+function makePdf(btn, msg) {
+  return savePdf([() => { const t = document.createElement('div'); t.innerHTML = shareSheetHTML(); return t.firstElementChild; }], `正月巫女シフト表_${wareki(Y)}.pdf`, btn, msg);
+}
+/* 配置表：画面の表をそのまま写し、色はいつも白い紙の色で */
+function sheetNode() { const sh = document.querySelector('#view .sheet').cloneNode(true); sh.classList.add('pdfsheet'); return sh; }
+async function haichiPdf(all, btn, msg) {
+  const keep = dayK, days = DAYS.filter(d => d.kind !== 'eve' && (needOf(d).n || assigned(d.k).length));
+  const list = all ? days : days.filter(d => d.k === keep);
+  const pages = list.map(d => () => { if (dayK !== d.k) { dayK = d.k; render(); } return sheetNode(); });
+  const name = all ? `正月巫女配置表_${wareki(Y)}_全日.pdf` : `正月巫女配置表_${list[0] ? wafuDate(list[0]).replace(/（.*$/, '') : wareki(Y)}.pdf`;
+  await savePdf(pages, name, btn, msg);
+  if (dayK !== keep) { dayK = keep; render(); }
+}
+function haichiDlg() {
+  const days = DAYS.filter(d => d.kind !== 'eve' && (needOf(d).n || assigned(d.k).length)), cur = DAYS.find(x => x.k === dayK);
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><div class="dlg pdfdlg"><h2>配置表をPDFにする</h2>
+    <div class="note">画面の配置表をそのままA4横のPDFにします。下はいま開いている日の見本です。</div>
+    <div class="seg" role="radiogroup"><label><input type="radio" name="hrange" value="1" checked> この日だけ：${cur ? wafuDate(cur).replace(wareki(Y), '') : ''}</label><label><input type="radio" name="hrange" value="all"> 全日：${days.length}日分（1日1ページ）</label></div>
+    <div class="ss-prev" id="hprev"></div>
+    <div class="row"><span class="note" id="hpdfmsg"></span><span class="sp"></span><button type="button" class="btn" id="cancel">閉じる</button><button type="button" class="btn pri" id="hpdfgo">PDFで保存</button></div></div></div>`;
+  const pv = document.getElementById('hprev'), sh = sheetNode(); pv.appendChild(sh);
+  const fit = () => { const k = pv.clientWidth / 1123; sh.style.transform = `scale(${k})`; pv.style.height = `${794 * k}px`; };
+  fit(); window.addEventListener('resize', fit, { once: true });
+  document.getElementById('cancel').onclick = close;
+  document.getElementById('hpdfgo').onclick = e => haichiPdf(document.querySelector('input[name=hrange]:checked').value === 'all', e.currentTarget, document.getElementById('hpdfmsg'));
+}
+function pdfDlg() {
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><div class="dlg pdfdlg"><h2>巫女に配るシフト表</h2>
+    <div class="note">名前と奉仕する日だけを載せます。A4横のPDFになります。</div>
+    <div class="ss-prev" id="ssprev">${shareSheetHTML()}</div>
+    <div class="row"><span class="note" id="pdfmsg"></span><span class="sp"></span><button type="button" class="btn" id="cancel">閉じる</button><button type="button" class="btn pri" id="pdfgo">PDFで保存</button></div></div></div>`;
+  const pv = document.getElementById('ssprev'), sh = pv.firstElementChild, fit = () => { const k = pv.clientWidth / 1123; sh.style.transform = `scale(${k})`; pv.style.height = `${794 * k}px`; };
+  fit(); window.addEventListener('resize', fit, { once: true });
+  document.getElementById('cancel').onclick = close;
+  document.getElementById('pdfgo').onclick = e => makePdf(e.currentTarget, document.getElementById('pdfmsg'));
+}
+const close = () => { document.getElementById('dlg').innerHTML = ''; if (sgPending) setTimeout(window.sgHostUpdated, 0); };
+
+/* ===== 巫女が自分で入力する画面（スマホ用。2026-11-11 本人）=====
+   URLを開く → 名前を選ぶ → 基本情報を確かめる（変わったら直して保存）→ シフトの希望を入れて送信 → あとから変更もできる。
+   初めての子は「名前がない」から基本情報を入力してもらう。見本では同じページの #nyuryoku で開き、送った内容がそのままシフト表に入る */
+let inp = { step: 'name' };
+const isInput = () => location.hash === '#nyuryoku';
+const ngEither = (a, b) => ((byId(a) || {}).ng || []).includes(b) || ((byId(b) || {}).ng || []).includes(a);
+const sentLabel = t => { const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${pad(d.getMinutes())}`; };
+function vInput() {
+  const m = inp.id ? byId(inp.id) : null;
+  const top = `<div class="in-top"><div class="in-t">${wareki(Y)} 正月 巫女</div><div class="in-s">シフトの希望を入れてください</div></div>`;
+  const steps = ['名前', '基本情報', 'シフト'], si = { name: 0, info: 1, shift: 2, done: 2 }[inp.step];
+  const bar = `<ol class="in-steps">${steps.map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'on' : ''}">${x}</li>`).join('')}</ol>`;
+  if (inp.step === 'name') return top + bar + `<section class="in-card"><h2>お名前を選んでください</h2>
+    <div class="in-names">${S.members.map(x => `<button class="in-name" data-in-pick="${x.id}"><span>${esc(x.name)}</span>${S.sent && S.sent[x.id] ? '<small>送信済み</small>' : ''}</button>`).join('')}</div>
+    <button class="in-new" data-in-pick="new">名前がない（はじめての方）</button></section>`;
+  if (inp.step === 'info') {
+    const d = inp.d, others = S.members.filter(x => x.id !== d.id && !String(x.id).startsWith('_'));
+    const grade = (GRADES.find(g => g[0] === d.grade) || [])[1] || '';
+    const people = ids => (ids || []).map(byId).filter(Boolean).map(x => esc(x.name)).join('、') || 'なし';
+    if (!inp.edit) return top + bar + `<section class="in-card"><h2>${esc(d.name)}さんの基本情報</h2><p class="in-note">変わったところがあれば「変更する」を押してください。</p>
+      <dl class="in-dl"><dt>大学名</dt><dd>${esc(d.univ) || '—'}</dd><dt>学年</dt><dd>${grade || '—'}</dd><dt>年齢</dt><dd>${d.age !== '' && d.age != null ? d.age + '歳' : '—'}</dd>
+        <dt>身長</dt><dd>${d.height ? d.height + ' cm' : '—'}</dd><dt>足袋</dt><dd>${d.tabi ? Number(d.tabi).toFixed(1) + ' cm' : '—'}</dd>
+        <dt>友達</dt><dd>${people(d.friends)}</dd><dt>NG</dt><dd>${MODE === 'api' ? '表示しません' : people(d.ng)}</dd></dl>
+      <div class="in-btns"><button class="in-btn" data-in-edit>変更する</button><button class="in-btn pri" data-in-go="shift">このままで次へ</button></div></section>`;
+    const chips = (nm, sel) => `<div class="in-picked" data-in-box="${nm}">${(sel || []).map(byId).filter(Boolean).map(x => inPicked(nm, x)).join('')}<button type="button" class="in-add" data-in-add="${nm}">＋ 追加</button></div>
+      <div class="in-list" data-in-list="${nm}" hidden><div class="in-list-h">名前を選んでください<button type="button" class="in-x" data-in-add="${nm}" aria-label="閉じる">×</button></div>${others.map(x => `<button type="button" class="in-li" data-in-addid="${nm},${x.id}">${esc(x.name)}</button>`).join('')}</div>`;
+    return top + bar + `<form class="in-card" id="inf"><h2>${d.id ? '基本情報を変更' : 'はじめての方：基本情報'}</h2>
+      ${d.id ? '' : '<p class="in-note">はじめての方は、基本情報を入力してください。</p>'}
+      <label class="in-f"><span>名前</span><input class="in" id="i-name" value="${esc(d.name)}" required autocomplete="name"${MODE === 'api' && d.id ? ' readonly' : ''}></label>
+      <label class="in-f"><span>大学名</span><input class="in" id="i-univ" value="${esc(d.univ)}"></label>
+      <label class="in-f"><span>学年</span><select class="in" id="i-grade"><option value="">選んでください</option>${GRADES.map(([v, l]) => `<option value="${v}" ${d.grade === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+      <label class="in-f"><span>年齢</span><input class="in" id="i-age" type="number" inputmode="numeric" min="15" max="40" value="${d.age}"></label>
+      <div class="in-two"><label class="in-f"><span>身長（cm）</span><input class="in" id="i-height" type="number" inputmode="numeric" value="${d.height}"></label>
+        <label class="in-f"><span>足袋（cm）</span><input class="in" id="i-tabi" type="number" inputmode="decimal" step="0.5" value="${d.tabi}"></label></div>
+      <div class="in-f"><span>友達</span>${others.length ? chips('i-fr', d.friends) : '<p class="in-note">まだいません</p>'}</div>
+      <div class="in-f"><span>NG（同じ日に入りたくない人）</span>${others.length ? chips('i-ng', d.ng) : '<p class="in-note">まだいません</p>'}<p class="in-note">${MODE === 'api' ? 'すでに登録したNGは表示しません。ここでは追加だけできます（外すときは神社に伝えてください）。' : ''}NGはほかの人には見えません。</p></div>
+      <p class="in-msg" id="i-msg"></p>
+      <div class="in-btns">${d.id ? '<button type="button" class="in-btn" data-in-cancel>戻る</button>' : '<button type="button" class="in-btn" data-in-go="name">戻る</button>'}<button class="in-btn pri">保存して次へ</button></div></form>`;
+  }
+  const days = DAYS, ans = inp.ans, left = days.filter(d => !ans[d.k]).length;
+  if (inp.step === 'shift') return top + bar + `<section class="in-card"><h2>${esc(m.name)}さんのシフトの希望</h2>
+      <p class="in-note">出られる日に「○」、出られない日に「×」を押してください。${S.sent && S.sent[m.id] ? `前回の送信：${sentLabel(S.sent[m.id])}` : ''}</p>
+      ${left ? `<button class="in-all" data-in-all>まだの日をすべて ○ にする</button>` : ''}
+      <div class="in-days">${days.map(d => `<div class="in-day ${ans[d.k] ? '' : 'todo'}"><div class="in-d"><b class="${dayCls(d)}">${d.label}<small>（${d.sub}）</small></b><span>${d.kind === 'eve' ? '大晦日の夜 24:00〜3:00' : d.hol || kindShort[d.kind]}</span></div>
+        <div class="in-yn"><button class="${ans[d.k] === 'ok' ? 'on ok' : ''}" data-in-ans="${d.k},ok" aria-pressed="${ans[d.k] === 'ok'}">○</button><button class="${ans[d.k] === 'ng' ? 'on ng' : ''}" data-in-ans="${d.k},ng" aria-pressed="${ans[d.k] === 'ng'}">×</button></div></div>`).join('')}</div></section>
+    <div class="in-send"><span>${left ? `あと${left}日` : `○ ${days.filter(d => ans[d.k] === 'ok').length}日`}</span><button class="in-btn pri" data-in-send ${left ? 'disabled' : ''}>${S.sent && S.sent[m.id] ? '変更して送信' : '送信'}</button></div>`;
+  const okDays = days.filter(d => S.avail[m.id] && S.avail[m.id][d.k] === 'ok');
+  return top + bar + `<section class="in-card in-done"><div class="in-check">✓</div><h2>送信しました</h2><p class="in-note">${esc(m.name)}さん、ありがとうございます。シフトが決まったらお知らせします。</p>
+    <div class="in-sum"><b>出られる日（${okDays.length}日）</b><div>${okDays.map(d => `<span>${d.label}（${d.kind === 'eve' ? '夜' : d.sub}）</span>`).join('') || 'なし'}</div></div>
+    <div class="in-btns"><button class="in-btn" data-in-go="shift">希望を変更する</button><button class="in-btn" data-in-go="info">基本情報を見る</button></div>
+    <button class="in-new" data-in-go="name">最初の画面に戻る</button></section>`;
+}
+const inPicked = (nm, x) => `<span class="in-pk">${esc(x.name)}<input type="hidden" name="${nm}" value="${x.id}"><button type="button" data-in-rm aria-label="${esc(x.name)}を外す">×</button></span>`;
+function inSyncList() {   // 友達・NGのどちらかに入っている人は一覧に出さない
+  const used = new Set([...document.querySelectorAll('#inf input[type=hidden][name^=i-]')].map(x => x.value));
+  document.querySelectorAll('[data-in-addid]').forEach(b => b.hidden = used.has(b.dataset.inAddid.split(',')[1]));
+}
+document.addEventListener('click', e => {
+  if (!isInput()) return;
+  const add = e.target.closest('[data-in-add]');
+  if (add) { const nm = add.dataset.inAdd; document.querySelectorAll('[data-in-list]').forEach(l => l.hidden = l.dataset.inList !== nm ? true : !l.hidden); inSyncList(); return; }
+  const pk = e.target.closest('[data-in-addid]');
+  if (pk) { const [nm, id] = pk.dataset.inAddid.split(','), box = document.querySelector(`[data-in-box="${nm}"]`), t = document.createElement('span');
+    t.innerHTML = inPicked(nm, byId(id)); box.insertBefore(t.firstElementChild, box.querySelector('.in-add')); pk.closest('[data-in-list]').hidden = true; inSyncList(); return; }
+  const rm = e.target.closest('[data-in-rm]');
+  if (rm) { rm.closest('.in-pk').remove(); inSyncList(); }
+});
+function inStart(id) {
+  const m = id === 'new' ? null : byId(id);
+  const pick = x => ({ id: x ? x.id : '', name: x ? x.name : '', univ: x ? x.univ || '' : '', grade: x ? gradeOf(x) : '', age: x ? (age(x) ?? '') : '', height: x ? x.height : '', tabi: x ? x.tabi : '', friends: x ? (x.friends || []).slice() : [], ng: x ? (x.ng || []).slice() : [] });
+  inp = { step: 'info', id: m ? m.id : '', d: pick(m), edit: !m };
+}
+function inGoShift() { const a = (S.avail[inp.id] || {}); inp.ans = Object.fromEntries(DAYS.filter(d => a[d.k]).map(d => [d.k, a[d.k]])); inp.step = 'shift'; inp.edit = false; }
+function inSaveInfo(f) {
+  const v = i => document.getElementById(i).value.trim(), msg = document.getElementById('i-msg');
+  if (!v('i-name')) { msg.textContent = '名前を入れてください。'; return; }
+  const ng = [...f.querySelectorAll('input[name=i-ng]')].map(x => x.value);
+  const fr = [...f.querySelectorAll('input[name=i-fr]')].map(x => x.value).filter(x => !ng.includes(x));
+  const vals = { name: v('i-name'), univ: v('i-univ'), grade: v('i-grade'), school: v('i-grade') === 'grad' ? 'grad' : 'student', height: Number(v('i-height')) || '', tabi: Number(v('i-tabi')) || '' };
+  let me = inp.id ? byId(inp.id) : null;
+  const ag = v('i-age');   // 年齢（2026-11-11 本人：生まれた年月ではなく年齢）。変わったときだけ入れ直す
+  if (me) { if (String(age(me) ?? '') !== ag) { me.birth = ''; me.ageAt = { age: ag === '' ? '' : Number(ag), year: Y }; } Object.assign(me, vals); }
+  else { me = { id: 'm' + Date.now(), first: Y, rank: 'auto', note: '', kigan: false, birth: '', ageAt: { age: ag === '' ? '' : Number(ag), year: Y }, ...vals }; S.members.push(me); S.avail[me.id] = {}; }
+  me.ng = ng;   // NGは本人が付けた分だけ持つ（相手のNGは変えない・見せない）。シフトでは両方向に効く
+  const fr2 = fr.filter(id => !ngEither(me.id, id));
+  me.friends = fr2; S.members.forEach(x => { if (x.id === me.id) return; x.friends = (x.friends || []).filter(y => y !== me.id); if (fr2.includes(x.id)) x.friends.push(me.id); });   // 友達は両方向（2026-11-11 本人：片方が友達にしたら相手も自動で友達。どちらかがNGなら友達にしない）
+  DAYS.forEach(d => makePairs(d.k));
+  inp.id = me.id; save(); inGoShift(); render(); window.scrollTo(0, 0);
+}
+function inSend() {
+  const a = S.avail[inp.id] = S.avail[inp.id] || {};
+  DAYS.forEach(d => { if (inp.ans[d.k]) a[d.k] = inp.ans[d.k]; });
+  (S.sent = S.sent || {})[inp.id] = Date.now();
+  save(); inp.step = 'done'; render(); window.scrollTo(0, 0);
+}
+document.addEventListener('click', e => {
+  if (!isInput()) return;
+  const t = e.target.closest('[data-in-pick],[data-in-edit],[data-in-cancel],[data-in-go],[data-in-ans],[data-in-all],[data-in-send]'); if (!t) return;
+  if (t.dataset.inPick) { inStart(t.dataset.inPick); window.scrollTo(0, 0); }
+  else if ('inEdit' in t.dataset) inp.edit = true;
+  else if ('inCancel' in t.dataset) inp.edit = false;
+  else if (t.dataset.inGo) { const g = t.dataset.inGo; if (g === 'shift') inGoShift(); else if (g === 'info') { inStart(inp.id); inp.edit = false; } else inp = { step: 'name' }; window.scrollTo(0, 0); }
+  else if (t.dataset.inAns) { const [k, v] = t.dataset.inAns.split(','); inp.ans[k] = v; }
+  else if ('inAll' in t.dataset) DAYS.forEach(d => { if (!inp.ans[d.k]) inp.ans[d.k] = 'ok'; });
+  else if ('inSend' in t.dataset) { inSend(); return; }
+  render();
+});
+document.addEventListener('submit', e => { if (e.target.id === 'inf') { e.preventDefault(); inSaveInfo(e.target); } });
+window.addEventListener('hashchange', () => { if (MODE === 'api') { apiInit(); return; } if (isInput()) inp = { step: 'name' }; ginp = { step: 'name' }; render(); window.scrollTo(0, 0); });
+
+/* ===== 御朱印・台所（正月。2026-11-11 本人）=====
+   神社くんの御朱印アルバイトと同じ考え方（○×の希望 → 割り当て → 出勤数）。巫女とは別の人を登録する。
+   台所担当は毎日1人。どちらも各自のスマホから「シフト登録URL」で希望を出す */
+const G_SEED = [['鈴村 拓海', 'goshuin'], ['森 大翔', 'goshuin'], ['池田 蓮', 'goshuin'], ['石井 悠真', 'goshuin'], ['前田 陽太', 'goshuin'], ['岡田 湊', 'goshuin'], ['藤井 和子', 'kitchen'], ['西村 恵子', 'kitchen'], ['原田 洋子', 'kitchen']];
+const TEAMS = { goshuin: '御朱印', kitchen: '台所' };
+/* 臨時職員の出勤：神社くんのホームで登録した日（本番は tempWork から）。見本は仮の出勤 */
+function sampleHomeTemp() { const kd = DAYS.filter(d => d.kind !== 'eve'), o = {}; kd.filter(d => d.kind === 'sanga').forEach(d => o[d.k] = ['川辺']); [kd[3], kd[4]].filter(Boolean).forEach(d => (o[d.k] = o[d.k] || []).push('中島')); return o; }
+function seedG(st) {   // 見本の人と希望（作り物）
+  const r = rnd(11);
+  st.goMembers = G_SEED.map(([name, team], i) => ({ id: 'g' + (i + 1), name, team, note: '' }));
+  st.goAvail = {}; st.goSent = {}; st.goAssign = {}; st.goNeed = {}; st.kitchen = {}; st.meals = {};
+  st.goMembers.forEach((m, i) => { st.goAvail[m.id] = {}; if (i === 4) return; st.goSent[m.id] = Date.now() - (i + 1) * 3600000 * 20;
+    DAYS.forEach(d => st.goAvail[m.id][d.k] = r() < (m.team === 'kitchen' ? 0.55 : 0.72) ? 'ok' : 'ng'); });
+  st.tomari = KOIZUMI.slice();   // 小泉家：夕食は自動で「あり」
+  st.homeTemp = sampleHomeTemp();
+  const kd = DAYS.filter(d => d.kind !== 'eve'); st.leaves = { [(kd[6] || {}).k]: ['鈴木'], [(kd[10] || {}).k]: ['今井'] };   // 見本：神職の休み（本番は神社くんの休み申告から）
+}
+const G_URLS = { goshuin: PAGE_URL + '#goshuin', kitchen: PAGE_URL + '#daidokoro' };   // 見本のシフト登録URL。御朱印と台所で別（2026-11-11 本人）
+const gById = id => (S.goMembers || []).find(m => m.id === id);
+const gTeam = t => (S.goMembers || []).filter(m => m.team === t);
+const gNeedRule = k => { const d = DAYS.find(x => x.k === k), v = ((S.rules.goNeed || {})[d ? d.kind : '']); return v == null || v === '' ? 2 : Number(v); };   // 御朱印の人数：ルールの日の種類ごと（2026-11-11 本人。空なら仮で2人）
+const gNeed = k => S.goNeed[k] ?? gNeedRule(k);   // 日ごとに＋−で手直しできる
+const gAs = k => S.goAssign[k] || [];
+const gOk = (id, k) => (S.goAvail[id] || {})[k] === 'ok';
+const kDays = () => DAYS.filter(d => d.kind !== 'eve');   // 台所と食事は昼の日だけ（大晦日の夜は除く）
+const gDaysOf = id => DAYS.filter(d => gAs(d.k).includes(id) || S.kitchen[d.k] === id).length;
+const daysFor = m => m && m.team === 'kitchen' ? kDays() : DAYS;
+function gDraft() {   // 神社くんの御朱印と同じ：出られる人が少ない日から、出勤の少ない人を入れる
+  const cnt = {}, G = gTeam('goshuin'); G.forEach(p => cnt[p.id] = 0); S.goAssign = {};
+  DAYS.map(d => ({ k: d.k, need: gNeed(d.k), av: G.filter(p => gOk(p.id, d.k)).length })).filter(x => x.need > 0).sort((a, b) => a.av - b.av)
+    .forEach(x => { S.goAssign[x.k] = G.filter(p => gOk(p.id, x.k)).sort((a, b) => cnt[a.id] - cnt[b.id]).slice(0, x.need).map(p => (cnt[p.id]++, p.id)); });
+  const kc = {}, K = gTeam('kitchen'); K.forEach(p => kc[p.id] = 0); S.kitchen = {};
+  kDays().map(d => ({ k: d.k, av: K.filter(p => gOk(p.id, d.k)).length })).sort((a, b) => a.av - b.av)
+    .forEach(x => { const p = K.filter(q => gOk(q.id, x.k)).sort((a, b) => kc[a.id] - kc[b.id])[0]; if (p) { S.kitchen[x.k] = p.id; kc[p.id]++; } });
+}
+let gSure = false;
+function gHead(days) { return days.map(d => `<th class="dh ${dayCls(d)}">${d.label}<br>${d.kind === 'eve' ? '夜' : d.sub}<div class="kind">${kindShort[d.kind]}</div></th>`).join(''); }
+function gMark(id, k, on) { const a = (S.goAvail[id] || {})[k]; return on ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}">${gById(id).team === 'kitchen' ? '台' : '朱'}</span>` : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>'; }
+function gSub(m) { return S.goSent[m.id] ? `<span class="kind">提出 ${sentLabel(S.goSent[m.id])}</span>` : '<span class="tag ngt">未提出</span>'; }
+function vGoshuin() {
+  const G = gTeam('goshuin'), K = gTeam('kitchen'), KD = kDays();
+  const needRow = DAYS.map(d => `<td><span class="need"><button data-gadj="-1" data-k="${d.k}" aria-label="${d.label}の人数を減らす">−</button><b>${gNeed(d.k)}</b><button data-gadj="1" data-k="${d.k}" aria-label="${d.label}の人数を増やす">＋</button></span>${S.goNeed[d.k] != null ? '<span class="src">手直し</span>' : ''}</td>`).join('');
+  const gotRow = DAYS.map(d => { const n = gNeed(d.k), a = gAs(d.k).length; return `<td><span class="chk ${!n && !a ? '' : a < n ? 'bad' : 'good'}">${n || a ? `${a}/${n}${a < n ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
+  const gRows = G.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${DAYS.map(d => `<td class="c" tabindex="0" data-gcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, gAs(d.k).includes(m.id))}</td>`).join('')}</tr>`).join('');
+  const kWho = KD.map(d => { const m = gById(S.kitchen[d.k]); return `<td><span class="chk ${m ? 'good' : 'bad'}">${m ? esc(m.name.split(' ')[0]) : '未定 !'}</span></td>`; }).join('');
+  const kRows = K.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${KD.map(d => `<td class="c" tabindex="0" data-kcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, S.kitchen[d.k] === m.id)}</td>`).join('')}</tr>`).join('');
+  const list = t => gTeam(t).map(m => `<li><button class="linkish" data-gedit="${m.id}">${esc(m.name)}</button>${m.note ? `<span class="kind">${esc(m.note)}</span>` : ''}</li>`).join('') || '<li class="kind">まだいません</li>';
+  return `<div class="card" style="display:grid;gap:12px">
+    <div class="row"><h2>御朱印のシフト</h2><span class="sp"></span><button class="btn pri" id="gmk">${gSure ? 'もう一度押すと作り直します（手で直した分は消えます）' : 'シフトを作る'}</button></div>
+    <div class="legend"><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">朱</span>御朱印</span><span><span class="m ok">○</span>可</span><span><span class="m ng">×</span>不可</span><span><span class="m no">・</span>未</span></div>
+    <div class="scroll"><table class="g"><thead><tr><th class="name">名前</th>${gHead(DAYS)}</tr></thead><tbody>
+      <tr><td class="name"><b>必要人数</b></td>${needRow}</tr>
+      <tr><td class="name"><b>割り当て</b></td>${gotRow}</tr>${gRows || `<tr><td class="name kind" colspan="${DAYS.length + 1}">御朱印の人を登録してください</td></tr>`}</tbody></table></div>
+  </div>
+  <div class="card" style="display:grid;gap:12px">
+    <div class="row"><h2>台所担当のシフト</h2><span class="tag">毎日1人</span></div>
+    <div class="legend"><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">台</span>台所</span><span><span class="m ok">○</span>可</span><span><span class="m ng">×</span>不可</span><span><span class="m no">・</span>未</span></div>
+    <div class="scroll"><table class="g"><thead><tr><th class="name">名前</th>${gHead(KD)}</tr></thead><tbody>
+      <tr><td class="name"><b>担当</b></td>${kWho}</tr>${kRows || `<tr><td class="name kind" colspan="${KD.length + 1}">台所の人を登録してください</td></tr>`}</tbody></table></div>
+  </div>
+  <div class="card" style="display:grid;gap:12px">
+    <div class="gteams">
+      <div><div class="row"><h2>御朱印（${G.length}人）</h2><span class="sp"></span><button class="btn pri" data-gedit="" data-team="goshuin">＋ 登録</button></div><ul class="glist">${list('goshuin')}</ul></div>
+      <div><div class="row"><h2>台所（${K.length}人）</h2><span class="sp"></span><button class="btn pri" data-gedit="" data-team="kitchen">＋ 登録</button></div><ul class="glist">${list('kitchen')}</ul></div>
+    </div>
+    ${Object.entries(TEAMS).map(([t, l]) => `<div class="urlbox"><div class="urlbox-h">シフト登録URL（${l}）</div>
+      <div class="urlrow"><a class="url" id="gurl-${t}" href="${G_URLS[t]}" target="_blank" rel="noopener">${G_URLS[t]}</a><button type="button" class="btn" data-gcopy="${t}">コピー</button></div></div>`).join('')}
+  </div>`;
+}
+function gEditDlg(id, team) {
+  const m = gById(id) || { id: '', name: '', team: team || 'goshuin', note: '' };
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><form class="dlg" id="gf">
+    <h2>${m.id ? '編集' : `${TEAMS[m.team]}の人を登録`}</h2>
+    <div class="f"><label for="g-name">名前</label><input class="in" id="g-name" value="${esc(m.name)}" required></div>
+    <div class="f"><label for="g-note">メモ（職員だけ）</label><input class="in" id="g-note" value="${esc(m.note)}"></div>
+    <div class="row">${m.id ? '<button type="button" class="btn" id="gdel" style="color:var(--ng)">削除</button>' : ''}<span class="sp"></span><button type="button" class="btn" id="cancel">戻る</button><button class="btn pri">保存</button></div>
+  </form></div>`;
+  const f = document.getElementById('gf');
+  document.getElementById('cancel').onclick = close;
+  const del = document.getElementById('gdel');
+  if (del) del.onclick = () => { if (!del.dataset.sure) { del.dataset.sure = 1; del.textContent = 'もう一度押すと削除'; return; }
+    S.goMembers = S.goMembers.filter(x => x.id !== m.id); Object.keys(S.goAssign).forEach(k => S.goAssign[k] = gAs(k).filter(x => x !== m.id));
+    Object.keys(S.kitchen).forEach(k => { if (S.kitchen[k] === m.id) delete S.kitchen[k]; }); delete S.goAvail[m.id]; delete S.goSent[m.id]; save(); close(); render(); };
+  f.onsubmit = e => { e.preventDefault(); const name = document.getElementById('g-name').value.trim(); if (!name) return;
+    const team = m.team, note = document.getElementById('g-note').value.trim();
+    if (m.id) { if (m.team !== team) { Object.keys(S.goAssign).forEach(k => S.goAssign[k] = gAs(k).filter(x => x !== m.id)); Object.keys(S.kitchen).forEach(k => { if (S.kitchen[k] === m.id) delete S.kitchen[k]; }); } Object.assign(m, { name, team, note }); }
+    else { const n = { id: 'g' + Date.now(), name, team, note }; S.goMembers.push(n); S.goAvail[n.id] = {}; }
+    save(); close(); render(); };
+}
+
+/* 御朱印・台所の人が自分のスマホで入れる画面（#goshuin）：名前 → シフトの希望 → 送信。あとから変更もできる */
+let ginp = { step: 'name' };
+const isGInput = () => location.hash === '#goshuin' || location.hash === '#daidokoro';
+const gHashTeam = () => location.hash === '#daidokoro' ? 'kitchen' : 'goshuin';
+function vGInput() {
+  const team = gHashTeam(), top = `<div class="in-top"><div class="in-t">${wareki(Y)} 正月 ${TEAMS[team]}</div><div class="in-s">シフトの希望を入れてください</div></div>`;
+  const si = { name: 0, info: 0, shift: 1, done: 1 }[ginp.step];
+  const bar = `<ol class="in-steps two">${['名前', 'シフト'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'on' : ''}">${x}</li>`).join('')}</ol>`;
+  if (ginp.step === 'name') return top + bar + `<section class="in-card"><h2>お名前を選んでください</h2>
+    <div class="in-names">${gTeam(team).map(x => `<button class="in-name" data-g-pick="${x.id}"><span>${esc(x.name)}</span>${S.goSent[x.id] ? '<small>送信済み</small>' : ''}</button>`).join('') || '<p class="in-note">まだいません</p>'}</div>
+    <button class="in-new" data-g-pick="new">名前がない（はじめての方）</button></section>`;
+  if (ginp.step === 'info') return top + bar + `<form class="in-card" id="gnf"><h2>はじめての方</h2><p class="in-note">名前を入力してください。</p>
+    <label class="in-f"><span>名前</span><input class="in" id="gi-name" required autocomplete="name"></label>
+    <p class="in-msg" id="gi-msg"></p>
+    <div class="in-btns"><button type="button" class="in-btn" data-g-go="name">戻る</button><button class="in-btn pri">次へ</button></div></form>`;
+  const m = gById(ginp.id), days = daysFor(m), ans = ginp.ans, left = days.filter(d => !ans[d.k]).length;
+  if (ginp.step === 'shift') return top + bar + `<section class="in-card"><h2>${esc(m.name)}さんのシフトの希望</h2>
+      <p class="in-note">出られる日に「○」、出られない日に「×」を押してください。${S.goSent[m.id] ? `前回の送信：${sentLabel(S.goSent[m.id])}` : ''}</p>
+      ${left ? '<button class="in-all" data-g-all>まだの日をすべて ○ にする</button>' : ''}
+      <div class="in-days">${days.map(d => `<div class="in-day ${ans[d.k] ? '' : 'todo'}"><div class="in-d"><b class="${dayCls(d)}">${d.label}<small>（${d.sub}）</small></b><span>${d.kind === 'eve' ? '大晦日の夜 24:00〜3:00' : d.hol || kindShort[d.kind]}</span></div>
+        <div class="in-yn"><button class="${ans[d.k] === 'ok' ? 'on ok' : ''}" data-g-ans="${d.k},ok" aria-pressed="${ans[d.k] === 'ok'}">○</button><button class="${ans[d.k] === 'ng' ? 'on ng' : ''}" data-g-ans="${d.k},ng" aria-pressed="${ans[d.k] === 'ng'}">×</button></div></div>`).join('')}</div>
+      <button class="in-new" data-g-go="name">名前を選び直す</button></section>
+    <div class="in-send"><span>${left ? `あと${left}日` : `○ ${days.filter(d => ans[d.k] === 'ok').length}日`}</span><button class="in-btn pri" data-g-send ${left ? 'disabled' : ''}>${S.goSent[m.id] ? '変更して送信' : '送信'}</button></div>`;
+  const okDays = days.filter(d => gOk(m.id, d.k));
+  return top + bar + `<section class="in-card in-done"><div class="in-check">✓</div><h2>送信しました</h2><p class="in-note">${esc(m.name)}さん、ありがとうございます。シフトが決まったらお知らせします。</p>
+    <div class="in-sum"><b>出られる日（${okDays.length}日）</b><div>${okDays.map(d => `<span>${d.label}（${d.kind === 'eve' ? '夜' : d.sub}）</span>`).join('') || 'なし'}</div></div>
+    <div class="in-btns"><button class="in-btn" data-g-go="shift">希望を変更する</button></div>
+    <button class="in-new" data-g-go="name">最初の画面に戻る</button></section>`;
+}
+function gGoShift(id) { const a = S.goAvail[id] || {}, m = gById(id); ginp = { step: 'shift', id, ans: Object.fromEntries(daysFor(m).filter(d => a[d.k]).map(d => [d.k, a[d.k]])) }; }
+document.addEventListener('click', e => {
+  if (!isGInput()) return;
+  const t = e.target.closest('[data-g-pick],[data-g-go],[data-g-ans],[data-g-all],[data-g-send]'); if (!t) return;
+  if (t.dataset.gPick) { if (t.dataset.gPick === 'new') ginp = { step: 'info' }; else gGoShift(t.dataset.gPick); window.scrollTo(0, 0); }
+  else if (t.dataset.gGo) { if (t.dataset.gGo === 'shift') gGoShift(ginp.id); else ginp = { step: 'name' }; window.scrollTo(0, 0); }
+  else if (t.dataset.gAns) { const [k, v] = t.dataset.gAns.split(','); ginp.ans[k] = v; }
+  else if ('gAll' in t.dataset) daysFor(gById(ginp.id)).forEach(d => { if (!ginp.ans[d.k]) ginp.ans[d.k] = 'ok'; });
+  else if ('gSend' in t.dataset) { const a = S.goAvail[ginp.id] = S.goAvail[ginp.id] || {}; Object.assign(a, ginp.ans); S.goSent[ginp.id] = Date.now(); save(); ginp.step = 'done'; window.scrollTo(0, 0); }
+  render();
+});
+document.addEventListener('submit', e => { if (e.target.id !== 'gnf') return; e.preventDefault();
+  const name = document.getElementById('gi-name').value.trim(); if (!name) { document.getElementById('gi-msg').textContent = '名前を入れてください。'; return; }
+  const n = { id: 'g' + Date.now(), name, team: gHashTeam(), note: '' };
+  S.goMembers.push(n); S.goAvail[n.id] = {}; save(); gGoShift(n.id); render(); window.scrollTo(0, 0); });
+
+/* ===== 食事（お弁当・夕食。2026-11-11 本人）=====
+   お昼：その日に出ている全員（神職は神社くんの休み申告から、巫女・御朱印・台所はシフトから）。
+   夕食：希望者だけ。その日に確かめて「あり」にする。小泉家（宮司・真奈美）は最初から「あり」。業者は毎日ちがう */
+const SHINSHOKU = ['宮司', '勝史', '鈴木', '今井'];
+const KOIZUMI = ['宮司', '真奈美'];   // 小泉家（宮司家）。勝史は別に住んでいるので神職として扱う（2026-11-11 本人）
+let mealK = null;
+function mealPeople(k) {
+  const off = (S.leaves || {})[k] || [], tom = S.tomari || [], stay = mealOf(k).stay || {}, out = [];
+  SHINSHOKU.forEach(n => out.push({ key: 's:' + n, name: n, grp: '神職', off: off.includes(n), tomari: tom.includes(n), family: tom.includes(n) }));
+  tom.filter(n => !SHINSHOKU.includes(n)).forEach(n => out.push({ key: 't:' + n, name: n, grp: '台所', tomari: true, family: true }));   // 真奈美は台所（2026-11-11 本人）
+  ((S.homeTemp || {})[k] || []).forEach(n => out.push({ key: 'x:' + n, name: n, grp: '臨時神職' }));   // ホームで出勤を登録した臨時職員は、神職の下に自動で（2026-11-11 本人）
+  ORDER.flatMap(r => assigned(k).map(byId).filter(m => m && rankOf(m) === r)).forEach(m => out.push({ key: 'm:' + m.id, name: m.name, grp: '巫女' }));
+  gAs(k).map(gById).filter(Boolean).forEach(m => out.push({ key: 'g:' + m.id, name: m.name, grp: '御朱印', canStay: true, tomari: !!stay[m.id] }));   // 泊まりは御朱印の人と宮司一家だけ
+  const kc = gById(S.kitchen[k]); if (kc) out.push({ key: 'g:' + kc.id, name: kc.name, grp: '台所' });
+  return out;
+}
+const MEAL0 = () => ({ lunchOff: {}, dinner: {}, extraL: 0, extraD: 0, stay: {}, order: {} });
+const HOW = { yoyaku: '予約済み', kaini: '当日買いに行く', nashi: 'なし' };
+const isNo = h => h === 'nashi';   // 夕食を頼まない日（夕食だけ選べる。2026-11-11 本人）
+const howOpts = m => Object.entries(HOW).filter(([v]) => m === 'D' || !isNo(v));
+const MEALS = { L: 'お昼', D: '夕食' };
+const ordOf = (k, m) => { const o = { vendor: '', menu: '', place: '', how: '', ...((mealOf(k).order || {})[m] || {}) }; if (o.how === 'gaishoku' || o.how === 'jisui') o.how = 'nashi'; return o; };   // 版62の2択は「なし」へ
+const ordW = (k, m) => { const M = mealW(k); M.order = M.order || {}; return (M.order[m] = M.order[m] || {}); };
+/* 手配書の内訳（2026-11-11 本人）：お昼は神職・巫女・御朱印・台所。夕食は小泉家（宮司家）と御朱印、三が日などはほかに神職・巫女・台所も */
+const BREAK = { L: ['神職', '臨時神職', '巫女', '御朱印', '台所'], D: ['小泉家', '御朱印', '神職', '臨時神職', '巫女', '台所'] };
+function mealBreak(k, m) {   // 内訳（担当ごとの数）
+  const ps = mealPeople(k).filter(p => m === 'L' ? lunchOn(k, p) : dinnerOn(k, p)), out = [], cat = p => m === 'D' && p.family ? '小泉家' : p.grp;
+  BREAK[m].forEach(g => { const n = ps.filter(p => cat(p) === g).length; if (n) out.push(`${g} ${n}`); });
+  const x = Number(mealOf(k)[m === 'L' ? 'extraL' : 'extraD']) || 0; if (x) out.push(`追加 ${x}`);
+  return { list: out, names: ps.map(p => p.name) };
+}
+const mealOf = k => ({ ...MEAL0(), ...(S.meals[k] || {}) });
+const mealW = k => (S.meals[k] = { ...MEAL0(), ...(S.meals[k] || {}) });
+const lunchOn = (k, p) => !p.off && !mealOf(k).lunchOff[p.key];
+/* 夕食の最初の設定（2026-11-11 本人）：三が日は全員あり。4日以降は宮司一家（泊まり）と、その日も次の日も御朱印に入っている人があり。あとは手で直す */
+function dinnerDefault(k, p) {
+  const d = DAYS.find(x => x.k === k);
+  if (d && d.kind === 'sanga') return true;
+  if (p.tomari) return true;
+  if (p.grp === '御朱印') { const nx = key(addD(new Date(k + 'T00:00:00'), 1)); return gAs(nx).includes(p.key.slice(2)); }
+  return false;
+}
+const dinnerOn = (k, p) => !p.off && (mealOf(k).dinner[p.key] ?? dinnerDefault(k, p));
+function mealCount(k) { const ps = mealPeople(k), M = mealOf(k); return { L: ps.filter(p => lunchOn(k, p)).length + (Number(M.extraL) || 0), D: ps.filter(p => dinnerOn(k, p)).length + (Number(M.extraD) || 0) }; }
+/* お弁当の手配表：お弁当担当が1枚で分かる（何を・どこで・何個・予約済みか当日買うか） */
+function bentoHTML(k) {
+  const d = DAYS.find(x => x.k === k), c = mealCount(k), dash = '<span class="bt-none">（未記入）</span>';
+  const block = m => { const o = ordOf(k, m), n = m === 'L' ? c.L : c.D, b = mealBreak(k, m);
+    if (!n) return `<section class="bt-b none"><div class="bt-h"><span class="bt-m">${MEALS[m]}</span><span class="bt-n">なし</span></div></section>`;
+    const no = isNo(o.how), kv = [['お店', o.vendor], ['場所', o.place], ['お弁当', o.menu]];
+    return `<section class="bt-b"><div class="bt-h"><span class="bt-m">${MEALS[m]}</span><span class="bt-n"><b>${n}</b>${no ? '人' : '個'}</span><span class="bt-how ${o.how || 'mi'}">${HOW[o.how] || '手配 未定'}</span></div>
+      <table class="bt-kv">${kv.map(([l, v]) => `<tr><th>${l}</th><td>${no ? '—' : esc(v) || dash}</td></tr>`).join('')}</table>
+      <div class="bt-sub"><b>内訳</b>　${b.list.join('・')}</div>
+      ${m === 'D' ? `<div class="bt-sub"><b>夕食の人</b>　${b.names.map(esc).join('、')}</div>` : ''}</section>`; };
+  return `<div class="bt"><div class="bt-top"><div><div class="bt-t">お弁当の手配</div><div class="bt-d">${wafuDate(d)}</div></div><div class="bt-s">品川神社</div></div>
+    ${block('L')}${block('D')}
+    <div class="bt-f"><span>担当：</span><span class="bt-line"></span><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`;
+}
+function bentoDlg() {
+  const d = DAYS.find(x => x.k === mealK);
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><div class="dlg btdlg"><h2>お弁当の手配表</h2>
+    <div class="ss-prev bt-prev" id="btprev">${bentoHTML(mealK)}</div>
+    <div class="row"><span class="note" id="btmsg"></span><span class="sp"></span><button type="button" class="btn" id="cancel">閉じる</button><button type="button" class="btn pri" id="btgo">PDFで保存</button></div></div></div>`;
+  const pv = document.getElementById('btprev'), sh = pv.firstElementChild, fit = () => { const k = pv.clientWidth / 794; sh.style.transform = `scale(${k})`; pv.style.height = `${1123 * k}px`; };
+  fit(); window.addEventListener('resize', fit, { once: true });
+  document.getElementById('cancel').onclick = close;
+  document.getElementById('btgo').onclick = e => savePdf([() => { const t = document.createElement('div'); t.innerHTML = bentoHTML(mealK); return t.firstElementChild; }], `お弁当の手配_${wafuDate(d).replace(/（.*$/, '')}.pdf`, e.currentTarget, document.getElementById('btmsg'), true);
+}
+/* 予約のチェックシート：当日買いに行く分を除いて、業者ごとに日付・食事・内容・個数を並べる。□に印を付けながら予約する */
+function yoyakuRows() {
+  const rows = [];
+  kDays().forEach(d => { const c = mealCount(d.k); ['L', 'D'].forEach(m => { const o = ordOf(d.k, m), n = m === 'L' ? c.L : c.D;
+    if (!n || o.how === 'kaini' || isNo(o.how)) return; rows.push({ d, m, o, n }); }); });
+  const groups = [];
+  rows.forEach(r => { const v = r.o.vendor || ''; let g = groups.find(x => x.v === v); if (!g) groups.push(g = { v, rows: [] }); g.rows.push(r); });
+  groups.sort((a, b) => (a.v ? 0 : 1) - (b.v ? 0 : 1));   // 業者が決まっていない分は最後に
+  return groups;
+}
+function yoyakuPages() {
+  const groups = yoyakuRows(), ROW = 35, HEAD = 80, BUDGET = 820, pages = [[]]; let used = 0;   // 1ページに入る高さ（px）で区切る
+  groups.forEach(g => { g.rows.forEach((r, i) => { let cur = pages[pages.length - 1], pg = cur.find(x => x.v === g.v);
+    if (used + ROW + (pg ? 0 : HEAD) > BUDGET) { pages.push([]); used = 0; cur = pages[pages.length - 1]; pg = null; }
+    if (!pg) { cur.push(pg = { v: g.v, place: g.rows.map(x => x.o.place).find(Boolean) || '', total: g.rows.reduce((a, x) => a + x.n, 0), rows: [], cont: i > 0 }); used += HEAD; }
+    pg.rows.push(r); used += ROW; }); });
+  const total = pages.length;
+  return pages.map((gs, pi) => `<div class="bt yk"><div class="bt-top"><div><div class="bt-t">お弁当の予約チェックシート</div><div class="bt-d sm">${wareki(Y)} 正月（${kDays()[0].label}〜${kDays()[kDays().length - 1].label}）</div></div><div class="bt-s">品川神社${total > 1 ? `　${pi + 1}/${total}` : ''}</div></div>
+    ${gs.length ? gs.map(g => `<section class="yk-g"><div class="yk-h"><b>${esc(g.v) || '業者 未定'}</b>${g.cont ? '<span class="yk-c">（つづき）</span>' : ''}<span class="yk-p">${esc(g.place)}</span><span class="yk-t">合計 <b>${g.total}</b>個</span></div>
+      <table class="yk-tb"><thead><tr><th class="ck">予約</th><th>日付</th><th>食事</th><th>お弁当の内容</th><th class="r">個数</th><th>メモ</th></tr></thead><tbody>${g.rows.map(r => `<tr><td class="ck"><span class="box ${r.o.how === 'yoyaku' ? 'on' : ''}">${r.o.how === 'yoyaku' ? '✓' : ''}</span></td><td class="${dayCls(r.d)}">${r.d.label}（${r.d.sub}）</td><td>${MEALS[r.m]}</td><td>${esc(r.o.menu) || '<span class="bt-none">（未記入）</span>'}</td><td class="r"><b>${r.n}</b></td><td class="memo"></td></tr>`).join('')}</tbody></table></section>`).join('')
+      : '<p class="bt-sub">予約する分はありません（すべて当日買いに行く、または個数が0）。</p>'}
+    <div class="bt-f"><span>✓＝予約済みにしてある分　夕食の個数はその日に変わることがあります</span><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`);
+}
+function yoyakuDlg() {
+  const pages = yoyakuPages();
+  document.getElementById('dlg').innerHTML = `<div class="overlay"><div class="dlg btdlg"><h2>予約のチェックシート</h2>
+    <div class="note">当日買いに行く分と、手配が「なし」の夕食を除いて、業者ごとにまとめています。${pages.length > 1 ? `${pages.length}ページ（見本は1ページ目）。` : ''}</div>
+    <div class="ss-prev bt-prev" id="ykprev">${pages[0]}</div>
+    <div class="row"><span class="note" id="ykmsg"></span><span class="sp"></span><button type="button" class="btn" id="cancel">閉じる</button><button type="button" class="btn pri" id="ykgo">PDFで保存</button></div></div></div>`;
+  const pv = document.getElementById('ykprev'), sh = pv.firstElementChild, fit = () => { const k = pv.clientWidth / 794; sh.style.transform = `scale(${k})`; pv.style.height = `${1123 * k}px`; };
+  fit(); window.addEventListener('resize', fit, { once: true });
+  document.getElementById('cancel').onclick = close;
+  document.getElementById('ykgo').onclick = e => savePdf(yoyakuPages().map(h => () => { const t = document.createElement('div'); t.innerHTML = h; return t.firstElementChild; }), `お弁当の予約チェックシート_${wareki(Y)}.pdf`, e.currentTarget, document.getElementById('ykmsg'), true);
+}
+const ovHTML = (v, opt) => opt ? '<span class="kind">—</span>' : v ? esc(v) : '<span class="ov-mi">未記入</span>';
+function vMeal() {
+  const KD = kDays(); if (!KD.some(d => d.k === mealK)) mealK = (KD.find(d => d.k === key(new Date())) || KD[0] || {}).k;
+  const d = KD.find(x => x.k === mealK); if (!d) return '<div class="card">日程がありません</div>';
+  const k = d.k, M = mealOf(k), ps = mealPeople(k), c = mealCount(k);
+  // 準備の状況：手配が要るのは個数が1以上の食事
+  const items = KD.flatMap(x => { const n = mealCount(x.k); return ['L', 'D'].map(m => ({ x, m, n: m === 'L' ? n.L : n.D, o: ordOf(x.k, m) })).filter(it => it.n > 0); });
+  const cnt = h => items.filter(it => it.o.how === h).length, noShop = items.filter(it => !it.o.vendor && !isNo(it.o.how)).length, noB = items.filter(it => isNo(it.o.how)).length;
+  const totL = KD.reduce((a, x) => a + mealCount(x.k).L, 0), totD = KD.reduce((a, x) => a + mealCount(x.k).D, 0);
+  const stat = (l, v, cls = '') => `<div class="mstat ${cls}"><span>${l}</span><b>${v}</b></div>`;
+  const inp = (x, m, f, ph, w) => isNo(ordOf(x.k, m).how) ? `<span class="nodash" style="width:${w}px">—</span>` : `<input class="in" data-of="${m},${f}" data-k="${x.k}" value="${esc(ordOf(x.k, m)[f])}" placeholder="${ph}" style="width:${w}px">`;
+  const howSel = (x, m) => { const h = ordOf(x.k, m).how; return `<select class="in hsel ${h || 'mi'}" data-of="${m},how" data-k="${x.k}"><option value="">未定</option>${howOpts(m).map(([v, l]) => `<option value="${v}" ${h === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`; };
+  const planCells = (x, m, n) => n ? `<td class="n"><b>${n}</b></td><td>${inp(x, m, 'vendor', 'お店', 120)}</td><td>${inp(x, m, 'place', '場所', 130)}</td><td>${inp(x, m, 'menu', 'お弁当', 120)}</td><td>${howSel(x, m)}</td>` : '<td class="n kind">0</td><td colspan="4" class="kind">なし</td>';
+  const plan = KD.map(x => { const n = mealCount(x.k); return `<tr class="${x.k === k ? 'cur' : ''}"><td class="pd"><button class="linkish ${dayCls(x)}" data-mday="${x.k}" data-mgo="1">${x.label}（${x.sub}）</button></td>${planCells(x, 'L', n.L)}${planCells(x, 'D', n.D)}</tr>`; }).join('');
+  const chips = KD.map(x => { const n = mealCount(x.k); return `<button class="dchip ${dayCls(x)} ${x.k === k ? 'on' : ''}" data-mday="${x.k}">${x.label}<small>（${x.sub}）昼${n.L}・夕${n.D}</small></button>`; }).join('');
+  const grps = ['神職', '臨時神職', '巫女', '御朱印', '台所'];
+  const rows = grps.map(g => { const xs = ps.filter(p => p.grp === g); if (!xs.length) return '';
+    return `<tr class="grp"><td colspan="3">${g}（${xs.filter(p => !p.off).length}人）${g === '神職' ? ' <span class="kind">神社くんの休み申告から</span>' : g === '臨時神職' ? ' <span class="kind">神社くんのホームから</span>' : ''}</td></tr>` + xs.map(p => p.off
+      ? `<tr class="off"><td>${esc(p.name)}</td><td colspan="2"><span class="tag">休み</span></td></tr>`
+      : `<tr><td>${esc(p.name)}${p.canStay ? ` <button class="tog sm ${p.tomari ? 'on' : ''}" data-mst="${p.key.slice(2)}" aria-pressed="${p.tomari}">泊まり</button>` : ''}</td><td><button class="tog ${lunchOn(k, p) ? 'on' : ''}" data-ml="${p.key}" aria-pressed="${lunchOn(k, p)}">${lunchOn(k, p) ? 'あり' : 'なし'}</button></td><td><button class="tog ${dinnerOn(k, p) ? 'on' : ''}" data-md="${p.key}" aria-pressed="${dinnerOn(k, p)}">${dinnerOn(k, p) ? 'あり' : 'なし'}</button></td></tr>`).join(''); }).join('');
+  const step = (f, v) => `<span class="need big"><button data-mx="${f},-1" aria-label="減らす">−</button><b>${v}</b><button data-mx="${f},1" aria-label="増やす">＋</button></span>`;
+  return `<div class="card" style="display:grid;gap:14px">
+    <div class="row"><h2>食事の準備</h2><span class="sp"></span><button class="btn pri" id="yoyaku-pdf">予約のチェックシート</button></div>
+    <div class="mstats">${stat('お昼の合計', `${totL}個`)}${stat('夕食の合計', `${totD}個`)}${stat('予約済み', `${cnt('yoyaku')}件`, 'ok')}${stat('当日買いに行く', `${cnt('kaini')}件`, 'kaini')}${stat('夕食なし', `${noB}件`, 'nb')}${stat('手配 未定', `${cnt('')}件`, cnt('') ? 'mi' : '')}${stat('お店 未記入', `${noShop}件`, noShop ? 'mi' : '')}</div>
+    <div class="scroll"><table class="t plan"><thead><tr><th rowspan="2">日付</th><th colspan="5" class="mh">お昼</th><th colspan="5" class="mh">夕食</th></tr>
+      <tr>${'<th class="n">個数</th><th>業者</th><th>お店の場所</th><th>お弁当</th><th>手配</th>'.repeat(2)}</tr></thead><tbody>${plan}</tbody></table></div>
+  </div>
+  <div class="card" style="display:grid;gap:12px" id="mealday">
+    <div class="dchips">${chips}</div>
+    <div class="row"><h2>${wafuDate(d)}</h2><span class="sp"></span><button class="btn pri" id="bento-pdf">お弁当の手配表</button></div>
+    <div class="orders">${['L', 'D'].map(m => { const o = ordOf(k, m), n = m === 'L' ? c.L : c.D; return `<section class="order">
+      <div class="order-h"><b>${MEALS[m]}</b><span class="order-n"><b>${n}</b>${isNo(o.how) ? '人' : '個'}</span></div>
+      ${n ? `<dl class="oinfo"><dt>業者</dt><dd data-ov="${m},vendor" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.vendor, isNo(o.how))}</dd><dt>お店の場所</dt><dd data-ov="${m},place" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.place, isNo(o.how))}</dd><dt>お弁当</dt><dd data-ov="${m},menu" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.menu, isNo(o.how))}</dd><dt>手配</dt><dd>${o.how ? `<span class="hw ${o.how}">${HOW[o.how]}</span>` : '<span class="ov-mi">未定</span>'}</dd></dl>` : '<p class="kind">この日はありません</p>'}
+    </section>`; }).join('')}</div>
+    <p class="kind" style="margin:0">業者・場所・お弁当・手配は、上の「食事の準備」の表で入力します。</p>
+    <div class="scroll"><table class="t meal"><thead><tr><th>名前</th><th>お昼</th><th>夕食</th></tr></thead><tbody>${rows}
+      <tr class="grp"><td colspan="3">追加（来客・予備など）</td></tr><tr><td>追加</td><td>${step('extraL', Number(M.extraL) || 0)}</td><td>${step('extraD', Number(M.extraD) || 0)}</td></tr></tbody></table></div>
+  </div>`;
+}
+document.addEventListener('click', e => {
+  if (isInput() || isGInput()) return;
+  const gc = e.target.closest('[data-gcell]'); if (gc) { const k = gc.dataset.gcell, id = gc.dataset.id, a = S.goAssign[k] = gAs(k).slice(), i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); save(); render(); return; }
+  const kc = e.target.closest('[data-kcell]'); if (kc) { const k = kc.dataset.kcell, id = kc.dataset.id; if (S.kitchen[k] === id) delete S.kitchen[k]; else S.kitchen[k] = id; save(); render(); return; }
+  const ga = e.target.closest('[data-gadj]'); if (ga) { const k = ga.dataset.k, v = Math.max(0, gNeed(k) + Number(ga.dataset.gadj)); if (v === gNeedRule(k)) delete S.goNeed[k]; else S.goNeed[k] = v; save(); render(); return; }
+  if (e.target.closest('#gmk')) { const has = Object.values(S.goAssign).some(a => a.length) || Object.keys(S.kitchen).length; if (has && !gSure) { gSure = true; render(); return; } gSure = false; gDraft(); save(); render(); return; }
+  if (gSure && tab === 'goshuin') { gSure = false; render(); }
+  const ge = e.target.closest('[data-gedit]'); if (ge) { gEditDlg(ge.dataset.gedit, ge.dataset.team); return; }
+  const md = e.target.closest('[data-mday]'); if (md) { mealK = md.dataset.mday; render(); if (md.dataset.mgo) document.getElementById('mealday').scrollIntoView({ block: 'start' }); return; }
+  const ml = e.target.closest('[data-ml]'); if (ml) { const M = mealW(mealK), p = mealPeople(mealK).find(x => x.key === ml.dataset.ml); M.lunchOff[p.key] = lunchOn(mealK, p); if (!M.lunchOff[p.key]) delete M.lunchOff[p.key]; save(); render(); return; }
+  const mdn = e.target.closest('[data-md]'); if (mdn) { const M = mealW(mealK), p = mealPeople(mealK).find(x => x.key === mdn.dataset.md); const v = !dinnerOn(mealK, p); if (v === dinnerDefault(mealK, p)) delete M.dinner[p.key]; else M.dinner[p.key] = v; save(); render(); return; }
+  const mx = e.target.closest('[data-mx]'); if (mx) { const [f, n] = mx.dataset.mx.split(','), M = mealW(mealK); M[f] = Math.max(0, (Number(M[f]) || 0) + Number(n)); save(); render(); return; }
+  const st = e.target.closest('[data-mst]'); if (st) { const M = mealW(mealK), id = st.dataset.mst; if (M.stay[id]) delete M.stay[id]; else M.stay[id] = true; delete M.dinner['g:' + id]; save(); render(); return; }
+  const xc = e.target.closest('[data-xcell]'); if (xc) { const t = S.temps[xc.dataset.id]; if (t.days[xc.dataset.xcell]) delete t.days[xc.dataset.xcell]; else t.days[xc.dataset.xcell] = true; save(); render(); return; }
+  const xr = e.target.closest('[data-xrm]'); if (xr) { if (!xr.dataset.sure) { xr.dataset.sure = 1; xr.textContent = 'もう一度押すと削除'; return; } delete S.temps[xr.dataset.xrm]; save(); render(); return; }
+  if (e.target.closest('#temp-add')) { const v = document.getElementById('temp-new').value.trim(); if (v) { S.temps['x' + Date.now()] = { name: v, days: {} }; save(); render(); } return; }
+  const oh = e.target.closest('[data-oh]'); if (oh) { const [m, v] = oh.dataset.oh.split(','), o = ordW(mealK, m); o.how = o.how === v ? '' : v; save(); render(); return; }
+  if (e.target.closest('#bento-pdf')) { bentoDlg(); return; }
+  if (e.target.closest('#yoyaku-pdf')) { yoyakuDlg(); return; }
+  const tr = e.target.closest('[data-trm]'); if (tr) { S.tomari = (S.tomari || []).filter(n => n !== tr.dataset.trm); save(); render(); return; }
+  if (e.target.closest('#tomari-add')) { const v = document.getElementById('tomari-new').value.trim(); if (v && !(S.tomari || []).includes(v)) { S.tomari = [...(S.tomari || []), v]; save(); render(); } return; }
+});
+document.addEventListener('change', e => { const el = e.target, of = el.dataset && el.dataset.of; if (!of) return;
+  const [m, f] = of.split(','), k = el.dataset.k || mealK, v = el.value.trim(), o = ordW(k, m); o[f] = v;
+  const sync = (ff, val) => { document.querySelectorAll(`[data-of="${m},${ff}"][data-k="${k}"]`).forEach(x => { if (x !== el) x.value = val; }); document.querySelectorAll(`[data-ov="${m},${ff}"][data-k="${k}"]`).forEach(x => { x.innerHTML = ovHTML(val, !!x.dataset.opt); }); };
+  sync(f, v);
+  if (f === 'vendor' && v && !o.place) { const hit = kDays().flatMap(x => ['L', 'D'].map(mm => ordOf(x.k, mm))).find(x => x.vendor === v && x.place); if (hit) { o.place = hit.place; sync('place', hit.place); } }
+  save(); if (f === 'how' || !el.closest('.plan')) render(); });
+document.addEventListener('keydown', e => { const c = e.target.closest?.('[data-gcell],[data-kcell]'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); c.click(); }
+  if (e.target.id === 'tomari-new' && e.key === 'Enter') { e.preventDefault(); document.getElementById('tomari-add').click(); }
+  if (e.target.id === 'temp-new' && e.key === 'Enter') { e.preventDefault(); document.getElementById('temp-add').click(); }
+  const xc = e.target.closest?.('[data-xcell]'); if (xc && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); xc.click(); } });
+
+function render() {
+  document.body.classList.toggle('input-mode', isInput() || isGInput());
+  if (isInput()) { document.getElementById('view').innerHTML = vInput(); return; }
+  if (isGInput()) { document.getElementById('view').innerHTML = vGInput(); return; }
+  const ys = new Set([...Array.from({ length: Math.max(Y, new Date().getFullYear() + 1) - 2027 + 3 }, (_, i) => 2027 + i), ...Object.keys(S.years || {}).map(Number), Y]);
+  document.getElementById('yearSel').innerHTML = [...ys].sort((a, b) => a - b).map(y => `<option value="${y}" ${y === Y ? 'selected' : ''}>${wareki(y)}</option>`).join('');
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  document.getElementById('view').innerHTML = tab === 'shift' ? vShift() : tab === 'day' ? vDay() : tab === 'shozoku' ? vShozoku() : tab === 'members' ? vMembers() : tab === 'goshuin' ? vGoshuin() : tab === 'meal' ? vMeal() : vRules();
+  centerChips();
+}
+/* 日付の並び：選んだ日を横の真ん中に（作り直すと左端に戻るため。2026-11-11 本人） */
+function centerChips() { document.querySelectorAll('#view .dchips').forEach(box => { const on = box.querySelector('.on'); if (!on) return;
+  const r = on.getBoundingClientRect(), b = box.getBoundingClientRect(); box.scrollLeft += (r.left + r.width / 2) - (b.left + b.width / 2); }); }
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
+  const c = e.target.closest('[data-cell]'); if (c) { const k = c.dataset.cell, id = c.dataset.id, a = S.assign[k] = assigned(k).slice(); const i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); makePairs(k); save(); render(); return; }
+  const gd = e.target.closest('[data-goday]'); if (gd) { dayK = gd.dataset.goday; tab = 'day'; pairSel = null; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
+  const dy = e.target.closest('[data-day]'); if (dy) { dayK = dy.dataset.day; pairSel = null; render(); return; }
+  const tc = e.target.closest('[data-tc]'); if (tc) { const [id, js] = tc.dataset.tc.split(','), j = Number(js), row = S.time[dayK][id], dk = DAYS.find(x => x.k === dayK).kind, jo = dk === 'sanga' ? JOB_ORDER : dk !== 'shigoto' ? ['J', 'R', 'L'] : JOB_ORDER_LATER; row[j] = jo[(jo.indexOf(row[j]) + 1) % jo.length]; save(); render(); return; }
+  const kgb = e.target.closest('[data-kg]'); if (kgb) { const id = kgb.dataset.kg, a = kiganOf(dayK).slice(), i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); S.kigan[dayK] = a; makeTime(dayK); save(); render(); return; }
+  const pm = e.target.closest('[data-pm]'); if (pm) { const id = pm.dataset.pm;
+    if (!pairSel || pairSel === id) pairSel = pairSel === id ? null : id;
+    else { const ps = S.pairs[dayK] || []; let a, b; ps.forEach((g, gi) => g.forEach((x, xi) => { if (x === pairSel) a = [gi, xi]; if (x === id) b = [gi, xi]; }));
+      if (a && b) { ps[a[0]][a[1]] = id; ps[b[0]][b[1]] = pairSel; } pairSel = null; makeTime(dayK); save(); }
+    render(); return; }
+  if (e.target.closest('#repair')) { delete S.kigan[dayK]; makePairs(dayK); pairSel = null; save(); render(); return; }
+  const adj = e.target.closest('[data-adj]'); if (adj) { const k = adj.dataset.k; S.adj[k] = (S.adj[k] || 0) + Number(adj.dataset.adj); if (needOf(DAYS.find(d => d.k === k)).n === 0 && S.adj[k] < 0) S.adj[k] = -Math.max(Number(S.rules.need[DAYS.find(d => d.k === k).kind]) || 0, 0); save(); render(); return; }
+  const mk = e.target.closest('#mk'); if (mk) { const has = Object.values(S.assign).some(a => a.length); if (has && !mkSure) { mkSure = true; render(); return; } mkSure = false; draft(); save(); render(); return; }
+  if (e.target.closest('#addday')) { addDayDlg(); return; }
+  if (e.target.closest('#pdf')) { pdfDlg(); return; }
+  const cp = e.target.closest('#incopy, [data-gcopy]'); if (cp) { const gt = cp.dataset.gcopy, url = gt ? G_URLS[gt] : IN_URL, box = document.getElementById(gt ? 'gurl-' + gt : 'inurl'); const done = t => { cp.textContent = t; setTimeout(() => cp.textContent = 'コピー', 1500); };
+    try { navigator.clipboard.writeText(url).then(() => done('コピーしました'), () => { getSelection().selectAllChildren(box); done('選びました'); }); } catch (er) { getSelection().selectAllChildren(box); done('選びました'); } return; }
+  if (e.target.closest('#hpdf')) { haichiDlg(); return; }
+  const dd = e.target.closest('[data-delday]'); if (dd) { e.stopPropagation(); delDay(dd.dataset.delday); return; }
+  if (mkSure) { mkSure = false; render(); }
+  const ed = e.target.closest('[data-edit]'); if (ed) { editDlg(ed.dataset.edit); return; }
+  const rs = e.target.closest('#reset'); if (rs) { if (rs.dataset.sure) { S = seedState(); draft(); gDraft(); save(); render(); } else { rs.dataset.sure = 1; rs.textContent = 'もう一度押すと最初に戻します'; } }
+});
+document.addEventListener('keydown', e => { const c = e.target.closest?.('[data-cell]'); if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); c.click(); } });
+document.addEventListener('change', e => { if (e.target.id === 'yearSel') switchYear(Number(e.target.value)); });
+document.addEventListener('change', e => {
+  const el = e.target, R = S.rules;
+  if (el.closest('#mf')) return;
+  if (el.dataset.need) R.need[el.dataset.need] = Number(el.value) || 0;
+  else if (el.dataset.goneed) (R.goNeed = R.goNeed || {})[el.dataset.goneed] = Number(el.value) || 0;
+  else if (el.dataset.stock) R.stock[el.dataset.stock] = el.value === '' ? '' : Number(el.value);
+  else if (el.id === 'bookOn') R.bookOn = el.checked;
+  else if (['perPerson', 'vetMin', 'newMax', 'sizeSM', 'sizeML'].includes(el.id)) R[el.id] = Number(el.value) || 0;
+  else if (el.id === 'rokujiBy') R.rokujiBy = el.value;
+  else if (el.name === 'mixMode') R.mixMode = el.value;
+  else if (el.id.startsWith('h-')) { const f = el.id.slice(2); R.haichi[f] = el.type === 'checkbox' ? el.checked : el.type === 'time' ? el.value : Number(el.value) || 0; if (f === 'kiganN') S.kigan = {}; DAYS.forEach(d => makeTime(d.k)); }
+  else if (el.id === 'groupSize') { R.groupSize = Number(el.value); S.kigan = {}; DAYS.forEach(d => makePairs(d.k)); }
+  else if (el.id === 'groupSizeOther') { R.groupSizeOther = Number(el.value); DAYS.forEach(d => makePairs(d.k)); }
+  else if (el.id === 'friendNew') { R.friendNew = el.checked; DAYS.forEach(d => makePairs(d.k)); }
+  else return;
+  save(); render();
+});
+/* ===== シフト登録URL（本番。神社くんの受け口に直接送る。2026-11-12）=====
+   名前を選ぶ → その人の希望（○×）と基本情報を読む → 基本情報を確かめる（変わっていれば直す）→ 送信。
+   本人確認はないが、基本情報は変わっているかもしれないので確かめさせる（2026-11-12 本人） */
+const apiTeam = () => ({ '#nyuryoku': 'miko', '#goshuin': 'goshuin', '#daidokoro': 'kitchen' })[location.hash] || '';
+const apiMine = new Set(), apiInfo = {};
+async function sgApi(action, body) {
+  const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action }, body)) });
+  const j = await res.json();
+  if (!j.ok) { const e = new Error(j.message || j.error || 'エラー'); e.code = j.error; throw e; }
+  return j;
+}
+const apiCard = h => `<section class="in-card">${h}</section>`;
+function apiErr(er, near) {
+  let m = document.getElementById('apiMsg');
+  if (!m) { m = document.createElement('p'); m.id = 'apiMsg'; m.className = 'in-msg'; }
+  const box = near && near.closest('.in-send, .in-card'); (box || document.getElementById('view')).prepend(m);
+  m.textContent = er && er.code ? er.message : 'つながりませんでした。電波のよいところで、もう一度押してください。';
+}
+async function apiInit() {
+  const team = apiTeam(), v = document.getElementById('view');
+  document.body.classList.add('input-mode');
+  inp = { step: 'name' }; ginp = { step: 'name' }; apiMine.clear();
+  if (!team) { v.innerHTML = apiCard('<h2>正月</h2><p class="in-note">このページは神社くんの「正月」から開きます。シフトの希望は、神社から届いたURLから入れてください。</p>'); return; }
+  v.innerHTML = apiCard('<p class="in-note">読み込んでいます…</p>');
+  try {
+    const r = await sgApi('sgForm', { team });
+    if (apiTeam() !== team) return;   // 読み込み中にURLが変わった
+    Y = Number(r.year) || Y;
+    S = { rules: JSON.parse(JSON.stringify(DEFAULT_RULES)), members: [], goMembers: [], avail: {}, sent: {}, goAvail: {}, goSent: {}, extraDays: r.extraDays || [], assign: {}, adj: {}, pairs: {}, time: {}, kigan: {}, goAssign: {}, goNeed: {}, kitchen: {}, meals: {}, temps: {}, years: {} };
+    (r.people || []).forEach(p => {
+      if (team === 'miko') { S.members.push({ id: p.id, name: p.name, univ: '', height: '', tabi: '', friends: [], ng: [] }); S.avail[p.id] = {}; if (p.sent) S.sent[p.id] = p.sent; }
+      else { S.goMembers.push({ id: p.id, name: p.name, team }); S.goAvail[p.id] = {}; if (p.sent) S.goSent[p.id] = p.sent; }
+    });
+    DAYS = buildDays(); render();
+  } catch (e) { v.innerHTML = apiCard('<h2>読み込めませんでした</h2><p class="in-note">電波のよいところで、もう一度開いてください。</p><div class="in-btns"><button class="in-btn pri" id="apiRetry">もう一度</button></div>'); }
+}
+/* 巫女の基本情報：直した内容は送信のときにまとめて送る（受け口で置き換える）。はじめての人は仮の id「_new」 */
+function apiSaveInfo(f) {
+  const v = i => document.getElementById(i).value.trim(), msg = document.getElementById('i-msg');
+  const isNew = !inp.id || inp.id === '_new', name = v('i-name');
+  if (!name) { msg.textContent = '名前を入れてください。'; return; }
+  const ng = [...f.querySelectorAll('input[name=i-ng]')].map(x => x.value).filter(x => !x.startsWith('_'));
+  const fr = [...f.querySelectorAll('input[name=i-fr]')].map(x => x.value).filter(x => !ng.includes(x) && !x.startsWith('_'));
+  const info = { univ: v('i-univ'), grade: v('i-grade'), age: v('i-age'), height: v('i-height'), tabi: v('i-tabi'), friends: fr, ng };
+  let me = isNew ? null : byId(inp.id);
+  if (isNew) { S.members = S.members.filter(x => x.id !== '_new'); me = { id: '_new', name, birth: '' }; S.members.push(me); S.avail._new = S.avail._new || {}; inp.id = '_new'; }
+  if (String(age(me) ?? '') !== info.age) { me.birth = ''; me.ageAt = { age: info.age === '' ? '' : Number(info.age), year: Y }; }
+  Object.assign(me, { univ: info.univ, grade: info.grade, school: info.grade === 'grad' ? 'grad' : 'student', height: Number(info.height) || '', tabi: Number(info.tabi) || '', friends: fr, ng });
+  apiInfo[inp.id] = info;
+  inGoShift(); render(); window.scrollTo(0, 0);
+}
+function apiNewG() {
+  const name = document.getElementById('gi-name').value.trim();
+  if (!name) { document.getElementById('gi-msg').textContent = '名前を入れてください。'; return; }
+  S.goMembers = S.goMembers.filter(x => x.id !== '_new'); S.goMembers.push({ id: '_new', name, team: gHashTeam() }); S.goAvail._new = {};
+  gGoShift('_new'); render(); window.scrollTo(0, 0);
+}
+async function apiSend(btn) {
+  const team = apiTeam(), miko = team === 'miko', st = miko ? inp : ginp, id = st.id, list = miko ? S.members : S.goMembers, me = list.find(x => x.id === id);
+  if (!me || btn.disabled) return;
+  const label = btn.textContent; btn.disabled = true; btn.textContent = '送信しています…';
+  const body = { team, days: st.ans };
+  if (id === '_new') body.name = me.name; else body.id = id;
+  if (miko && apiInfo[id]) body.info = apiInfo[id];
+  try {
+    const r = await sgApi('sgSubmit', body), nid = String(r.id);
+    if (id === '_new') {   // 受け口が付けた id に置き換える（同じ名前の人がいたら、その人にまとめる）
+      list.splice(list.indexOf(me), 1); if (!list.some(x => x.id === nid)) list.push(Object.assign(me, { id: nid }));
+      [S.avail, S.sent, S.goAvail, S.goSent].forEach(o => delete o._new);
+    }
+    (miko ? S.avail : S.goAvail)[nid] = r.days || {}; (miko ? S.sent : S.goSent)[nid] = r.at; delete apiInfo[id]; apiMine.add(nid);
+    st.id = nid; st.step = 'done'; render(); window.scrollTo(0, 0);
+  } catch (er) { btn.disabled = false; btn.textContent = label; apiErr(er, btn); }
+}
+if (MODE === 'api') {
+  document.addEventListener('click', async e => {
+    if (e.target.closest('#apiRetry')) { apiInit(); return; }
+    const pk = e.target.closest('[data-in-pick],[data-g-pick]');
+    if (pk) {   // 名前を選んだ：その人の希望を先に読む
+      const id = pk.dataset.inPick || pk.dataset.gPick, team = apiTeam();
+      if (id === 'new' || id.startsWith('_') || apiMine.has(id)) return;
+      e.stopImmediatePropagation(); if (pk.disabled) return; pk.disabled = true;
+      try { const r = await sgApi('sgMine', { team, id }); (team === 'miko' ? S.avail : S.goAvail)[id] = r.days || {}; if (r.at) (team === 'miko' ? S.sent : S.goSent)[id] = r.at;
+        if (team === 'miko' && r.info) { const m = byId(id); if (m) Object.assign(m, r.info, { ng: [], school: r.info.grade === 'grad' ? 'grad' : 'student' }); }   // 確かめてもらう基本情報（NG は受け口が返さない）
+        apiMine.add(id); pk.disabled = false; pk.click(); }
+      catch (er) { pk.disabled = false; apiErr(er); }
+      return;
+    }
+    const sd = e.target.closest('[data-in-send],[data-g-send]');
+    if (sd) { e.stopImmediatePropagation(); apiSend(sd); }
+  }, true);
+  document.addEventListener('submit', e => { if (e.target.id !== 'inf' && e.target.id !== 'gnf') return; e.preventDefault(); e.stopImmediatePropagation(); if (e.target.id === 'inf') apiSaveInfo(e.target); else apiNewG(); }, true);
+}
+if (MODE === 'api') {
+  document.getElementById('demoTag').remove();
+  apiInit();
+} else if (MODE === 'host') {
+  try { const y = Number(localStorage.getItem('sg-year')); if (y > 2000) Y = y; } catch (e) {}
+  if (!PROD && !Object.keys(HOST.rows()).length) { S = seedState(); DAYS = buildDays(); draft(); gDraft(); S.tomari = KOIZUMI.slice(); baseRows = {}; hostPut(); }   // 神社くんのデモ：見本を入れる
+  hostLoad();
+  if (PROD) document.getElementById('demoTag').remove();
+  const th = HOST.theme(); if (th) document.documentElement.setAttribute('data-theme', th);
+  ['click', 'input', 'keydown'].forEach(ev => document.addEventListener(ev, () => HOST.touch(), true));
+} else {
+try { S = JSON.parse(localStorage.getItem(SKEY) || 'null'); } catch (e) { S = null; }
+if (!S || !S.members) { S = seedState(); draft(); gDraft(); }
+if (!S.goMembers) { seedG(S); gDraft(); }
+S.tomari = KOIZUMI.slice();   // 登録欄はなし（2026-11-11 本人）
+S.temps = S.temps || {}; if (!S.homeTemp) S.homeTemp = sampleHomeTemp();
+Object.values(S.meals || {}).forEach(M => { if (M.vendor && !(M.order && M.order.L)) { M.order = M.order || {}; M.order.L = { vendor: M.vendor }; } delete M.vendor; });
+S.time = S.time || {};
+if (S.year) Y = S.year; else S.year = Y;
+}
+if (MODE !== 'api') { DAYS = buildDays(); DAYS.filter(d => !S.pairs[d.k] && assigned(d.k).length).forEach(d => makePairs(d.k)); render(); }
+</script>
+
+</body>
+</html>

@@ -146,7 +146,15 @@ a{color:var(--brand)}
   .day-acts > .add-ev{grid-column:1/-1}
 }.btn.add-ev{border-color:var(--brand);color:var(--brand)}
 .ev.one{white-space:nowrap;text-overflow:ellipsis;padding-top:0;padding-bottom:0}.ev.one b,.ev.one > span:not(.ev-ic),.ev.one .ev-tx span{display:inline;margin-right:6px}
-.date-pick{position:relative;display:inline-flex}.date-pick .cal-title{pointer-events:none}.date-over{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0;margin:0;-webkit-appearance:none;appearance:none}
+.wareki-field{display:inline-flex;min-width:0}
+.wareki-heading{font-size:18px;font-weight:700}
+.wareki-dialog{width:min(400px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--bg-2);color:var(--text);margin:auto}
+.wareki-dialog::backdrop{background:rgba(0,0,0,.35)}
+.wareki-nav,.wareki-footer{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.wareki-footer{justify-content:flex-end}
+.wareki-options{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;margin:12px 0;text-align:center}
+.wareki-options.months{grid-template-columns:repeat(4,minmax(0,1fr))}
+.wareki-options .btn{justify-content:center;min-width:0;padding:6px 0;min-height:32px}
 .diary-h{flex-wrap:wrap;gap:8px}
 .cell .top .dots.in-top{display:inline-flex;gap:2px;flex:none}
 @keyframes swipedIn{from{opacity:.35}to{opacity:1}}.cal.swiped,#dayPanel.swiped,.diary > section.swiped{animation:swipedIn .2s ease-out}
@@ -736,6 +744,11 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 }
 html.embedded .print-only{display:none !important}
 .sync-badge{position:fixed;right:max(12px, env(safe-area-inset-right, 0px));bottom:calc(76px + env(safe-area-inset-bottom, 0px));background:var(--text);color:var(--bg);padding:4px 12px;border-radius:99px;font-size:11.5px;font-weight:600;z-index:150;box-shadow:var(--shadow-2)}
+/* 正月：別ページを画面いっぱいに埋め込む（2026-11-12） */
+.main:has(.sg-wrap){padding:0}
+.sg-wrap{display:block}
+.sg-frame{display:block;width:100%;height:100vh;height:100dvh;border:0;background:var(--bg)}
+@media (max-width:900px){.sg-frame{height:calc(100dvh - 104px - env(safe-area-inset-top) - env(safe-area-inset-bottom))}}
 </style>
 </head>
 <body>
@@ -759,7 +772,11 @@ const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); r
 const WD = ['日', '月', '火', '水', '木', '金', '土'];
 const md = d => `${d.getMonth() + 1}/${d.getDate()}`;
 const mdw = d => `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）`;
-const ymdw = d => `${d.getFullYear()}年${mdw(d)}`;
+const japaneseYear = new Intl.DateTimeFormat('ja-JP-u-ca-japanese', { era: 'long', year: 'numeric' });
+const warekiYear = d => japaneseYear.format(d instanceof Date ? d : new Date(Number(d), 11, 31));
+const warekiMonth = (year, month) => `${warekiYear(new Date(Number(year), month - 1, 1))}${month}月`;
+const warekiDate = d => `${warekiYear(d)}${d.getMonth() + 1}月${d.getDate()}日`;
+const ymdw = d => `${warekiYear(d)}${mdw(d)}`;
 const TODAY = (() => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth(), t.getDate()); })();
 const TK = key(TODAY);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -1010,7 +1027,7 @@ function seed() {
   ['2027-01-04', '2027-01-05', '2027-01-06', '2027-01-07', '2027-01-08'].forEach(k => st.seasons[k] = 'shogatsu_hou');
   [...reitaisaiDays(2026), ...reitaisaiDays(2027)].forEach(k => st.seasons[k] = 'reitaisai');
 
-  /* 平時アルバイト（仮名） */
+  /* 平時助勤（仮名） */
   st.regulars = [
     { id: 'r1', name: '田中 美咲', kana: 'たなか みさき', tel: '090-0000-0001', note: '平日は不可', color: AV_COLORS[0], days: [0, 6] },
     { id: 'r2', name: '中村 陽菜', kana: 'なかむら ひな', tel: '090-0000-0002', note: '', color: AV_COLORS[1], days: [0, 1, 2, 3, 4, 5, 6] },
@@ -1034,6 +1051,7 @@ function seed() {
 
   /* 職員の休み（完全シフト制・申告制、承認なし）：1人 月8日。休めるのは平日2人・土日1人・イベントの日0人まで */
   st.leaves = [];
+  st.shogatsu = {};   // 正月（中身は正月の画面が作る）
   const from = addDays(TODAY, -60), to = addDays(TODAY, 120);
   const offCnt = {};
   for (let m = new Date(from.getFullYear(), from.getMonth(), 1); m <= to; m = new Date(m.getFullYear(), m.getMonth() + 1, 1)) {
@@ -1051,7 +1069,7 @@ function seed() {
     });
   }
 
-  /* 平時アルバイトの確定シフト（土日に1人） */
+  /* 平時助勤の確定シフト（土日に1人） */
   st.shifts = {};
   for (let d = new Date(from); d <= addDays(TODAY, 40); d = addDays(d, 1)) {
     const k = key(d), t = st.seasons[k];
@@ -1138,10 +1156,10 @@ function seed() {
   /* 掲示板 */
   const ago = (dd, h) => { const x = addDays(TODAY, -dd); x.setHours(h, 10); return x.getTime(); };
   st.board = [
-    { id: 'b1', title: '11月の七五三期（予約なし日）の動き方', body: '11/1・3・7・8・14・15は予約なしの受付順です。受付票の束は社務所の棚に用意しました。アルバイトさんの配置はシフト表を確認してください。（見本の文章）', by: 'katsushi', at: ago(1, 9), target: ['shuin'], reads: { katsushi: ago(1, 9), suzuki: ago(1, 12), r1: ago(1, 18) } },
+    { id: 'b1', title: '11月の七五三期（予約なし日）の動き方', body: '11/1・3・7・8・14・15は予約なしの受付順です。受付票の束は社務所の棚に用意しました。助勤さんの配置はシフト表を確認してください。（見本の文章）', by: 'katsushi', at: ago(1, 9), target: ['shuin'], reads: { katsushi: ago(1, 9), suzuki: ago(1, 12), r1: ago(1, 18) } },
     { id: 'b2', title: '授与所の釣り銭の補充について', body: '土曜の朝は千円札が不足しがちです。前日の締めのときに補充をお願いします。（見本の文章）', by: 'suzuki', at: ago(2, 17), target: [], reads: { suzuki: ago(2, 17), imai: ago(1, 9) } },
     { id: 'b3', title: '年末の授与品の入荷予定', body: '年末に一括で届きます。届いたら在庫画面で箱数を入力してください（12月から入力開始）。（見本の文章）', by: 'katsushi', at: ago(4, 10), target: [], reads: { katsushi: ago(4, 10) } },
-    { id: 'b4', title: '【アルバイトの方へ】12月の希望シフトの提出', body: '12月の希望を、アルバイト用ページから提出してください。（見本の文章）', by: 'imai', at: ago(6, 11), target: ['shuin'], reads: { imai: ago(6, 11), suzuki: ago(5, 10), r1: ago(5, 20), r2: ago(4, 9) } }
+    { id: 'b4', title: '【助勤の方へ】12月の希望シフトの提出', body: '12月の希望を、助勤用ページから提出してください。（見本の文章）', by: 'imai', at: ago(6, 11), target: ['shuin'], reads: { imai: ago(6, 11), suzuki: ago(5, 10), r1: ago(5, 20), r2: ago(4, 9) } }
   ];
 
   /* マニュアル・よくある質問（見本） */
@@ -1215,7 +1233,7 @@ function seed() {
     { id: 'ev2', name: '七五三期の準備', year: y, items: ['予約なし日をカレンダーに設定', '受付票の準備', '千歳飴などの授与品の確認', '繁忙期スタッフの配置'].map((t, i) => ({ t, done: i < 3, who: STAFF[(i + 1) % 3].id })) },
     { id: 'ev3', name: '例大祭準備', year: y + 1, items: ['例大祭の日程を時期の設定に登録', '繁忙期スタッフの募集', '関係先への連絡'].map((t, i) => ({ t, done: false, who: STAFF[(i + 2) % 3].id })) }
   ];
-  /* アルバイトの希望（来月分） */
+  /* 助勤の希望（来月分） */
   st.requests = {};
   const nm = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 1);
   st.regulars.forEach((p, i) => {
@@ -1275,7 +1293,7 @@ const isTemp = () => TEMP_STAFF.some(t => t.id === S.me);
 const tempOn = k => TEMP_STAFF.filter(t => S.tempWork.some(w => w.staff === t.id && w.date === k));
 const boardTargets = p => Array.isArray(p.target) ? p.target : p.target === 'all' ? ['shuin'] : [];
 const targetLabel = p => { const t = boardTargets(p); return !t.length ? '職員のみ' : t.map(g => g === 'shuin' ? '御朱印' : '巫女').join('・') + 'にも表示'; };
-const mikoPeople = () => { const seen = new Set(), out = []; ['reitaisai', 'shichigosan', 'shogatsu'].forEach(t => (S.seasonMembers[t] || []).forEach(m => { if (!seen.has(m.name)) { seen.add(m.name); out.push(m); } })); return out; };
+const mikoPeople = () => { const seen = new Set(), out = []; ['reitaisai', 'shichigosan'].forEach(t => (S.seasonMembers[t] || []).forEach(m => { if (!seen.has(m.name)) { seen.add(m.name); out.push(m); } })); return out; };
 /* 宮司は既読・未読の対象外 */
 const unreadFor = id => id === 'guji' ? [] : S.board.filter(p => !p.reads[id]);
 const ym = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}`;
@@ -1292,6 +1310,7 @@ const ICON = {
   baito: I('<circle cx="9" cy="8" r="3.2"/><path d="M3 20c.6-3.4 3-5.5 6-5.5s5.4 2.1 6 5.5"/><circle cx="17.5" cy="9" r="2.4"/><path d="M16 14.6c2.6.1 4.4 1.9 4.9 4.9"/>'),
   chart: I('<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>'),
   task: I('<rect x="3" y="4" width="18" height="17" rx="2"/><path d="m8 12 2.5 2.5L16 9"/>'),
+  shogatsu: I('<path d="M7 21V9.5L9 7"/><path d="M12 21V6l2-2.5"/><path d="M17 21v-10l2-2.5"/><path d="M4 21h16"/>'),   // 正月（門松）
   season: I('<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8.5" cy="15" r="1.4" fill="currentColor"/>'),
   lock: I('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
   more: I('<circle cx="5" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="19" cy="12" r="1.5" fill="currentColor"/>'),
@@ -1309,12 +1328,13 @@ const ICON = {
    ========================================================= */
 const NAV = [
   ['g', '毎日'], ['home', 'ホーム', ICON.home], ['diary', '日報', ICON.diary], ['board', '掲示板', ICON.board],
-  ['g', '業務'], ['kigan', '祈願予約', ICON.kigan], ['tasks', 'タスク', ICON.task], ['juyo', '授与品', ICON.juyo], ['analytics', '分析', ICON.chart], ['baito', 'アルバイト', ICON.baito], ['manual', 'マニュアル', ICON.manual],
+  ['g', '業務'], ['kigan', '祈願予約', ICON.kigan], ['tasks', 'タスク', ICON.task], ['juyo', '授与品', ICON.juyo], ['analytics', '分析', ICON.chart], ['baito', '助勤', ICON.baito], ['shogatsu', '正月', ICON.shogatsu], ['manual', 'マニュアル', ICON.manual],
   ['g', '設定'], ['seasons', '祭典の設定', ICON.season], ['ujiko', '氏子名簿', ICON.lock]
 ];
 const PHASE1_HIDE = ['kigan', 'tasks', 'analytics', 'ujiko'];
 /* 分析は宮司・職員・臨時職員に見せる（2026-11-02 本人「職員にも出していいよ」。受け口も同じ3つに許可） */
-const hiddenRoutes = () => PHASE1_HIDE.filter(r => !(r === 'analytics' && typeof P !== 'undefined' && P.me && ['guji', 'staff', 'temp'].includes(P.me.role)));
+const hiddenRoutes = () => PHASE1_HIDE.filter(r => !(r === 'analytics' && typeof P !== 'undefined' && P.me && ['guji', 'staff', 'temp'].includes(P.me.role)))
+  .concat(typeof P !== 'undefined' && P.me && !['guji', 'staff', 'temp'].includes(P.me.role) ? ['shogatsu'] : []);   // 正月は宮司・職員・臨時職員（2026-11-12 本人：臨時職員も）
 function navItems() {
   if (!PROD) return NAV;
   const list = NAV.filter(n => !hiddenRoutes().includes(n[0])).filter((n, i, a) => !(n[0] === 'g' && (!a[i + 1] || a[i + 1][0] === 'g')));
@@ -1515,7 +1535,7 @@ function dayPanel(k) {
   };
   return `
     <div class="day-h">
-      <div class="row" style="align-items:flex-start;row-gap:6px"><div style="flex:1 0 auto"><div class="small muted">${d.getFullYear()}年${k === TK ? '・今日' : ''}</div>
+      <div class="row" style="align-items:flex-start;row-gap:6px"><div style="flex:1 0 auto"><div class="small muted">${warekiYear(d)}${k === TK ? '・今日' : ''}</div>
       <div class="dt">${mdw(d)}</div></div>
       <div class="row day-acts"><button class="btn act-btn add-ev" data-act="addEvent" data-k="${k}">＋ 予定を追加</button>${k >= TK && isTemp() ? `<button class="btn act-btn" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn act-btn" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn act-btn" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn act-btn" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
       <div class="meta">${wxs}${HOLIDAYS[k] ? `<span class="tag red">${HOLIDAYS[k]}</span>` : ''}</div>
@@ -1524,7 +1544,7 @@ function dayPanel(k) {
     ${prevNote(k) && k >= key(addDays(TODAY, -7)) ? `<div class="day-sec">${noteCard(k, true)}</div>` : ''}
     <div class="day-sec"><h4>職員</h4><div class="people">${STAFF.map(status).join('')}</div>
       ${tempOn(k).length ? `<h4 style="margin-top:10px">臨時職員</h4><div class="people">${tempOn(k).map(t => `<span class="person temp-on">${avatar(t.name, t.color, true)}${t.name}　出勤</span>`).join('')}</div>` : ''}</div>
-    <div class="day-sec"><h4>アルバイト</h4>${rg.length ? `<div class="people">${POSTS.map(([po, pl]) => regularsOn(k, po).map(r => `<span class="person"><span class="mk as ${po}" style="width:22px;height:22px;font-size:11px;border-radius:50%">${pl.slice(0, 1)}</span>${pl}　${esc(r.name)}</span>`).join('')).join('')}</div>` : '<span class="small muted">なし</span>'}</div>
+    <div class="day-sec"><h4>助勤</h4>${rg.length ? `<div class="people">${POSTS.map(([po, pl]) => regularsOn(k, po).map(r => `<span class="person"><span class="mk as ${po}" style="width:22px;height:22px;font-size:11px;border-radius:50%">${pl.slice(0, 1)}</span>${pl}　${esc(r.name)}</span>`).join('')).join('')}</div>` : '<span class="small muted">なし</span>'}</div>
     <div class="day-sec"><h4>予定 <span class="sp"></span>${rt.length ? `<span class="tag" style="background:var(--shu-soft);color:var(--shu)">祭典 ${rt.length}</span>` : ''}${PROD || (s && s.mode !== 'hou') ? '' : `<span class="tag brand">祈願 ${rs.filter(r => r.type !== '外祭').length}</span>${rs.some(r => r.type === '外祭') ? '<span class="tag brand">外祭</span>' : ''}`}${vs.length ? `<span class="tag" style="background:var(--violet-soft);color:var(--violet)">来訪 ${vs.length}</span>` : ''}${os.length ? `<span class="tag gray">外出 ${os.length}</span>` : ''}</h4>${tl}</div>
     ${k === TK && unread.length ? `<div class="day-sec"><h4>未読の掲示板 <span class="badge">${unread.length}</span></h4><ul class="mini-list">${unread.slice(0, 3).map(p => `<li style="cursor:pointer" data-act="openPost" data-id="${p.id}"><span class="unread" style="width:7px;height:7px;border-radius:50%;background:var(--brand)"></span>${esc(p.title)}</li>`).join('')}</ul></div>` : ''}
 `;
@@ -1539,7 +1559,7 @@ function calPickerModal() {
     const isCur = cur.getFullYear() === y && cur.getMonth() === m, isNow = TODAY.getFullYear() === y && TODAY.getMonth() === m;
     return `<button class="ym-cell ${isCur ? 'cur' : ''} ${isNow ? 'now' : ''}" data-act="calPick" data-y="${y}" data-m="${m}"><span class="ym-m">${m + 1}月${isNow ? '<i>今月</i>' : ''}</span><ul>${evs.slice(0, 4).join('')}${evs.length > 4 ? `<li class="muted">ほか${evs.length - 4}件</li>` : ''}</ul></button>`;
   }).join('');
-  modal(`<div class="modal-h"><button class="icon-btn" data-act="pickerYear" data-n="-1" aria-label="前の年">${ICON.left}</button><h3 style="margin:0 10px">${y}年</h3><button class="icon-btn" data-act="pickerYear" data-n="1" aria-label="次の年">${ICON.right}</button><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  modal(`<div class="modal-h"><button class="icon-btn" data-act="pickerYear" data-n="-1" aria-label="前の年">${ICON.left}</button><h3 style="margin:0 10px">${warekiYear(y)}</h3><button class="icon-btn" data-act="pickerYear" data-n="1" aria-label="次の年">${ICON.right}</button><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b"><div class="ym-grid">${months}</div><div class="small muted" style="margin-top:10px">月を押すと、その月のカレンダーに移ります。毎月の月次祭は省いています。</div></div>`, 'wide');
 }
 /* 休みの残り日数（表示している月・ログイン中の人） */
@@ -1554,7 +1574,11 @@ function vHome() {
   const tr = resOn(TK), ts = seasonOf(TK);
   const sum = PROD ? `今日の来訪 ${visitsOn(TK).length}件・外出 ${outingsOn(TK).length}件${ritualsOn(TK).length ? '・' + ritualsOn(TK).map(r => r.name).join('・') : ''}${ts ? '・' + (ts.mode === 'off' ? '休み' : MODES[ts.mode].long) : ''}` : ts && ts.mode !== 'hou' ? MODES[ts.mode].long : `今日の祈願 ${tr.filter(r => r.type !== '外祭').length}件${tr.some(r => r.type === '外祭') ? '・外祭あり' : ''}・来訪 ${visitsOn(TK).length}件${ritualsOn(TK).length ? '・' + ritualsOn(TK).map(r => r.name).join('・') : ''}`;
   const isMonth = S.ui.calView === 'month';
-  const title = isMonth ? `${calCursor.getFullYear()}年${calCursor.getMonth() + 1}月` : (() => { const ws = weekStart(), we = addDays(ws, 6); return `${ws.getFullYear()}年${md(ws)}〜${md(we)}`; })();
+  const title = isMonth ? warekiMonth(calCursor.getFullYear(), calCursor.getMonth() + 1) : (() => {
+    const start = weekStart(), end = addDays(start, 6);
+    const sameYear = warekiYear(start) === warekiYear(end);
+    return `${warekiYear(start)}${md(start)}〜${sameYear ? '' : warekiYear(end)}${md(end)}`;
+  })();
   const lm = isMonth ? calCursor : new Date(parse(selDay).getFullYear(), parse(selDay).getMonth(), 1);
   const ll = leaveLeft(S.me, lm);
   const chip = (id, label, color) => `<button class="chip ${L[id] ? 'on' : 'off'}" data-act="layer" data-id="${id}"><span class="dot" style="background:${color}"></span>${label}</button>`;
@@ -1570,12 +1594,12 @@ function vHome() {
         ${isTemp() ? `<div class="leave-box"><button class="btn pri act-btn" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri act-btn" data-act="leaveModal" data-k="${selDay}">休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}</div>
       </div>
       ${isMonth ? monthView() : weekView()}
-      <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（アルバイト）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
+      <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（助勤）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
       <div class="legend">
         <span><span class="off-b" style="background:${(STAFF[1] || STAFF[0] || {}).color || 'var(--blue)'}">${esc((STAFF[1] || STAFF[0] || { name: '鈴木' }).name)}</span>名前＝休みの職員（その人の色）</span><span><span class="bunka" style="font-size:11px">節分</span> 季節の行事</span>
         <span><span class="kd inu">戌</span>戌の日</span><span><span class="kd ichi">一</span>一粒万倍日</span><span><span class="kd ten">天</span>天赦日</span>
         <span><span class="season uke">受付順</span> 予約なし</span><span><span class="season hou">法人のみ</span></span><span><span class="season nok">祈願なし</span></span>
-        <span class="small">※暦は計算値。祈願・来訪・外出・アルバイト名は仮のデータです</span>
+        <span class="small">※暦は計算値。祈願・来訪・外出・助勤名は仮のデータです</span>
       </div>
     </section>
     <aside class="card day" id="dayPanel">${dayPanel(selDay)}</aside>
@@ -1591,7 +1615,7 @@ function addEventModal(k, type = 'visit') {
   modal(`<div class="modal-h"><h3>予定を追加</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="seg" style="margin-bottom:14px" id="evType">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事']].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
-    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label><input type="date" class="input" id="evDate" value="${k}"></div><div class="field"><label>開始（先方での開始）</label>${tsel('evStart', '10:00')}</div><div class="field"><label>長さ</label>${dsel('evDur', 60)}</div></div>
+    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付'})}</div><div class="field"><label>開始（先方での開始）</label>${tsel('evStart', '10:00')}</div><div class="field"><label>長さ</label>${dsel('evDur', 60)}</div></div>
     <div class="evsec" data-sec="visit" ${type !== 'visit' ? 'hidden' : ''}>
       <div class="field"><label>来訪者（だれが来るか）</label><input class="input" id="vWho" list="vWhoList" placeholder="例：京都奉製、さわやか信用金庫"><datalist id="vWhoList">${visitors.map(v => `<option value="${esc(v)}">`).join('')}</datalist></div>
       <div class="grid2"><div class="field"><label>用件（任意）</label><input class="input" id="vPurpose" placeholder="例：授与品の打合せ"></div><div class="field"><label>対応する職員</label><select class="input" id="vHost"><option value="">未定</option>${HOSTS.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select></div></div>
@@ -1617,7 +1641,7 @@ function leaveModal(k) {
   <div class="modal-b">
     <div class="note" style="margin-bottom:14px">${ICON.info}<span>承認は不要です。登録するとすぐカレンダーに表示されます。申告の締切はありません。休みは1人<b>月${S.rules.leaveQuota}日</b>。1日に休めるのは<b>平日${S.rules.leaveCap.weekday}人・土日祝${S.rules.leaveCap.weekend}人・イベントの日${S.rules.leaveCap.event}人</b>までで、超える日は登録できません。</span></div>
     <div class="field"><label>だれの休み</label><select class="input" id="lvWho">${STAFF.map(s => `<option value="${s.id}" ${s.id === (isGuji() ? 'katsushi' : S.me) ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div>
-    <div class="grid2"><div class="field"><label>開始日</label><input type="date" class="input" id="lvFrom" value="${k}"></div><div class="field"><label>終了日</label><input type="date" class="input" id="lvTo" value="${k}"></div></div>
+    <div class="grid2"><div class="field"><label>開始日</label>${warekiField(k, {id: 'lvFrom', label: '開始日'})}</div><div class="field"><label>終了日</label>${warekiField(k, {id: 'lvTo', label: '終了日'})}</div></div>
     <div class="field"><label>メモ（任意）</label><input class="input" id="lvMemo" placeholder="例：通院のため"></div>
     ${mine.length ? `<h4 class="small muted" style="margin:6px 0">${me().name}さんの予定している休み</h4><ul class="mini-list">${mine.map(l => `<li>${mdw(parse(l.date))}<span class="muted small">${esc(l.memo)}</span><span class="sp"></span><button class="btn sm ghost" data-act="delLeave" data-id="${l.id}">取り消す</button></li>`).join('')}</ul>` : ''}
   </div>
@@ -1671,7 +1695,7 @@ function vDiary() {
   <div class="diary">
     <section class="card card-p">
       <div class="row diary-h" style="margin-bottom:14px">
-        <div class="date-pick"><span class="cal-title"><h3 style="font-size:18px">${ymdw(a.d)}</h3><span class="caret">▾</span></span><input type="date" class="date-over" value="${k}" max="${TK}" data-chg="diaryDate" data-act="diaryPick" aria-label="日付を選ぶ" title="日付を選ぶ"></div>
+        ${warekiField(k, {max: TK, change: 'diaryDate', label: '日報の日付', heading: true})}
         <span class="sp"></span>
         <div class="cal-nav"><button class="btn sm" data-act="diaryMove" data-n="-1">${ICON.left}<span>前の日</span></button><button class="btn sm" data-act="diaryToday" ${k === TK ? 'disabled' : ''}>今日</button><button class="btn sm" data-act="diaryMove" data-n="1" ${k >= TK ? 'disabled' : ''}><span>次の日</span>${ICON.right}</button></div>
       </div>
@@ -1722,8 +1746,8 @@ function vBoard() {
       <p style="white-space:pre-wrap;line-height:1.8">${esc(sel.body)}</p>
       <h4 class="small muted" style="margin:18px 0 8px">既読（職員）</h4>
       ${readChips(sel, STAFF)}
-      ${boardTargets(sel).includes('shuin') ? `<h4 class="small muted" style="margin:14px 0 8px">既読（アルバイト・御朱印）</h4>${readChips(sel, S.regulars)}` : ''}
-      ${boardTargets(sel).includes('miko') ? `<h4 class="small muted" style="margin:14px 0 8px">既読（アルバイト・巫女）</h4>${readChips(sel, mikoPeople(), true)}` : ''}` : '<div class="empty">投稿を選ぶと、内容と既読の状況が表示されます。<br>開いた時点で既読になります。</div>'}</div>
+      ${boardTargets(sel).includes('shuin') ? `<h4 class="small muted" style="margin:14px 0 8px">既読（助勤・御朱印）</h4>${readChips(sel, S.regulars)}` : ''}
+      ${boardTargets(sel).includes('miko') ? `<h4 class="small muted" style="margin:14px 0 8px">既読（助勤・巫女）</h4>${readChips(sel, mikoPeople(), true)}` : ''}` : '<div class="empty">投稿を選ぶと、内容と既読の状況が表示されます。<br>開いた時点で既読になります。</div>'}</div>
   </div>`;
 }
 function newPostModal(prefill) {
@@ -1731,7 +1755,7 @@ function newPostModal(prefill) {
   <div class="modal-b">
     <div class="field"><label>タイトル</label><input class="input" id="bpTitle" value="${esc(prefill?.title || '')}"></div>
     <div class="field"><label>本文</label><textarea class="input" id="bpBody" style="min-height:140px">${esc(prefill?.body || '')}</textarea></div>
-    <div class="field"><label>表示する相手</label><div class="small muted" style="margin-bottom:4px">職員には必ず表示されます。アルバイトにも見せる場合だけ選んでください。</div>
+    <div class="field"><label>表示する相手</label><div class="small muted" style="margin-bottom:4px">職員には必ず表示されます。助勤にも見せる場合だけ選んでください。</div>
       <div class="row"><label class="row small" style="gap:6px"><input type="checkbox" id="bpShuin" style="width:18px;height:18px;accent-color:var(--brand)"> 御朱印にも表示</label><label class="row small" style="gap:6px"><input type="checkbox" id="bpMiko" style="width:18px;height:18px;accent-color:var(--brand)"> 巫女にも表示</label></div></div>
   </div>
   <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="savePost">投稿する</button></div>`);
@@ -1769,7 +1793,7 @@ function editManModal(id) {
     <div class="field"><label>本文</label><textarea class="input" id="mnBody" style="min-height:180px" placeholder="PDFだけを登録する場合は空欄でもかまいません">${esc(m.body)}</textarea></div>
     <div class="field"><label>PDF</label><div id="manFiles">${manFilesHtml()}</div>
       <label class="btn sm" style="align-self:flex-start;margin-top:6px;cursor:pointer">＋ PDFを追加<input type="file" accept="application/pdf" multiple style="display:none" data-chg="manPdf"></label></div>
-    ${m.id ? `<div class="small muted">最終更新：${staffById(m.by).name}（${new Date(m.at).toLocaleString('ja-JP')}）。保存すると「${me().name}」が更新者になります。</div>` : ''}
+    ${m.id ? `<div class="small muted">最終更新：${staffById(m.by).name}（${new Date(m.at).toLocaleString('ja-JP-u-ca-japanese')}）。保存すると「${me().name}」が更新者になります。</div>` : ''}
   </div>
   <div class="modal-f"><button class="btn" data-act="closeModal">閉じる</button><button class="btn pri" data-act="saveMan" data-id="${m.id}">保存</button></div>`);
 }
@@ -1856,14 +1880,14 @@ function juyoStock() {
         <td>${STATUS_TAG[st.status]}</td>
         <td><button class="btn sm" data-act="openBox" data-id="${it.id}" ${st.now <= 0 ? 'disabled' : ''}>1箱開けた</button></td></tr>`;
     }).join('')}</tbody></table></div></div>
-  <div class="small muted" style="margin-top:8px">※箱数・減り方は仮のデータです。実際の入力は2026年12月の入荷時から始めます。</div>`;
+  <div class="small muted" style="margin-top:8px">※箱数・減り方は仮のデータです。実際の入力は令和8年12月の入荷時から始めます。</div>`;
 }
 
 function countModal() {
   modal(`<div class="modal-h"><h3>まとめて数える（棚卸）</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="note" style="margin-bottom:12px">${ICON.info}<span>実際に数えた箱数を入れてください。空欄の品は変更しません。入荷したときも、ここで入荷後の箱数を入れればOKです。</span></div>
-    <div class="field"><label>数えた日</label><input type="date" class="input" id="cntDate" value="${TK}" style="width:auto"></div>
+    <div class="field"><label>数えた日</label>${warekiField(TK, {id: 'cntDate', label: '数えた日'})}</div>
     <table class="tbl"><thead><tr><th>授与品</th><th class="r">いまの記録</th><th class="r">数えた箱数</th></tr></thead><tbody>
     ${S.items.map(it => `<tr><td>${esc(it.name)}</td><td class="r num muted">${S.stock[it.id]}箱</td><td class="r"><input class="input num" type="number" min="0" inputmode="numeric" style="width:90px;text-align:right" data-cnt="${it.id}" placeholder="${S.stock[it.id]}"></td></tr>`).join('')}
     </tbody></table>
@@ -1997,7 +2021,7 @@ function orderSheets() {
     <div class="order-sheet">
       <h2>発注書</h2>
       <div class="os-top"><div><div class="os-to">${esc(s.name)}　御中</div><div style="margin-top:6px">${esc(s.person)}<br>FAX ${esc(s.fax)}</div></div>
-      <div style="text-align:right">発注日　${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日<br><b style="font-size:15px">品川神社</b><br>東京都品川区北品川（住所は設定で登録）<br>TEL 03-3474-5575　FAX 03-3474-5599</div></div>
+      <div style="text-align:right">発注日　${warekiDate(d)}<br><b style="font-size:15px">品川神社</b><br>東京都品川区北品川（住所は設定で登録）<br>TEL 03-3474-5575　FAX 03-3474-5599</div></div>
       <p style="margin-top:16px">下記のとおり発注いたします。</p>
       <table><thead><tr><th>品名</th><th>入り数</th><th style="text-align:right">段ボール</th><th style="text-align:right">箱数</th><th style="text-align:right">体数</th></tr></thead>
       <tbody>${rs.map(r => `<tr><td>${esc(r.it.name)}</td><td>1箱${r.it.perBox}体／段ボール1つ${r.it.perCase}箱</td><td style="text-align:right">${r.final}</td><td style="text-align:right">${r.final * r.it.perCase}</td><td style="text-align:right">${(r.final * r.it.perCase * r.it.perBox).toLocaleString()}</td></tr>`).join('')}</tbody></table>
@@ -2007,13 +2031,13 @@ function orderSheets() {
 }
 
 /* =========================================================
-   アルバイト
+   助勤
    - 御朱印：御朱印Boys（御朱印担当）の毎月のシフト
    - 例大祭・七五三・正月：本殿の担当者（御朱印とは別の人）。タブごとにメンバー登録・シフト提出・シフト作成
    ========================================================= */
 const POSTS = [['shuin', '朱印'], ['honden', '本殿']];
 const postLabel = p => (POSTS.find(x => x[0] === p) || [, ''])[1];
-const SEASON_TABS = [['reitaisai', '例大祭'], ['shichigosan', '七五三'], ['shogatsu', '正月']];
+const SEASON_TABS = [['reitaisai', '例大祭'], ['shichigosan', '七五三']];   // 正月の巫女は左メニューの「正月」で扱う（2026-11-12 本人）
 const seasonLabel = t => (SEASON_TABS.find(x => x[0] === t) || [, ''])[1];
 let shiftMonth = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 1);
 function daysOfMonth(m) { const out = []; for (let d = new Date(m); d.getMonth() === m.getMonth(); d = addDays(d, 1)) out.push(new Date(d)); return out; }
@@ -2044,12 +2068,25 @@ function makeDraft() {
   S.draft[ymk] = A; save();
 }
 function vBaito() {
-  const tab = ['regular', 'reitaisai', 'shichigosan', 'shogatsu', 'rules'].includes(S.ui.baitoTab) ? S.ui.baitoTab : 'regular';
-  const T = [['regular', '御朱印'], ...SEASON_TABS.map(([t, l]) => [t, l + '（巫女）']), ['rules', '🔒 シフトのルール']];
+  const tabs = [['regular', '御朱印'], ['temporary', '巫女（臨時）'], ['rules', '🔒 シフトのルール']];   // 正月の巫女は左メニューの「正月」へ（2026-11-12 本人：タブは削除）
+  const savedTab = S.ui.baitoTab;
+  const tab = ['reitaisai', 'shichigosan'].includes(savedTab) ? 'temporary'
+    : tabs.some(([id]) => id === savedTab) ? savedTab : 'regular';
+  let content;
+  switch (tab) {
+    case 'temporary':
+      content = `<section style="margin-bottom:28px">${seasonPage('reitaisai')}</section><section>${seasonPage('shichigosan')}</section>`;
+      break;
+    case 'rules':
+      content = baitoRules();
+      break;
+    default:
+      content = baitoRegular();
+  }
   return `
-  <div class="page-h"><h1>アルバイト</h1></div>
-  <div class="tabs">${T.map(t => `<button class="${tab === t[0] ? 'on' : ''}" data-act="baitoTab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
-  ${tab === 'regular' ? baitoRegular() : tab === 'rules' ? baitoRules() : seasonPage(tab)}`;
+  <div class="page-h"><h1>助勤</h1></div>
+  <div class="tabs">${tabs.map(t => `<button class="${tab === t[0] ? 'on' : ''}" data-act="baitoTab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
+  ${content}`;
 }
 function baitoRegular() {
   const ymk = ym(shiftMonth), days = daysOfMonth(shiftMonth), A = assignOf(ymk), isDraft = !!S.draft[ymk];
@@ -2069,7 +2106,7 @@ function baitoRegular() {
   const countIn = (pid, pre) => Object.entries(S.shifts).filter(([k, v]) => k.startsWith(pre) && (v.shuin || []).includes(pid)).length;
   return `
   <div class="row" style="margin-bottom:12px">
-    <button class="icon-btn" data-act="shiftMove" data-n="-1">${ICON.left}</button><h3 style="font-size:18px">${shiftMonth.getFullYear()}年${shiftMonth.getMonth() + 1}月 御朱印のシフト</h3><button class="icon-btn" data-act="shiftMove" data-n="1">${ICON.right}</button>
+    <button class="icon-btn" data-act="shiftMove" data-n="-1">${ICON.left}</button><h3 style="font-size:18px">${warekiMonth(shiftMonth.getFullYear(), shiftMonth.getMonth() + 1)} 御朱印のシフト</h3><button class="icon-btn" data-act="shiftMove" data-n="1">${ICON.right}</button>
     ${isDraft ? '<span class="tag warn">下書き</span>' : '<span class="tag green">確定済みの表示</span>'}
     <span class="sp"></span>
     <button class="btn" data-act="extraModal">臨時</button>
@@ -2082,7 +2119,7 @@ function baitoRegular() {
   <div class="grid2" style="margin-top:16px;align-items:start">
     <div class="card card-p"><div class="card-h"><h3>出勤数</h3><span class="sp"></span><span class="small muted">確定したシフトから集計</span></div>
       <table class="tbl"><thead><tr><th>名前</th><th class="r">先月</th><th class="r">今月</th><th class="r">今年の合計</th></tr></thead><tbody>${S.regulars.map(p => `<tr><td>${esc(p.name)}</td><td class="r num">${countIn(p.id, prevM)}日</td><td class="r num">${countIn(p.id, thisM)}日</td><td class="r num"><b>${countIn(p.id, thisY)}</b>日</td></tr>`).join('')}</tbody></table></div>
-    <div class="card card-p"><div class="card-h"><h3>登録しているアルバイト</h3><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="">＋ 登録</button></div>
+    <div class="card card-p"><div class="card-h"><h3>登録している助勤</h3><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="">＋ 登録</button></div>
       <ul class="mini-list">${S.regulars.map(p => `<li style="cursor:pointer" data-act="editRegular" data-id="${p.id}">${avatar(p.name, p.color, true)}<b>${esc(p.name)}</b><span class="small muted">${p.days.length === 7 ? '毎日可' : p.days.map(x => WD[x]).join('・') + 'のみ'}${p.note ? '・' + esc(p.note) : ''}</span></li>`).join('')}</ul>
       <div class="small muted" style="margin-top:6px">${PROD ? '登録・変更は「管理」で行います（暗証番号を発行するため）。' : '連絡先は職員だけが見られます。'}</div></div>
   </div>`;
@@ -2091,8 +2128,8 @@ function baitoRegular() {
 function extraModal() {
   modal(`<div class="modal-h"><h3>臨時</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="note" style="margin-bottom:12px">${ICON.info}<span>普段は平日にアルバイトは入りませんが、忙しくなりそうな日に臨時で1人追加できます。カレンダーにもすぐ反映されます。</span></div>
-    <div class="grid2"><div class="field"><label>日付</label><input type="date" class="input" id="exDate" value="${key(addDays(TODAY, 1))}" min="${TK}"></div>
+    <div class="note" style="margin-bottom:12px">${ICON.info}<span>普段は平日に助勤は入りませんが、忙しくなりそうな日に臨時で1人追加できます。カレンダーにもすぐ反映されます。</span></div>
+    <div class="grid2"><div class="field"><label>日付</label>${warekiField(key(addDays(TODAY, 1)), {id: 'exDate', min: TK, label: '日付'})}</div>
     <div class="field"><label>だれに頼むか</label><select class="input" id="exWho"><option value="">あとで決める</option>${S.regulars.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}</select></div></div>
     <div class="field"><label>理由（任意）</label><input class="input" id="exMemo" placeholder="例：団体参拝が多い"></div>
   </div>
@@ -2125,7 +2162,7 @@ function seasonPage(type) {
   <div class="grid2" style="margin-top:16px;align-items:start">
     <div class="card card-p"><div class="card-h"><h3>${label}の巫女</h3><span class="sp"></span><button class="btn sm" data-act="bulkMember" data-t="${type}">まとめて登録</button><button class="btn sm" data-act="editMember" data-t="${type}" data-id="">＋ 登録</button></div>
       <ul class="mini-list">${members.map(m => `<li style="cursor:pointer" data-act="editMember" data-t="${type}" data-id="${m.id}">${avatar(m.name, m.color, true)}<b>${esc(m.name)}</b><span class="small muted">${esc(m.tel || '')}${m.note ? '・' + esc(m.note) : ''}</span><span class="sp"></span><span class="small muted">出勤 ${days.filter(k => (S.shifts[k]?.honden || []).includes(m.id)).length}日</span></li>`).join('') || '<li class="muted">未登録</li>'}</ul>
-      <div class="small muted" style="margin-top:6px">御朱印Boysとは別のメンバーです。各自、アルバイト用ページから${label}の希望を提出します。</div></div>
+      <div class="small muted" style="margin-top:6px">御朱印Boysとは別のメンバーです。各自、助勤用ページから${label}の希望を提出します。</div></div>
     <div class="card card-p"><div class="card-h"><h3>提出状況</h3></div>
       <ul class="mini-list">${members.map(m => `<li>${avatar(m.name, m.color, true)}${esc(m.name)}<span class="sp"></span>${S.seasonReq[m.id] ? `<span class="tag green">提出済み ${md(new Date(S.seasonReq[m.id].at))}</span>` : '<span class="tag warn">未提出</span>'}</li>`).join('')}</ul></div>
   </div>`;
@@ -2148,7 +2185,7 @@ function bulkMemberModal(type) {
 }
 function editRegularModal(id) {
   const p = S.regulars.find(x => x.id === id) || { id: '', name: '', kana: '', tel: '', note: '', days: [0, 6] };
-  modal(`<div class="modal-h"><h3>御朱印のアルバイトの登録</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  modal(`<div class="modal-h"><h3>御朱印の助勤の登録</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="grid2"><div class="field"><label>氏名</label><input class="input" id="rgName" value="${esc(p.name)}"></div><div class="field"><label>ふりがな</label><input class="input" id="rgKana" value="${esc(p.kana)}"></div></div>
     <div class="field"><label>電話</label><input class="input" id="rgTel" value="${esc(p.tel)}"></div>
@@ -2160,14 +2197,12 @@ function editRegularModal(id) {
 function baitoRules() {
   const R = S.rules, inp = (t, f) => `<input class="input num" type="number" min="0" style="width:56px;text-align:right" value="${R.posts[t][f]}" data-chg="postRule" data-t="${t}" data-f="${f}">`;
   return `
-  <div class="note brand" style="margin-bottom:14px">${ICON.lock.replace('<svg', '<svg width="16" height="16"')}<span><b>この画面は職員だけが見られます。</b>アルバイト用ページには表示されません。シフト作成は、ここの人数と各自の条件を使います。</span></div>
-  <div class="grid2" style="align-items:start">
+  <div class="note brand" style="margin-bottom:14px">${ICON.lock.replace('<svg', '<svg width="16" height="16"')}<span><b>この画面は職員だけが見られます。</b>助勤用ページには表示されません。御朱印の自動シフト作成には、必要人数と各自が提出した希望を使います。</span></div>
     <div class="card card-p"><div class="card-h"><h3>必要人数</h3></div>
-      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>持ち場</th><th class="r">平時の平日</th><th class="r">平時の土日祝</th><th class="r">七五三</th><th class="r">例大祭</th><th class="r">正月</th></tr></thead><tbody>
-        <tr><td style="white-space:nowrap"><span class="mk as shuin" style="width:20px;height:20px;font-size:11px">朱</span> 御朱印</td><td class="r">${inp('shuin', 'weekday')}</td><td class="r">${inp('shuin', 'weekend')}</td><td class="r">${inp('shuin', 'shichigosan')}</td><td class="r">${inp('shuin', 'reitaisai')}</td><td class="r muted">―</td></tr>
-        <tr><td style="white-space:nowrap"><span class="mk as honden" style="width:20px;height:20px;font-size:11px">本</span> 本殿</td><td class="r muted">―</td><td class="r muted">―</td><td class="r">${inp('honden', 'shichigosan')}</td><td class="r">${inp('honden', 'reitaisai')}</td><td class="r">${inp('honden', 'shogatsu')}</td></tr>
+      <div class="tbl-wrap"><table class="tbl"><thead><tr><th>持ち場</th><th class="r">平時の平日</th><th class="r">平時の土日祝</th><th class="r">七五三</th><th class="r">例大祭</th></tr></thead><tbody>
+        <tr><td style="white-space:nowrap"><span class="mk as shuin" style="width:20px;height:20px;font-size:11px">朱</span> 御朱印</td><td class="r">${inp('shuin', 'weekday')}</td><td class="r">${inp('shuin', 'weekend')}</td><td class="r">${inp('shuin', 'shichigosan')}</td><td class="r">${inp('shuin', 'reitaisai')}</td></tr>
+        <tr><td style="white-space:nowrap"><span class="mk as honden" style="width:20px;height:20px;font-size:11px">本</span> 本殿</td><td class="r muted">―</td><td class="r muted">―</td><td class="r">${inp('honden', 'shichigosan')}</td><td class="r">${inp('honden', 'reitaisai')}</td></tr>
       </tbody></table></div>
-      <div class="small muted" style="margin-top:8px">確認済み：御朱印（平時の土日1人・七五三1人・例大祭2人）、本殿（平時なし・七五三1人・例大祭2人）。本殿の正月は仮。平日に臨時で入れる日は、御朱印のシフト画面の「臨時で平日に入れる」から追加します。</div>
       <h4 class="small muted" style="margin:16px 0 8px">職員の休み</h4>
       <table class="tbl"><tbody>
         <tr><td>1人あたり月の休み</td><td class="r"><input class="input num" type="number" min="0" style="width:70px;text-align:right" value="${R.leaveQuota}" data-chg="leaveQuota"> 日</td></tr>
@@ -2175,10 +2210,7 @@ function baitoRules() {
         <tr><td>1日に休める人数（土日祝）</td><td class="r"><input class="input num" type="number" min="0" style="width:70px;text-align:right" value="${R.leaveCap.weekend}" data-chg="leaveCap" data-f="weekend"> 人</td></tr>
         <tr><td>1日に休める人数（イベントの日）<div class="small muted">七五三・正月・例大祭の時期と祭典の日</div></td><td class="r"><input class="input num" type="number" min="0" style="width:70px;text-align:right" value="${R.leaveCap.event}" data-chg="leaveCap" data-f="event"> 人</td></tr>
       </tbody></table></div>
-    <div class="card card-p"><div class="card-h"><h3>御朱印のアルバイトの条件</h3></div>
-      <ul class="mini-list">${S.regulars.map(p => `<li>${avatar(p.name, p.color, true)}<b>${esc(p.name)}</b><span class="small muted">${p.days.length === 7 ? '曜日の制限なし' : p.days.map(x => WD[x]).join('・') + 'のみ'}${p.note ? '・' + esc(p.note) : ''}</span><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="${p.id}">編集</button></li>`).join('')}</ul>
-      <div class="field" style="margin-top:14px"><label>希望シフトの提出締切</label><input class="input" value="${esc(R.deadline)}" placeholder="未定（例：前月の20日）" data-chg="ruleDeadline"></div></div>
-  </div>`;
+`;
 }
 
 /* =========================================================
@@ -2208,7 +2240,7 @@ function vAnalytics() {
 </div>
     <div class="card card-p"><div class="card-h"><h3>月ごとの数字</h3></div>
       <div class="tbl-wrap" style="max-height:340px;overflow:auto"><table class="tbl"><thead><tr><th>月</th><th class="r">HP閲覧</th><th class="r">前年比</th><th class="r">検索</th></tr></thead>
-      <tbody>${[...cur].reverse().map((m, i) => { const p = [...prev].reverse()[i], d = pct(g(m, 'hp'), g(p, 'hp')); return `<tr><td>${m.replace('-', '/')}</td><td class="r num">${g(m, 'hp').toLocaleString()}</td><td class="r num small ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d.toFixed(1)}%</td><td class="r num">${g(m, 'search')}</td></tr>`; }).join('')}</tbody></table></div></div>
+      <tbody>${[...cur].reverse().map((m, i) => { const p = [...prev].reverse()[i], d = pct(g(m, 'hp'), g(p, 'hp')); return `<tr><td>${warekiFieldLabel(m, true)}</td><td class="r num">${g(m, 'hp').toLocaleString()}</td><td class="r num small ${d >= 0 ? 'up' : 'down'}">${d >= 0 ? '+' : ''}${d.toFixed(1)}%</td><td class="r num">${g(m, 'search')}</td></tr>`; }).join('')}</tbody></table></div></div>
   </div>
   <div class="grid3" style="margin-top:16px">
     <div class="card card-p"><h3>Googleマップ</h3><p class="small muted" style="margin-top:6px">ビジネスプロフィールの管理を始めたら、閲覧数・ルート検索数をここに出します。</p></div>
@@ -2220,7 +2252,7 @@ function anInputModal() {
   const m = ym(new Date(TODAY.getFullYear(), TODAY.getMonth() - 1, 1)), a = S.analytics[m] || {};
   modal(`<div class="modal-h"><h3>月の数字を入力</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="field"><label>対象の月</label><input type="month" class="input" id="anMonth" value="${m}" style="width:auto"></div>
+    <div class="field"><label>対象の月</label>${warekiField(m, {id: 'anMonth', month: true, label: '対象の月'})}</div>
     <div class="grid2"><div class="field"><label>HP閲覧数（GA4）</label><input class="input num" type="number" id="anHp" value="${a.hp ?? ''}"></div><div class="field"><label>検索の多さ（Googleトレンド）</label><input class="input num" type="number" id="anSearch" value="${a.search ?? ''}"></div></div>
     <div class="grid2"><div class="field"><label>Instagram 閲覧数</label><input class="input num" type="number" id="anIg" placeholder="開設後" value="${a.ig ?? ''}"></div><div class="field"><label>Googleマップ 閲覧数</label><input class="input num" type="number" id="anMap" placeholder="管理開始後" value="${a.map ?? ''}"></div></div>
   </div>
@@ -2279,16 +2311,16 @@ function eventsView() {
     const evs = S.events.filter(e => e.name === n).sort((a, b) => b.year - a.year), e = evs[0];
     const done = e.items.filter(i => i.done).length, open = openEvent === e.id, total = e.items.length || 1;
     return `<div class="card card-p" ${open ? 'style="grid-column:span 2"' : ''}>
-      <div class="card-h"><h3>${esc(n)}</h3><span class="tag gray">${e.year}年</span><span class="sp"></span><span class="small muted">${done}/${e.items.length}</span></div>
+      <div class="card-h"><h3>${esc(n)}</h3><span class="tag gray">${warekiYear(e.year)}</span><span class="sp"></span><span class="small muted">${done}/${e.items.length}</span></div>
       <div class="prog" style="margin-bottom:10px"><i style="width:${done / total * 100}%"></i></div>
       ${open ? `${e.items.map((it, i) => `<div class="chk ${it.done ? 'done' : ''}"><input type="checkbox" ${it.done ? 'checked' : ''} data-chg="evCheck" data-id="${e.id}" data-i="${i}">
           <input class="input" style="flex:1;padding:4px 8px;font-size:13px;${it.done ? 'text-decoration:line-through;color:var(--text-3)' : ''}" value="${esc(it.t)}" data-chg="evText" data-id="${e.id}" data-i="${i}">
-          ${staffSel(e, i, it.who)}<input type="date" class="input" style="width:auto;padding:3px 6px;font-size:12px" value="${it.due || ''}" data-chg="evDue" data-id="${e.id}" data-i="${i}" title="期限（任意）">
+          ${staffSel(e, i, it.who)}${warekiField(it.due || '', {change: 'evDue', data: {id: e.id, i}, clear: true, label: '期限（任意）'})}
           <button class="btn sm ghost" data-act="evDel" data-id="${e.id}" data-i="${i}" title="この項目を削除">×</button></div>`).join('')}
         <div class="row" style="margin-top:10px;flex-wrap:nowrap"><input class="input" id="evNew_${e.id}" placeholder="項目を追加（例：授与所の設営）" data-enter="evAdd" data-id="${e.id}"><button class="btn sm" data-act="evAdd" data-id="${e.id}">追加</button></div>`
         : `<div class="small muted">${e.items.slice(0, 3).map(i => esc(i.t)).join('、')}${e.items.length > 3 ? '…' : ''}</div>`}
-      <div class="row" style="margin-top:12px"><button class="btn sm" data-act="toggleEvent" data-id="${e.id}">${open ? '閉じる' : '開いて編集'}</button><span class="sp"></span>${!evs.some(x => x.year === e.year + 1) ? `<button class="btn sm" data-act="copyEvent" data-id="${e.id}">${e.year + 1}年用に複製</button>` : ''}${open ? `<button class="btn sm ghost" style="color:var(--red)" data-act="delEventList" data-id="${e.id}">この年の分を削除</button>` : ''}</div>
-      ${evs.length > 1 ? `<div class="small muted" style="margin-top:8px">過去：${evs.slice(1).map(x => x.year + '年（' + x.items.filter(i => i.done).length + '/' + x.items.length + '）').join('、')}</div>` : ''}
+      <div class="row" style="margin-top:12px"><button class="btn sm" data-act="toggleEvent" data-id="${e.id}">${open ? '閉じる' : '開いて編集'}</button><span class="sp"></span>${!evs.some(x => x.year === e.year + 1) ? `<button class="btn sm" data-act="copyEvent" data-id="${e.id}">${warekiYear(e.year + 1)}用に複製</button>` : ''}${open ? `<button class="btn sm ghost" style="color:var(--red)" data-act="delEventList" data-id="${e.id}">この年の分を削除</button>` : ''}</div>
+      ${evs.length > 1 ? `<div class="small muted" style="margin-top:8px">過去：${evs.slice(1).map(x => warekiYear(x.year) + '（' + x.items.filter(i => i.done).length + '/' + x.items.length + '）').join('、')}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
@@ -2296,7 +2328,7 @@ function newTaskModal() {
   modal(`<div class="modal-h"><h3>タスクを追加</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="field"><label>内容</label><input class="input" id="tkTitle"></div>
-    <div class="grid2"><div class="field"><label>担当</label><select class="input" id="tkWho">${STAFF.map(s => `<option value="${s.id}" ${s.id === S.me ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div><div class="field"><label>期限</label><input type="date" class="input" id="tkDue" value="${key(addDays(TODAY, 7))}"></div></div>
+    <div class="grid2"><div class="field"><label>担当</label><select class="input" id="tkWho">${STAFF.map(s => `<option value="${s.id}" ${s.id === S.me ? 'selected' : ''}>${s.name}</option>`).join('')}</select></div><div class="field"><label>期限</label>${warekiField(key(addDays(TODAY, 7)), {id: 'tkDue', clear: true, label: '期限'})}</div></div>
   </div>
   <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveTask">追加</button></div>`);
 }
@@ -2358,7 +2390,7 @@ function vSeasons() {
       <button class="btn pri" data-act="saveRitual">追加する</button>
     </div>
   </div>
-  <div class="note" style="margin-top:14px">${ICON.info}<span>七五三・正月・例大祭などの時期（予約なし・法人のみ・祈願なし）は、毎月の決まったルールとしてシステム側に組み込むため、この画面では設定しません。デモでは2026年度の日程を仮に入れてあります。</span></div>`;
+  <div class="note" style="margin-top:14px">${ICON.info}<span>七五三・正月・例大祭などの時期（予約なし・法人のみ・祈願なし）は、毎月の決まったルールとしてシステム側に組み込むため、この画面では設定しません。デモでは令和8年度の日程を仮に入れてあります。</span></div>`;
 }
 
 /* =========================================================
@@ -2372,7 +2404,7 @@ function vUjiko() {
     <h3 style="font-size:19px;margin-bottom:8px">氏子名簿は別のシステムで管理します</h3>
     <p class="muted" style="font-size:14px">見られるのは<b style="color:var(--text)">職員だけ</b>。神社くんとは保存先を分け、開くときにもう一度本人確認をします。</p>
     <ul class="mini-list" style="text-align:left;margin:20px auto 0;max-width:460px">
-      <li>${ICON.lock.replace('<svg', '<svg width="15" height="15"')} アルバイトのアカウントからは入口も見えない</li>
+      <li>${ICON.lock.replace('<svg', '<svg width="15" height="15"')} 助勤のアカウントからは入口も見えない</li>
       <li>${ICON.lock.replace('<svg', '<svg width="15" height="15"')} 開くたびに再ログイン（個人の暗証番号）か共有パスワード（検討中）</li>
       <li>${ICON.lock.replace('<svg', '<svg width="15" height="15"')} 寄付・奉納の記録、案内状の発送も将来はこちら側に</li>
     </ul>
@@ -2381,9 +2413,9 @@ function vUjiko() {
 }
 
 /* =========================================================
-   アルバイト用ページ（アルバイトに見える画面）
+   助勤用ページ（助勤に見える画面）
    ========================================================= */
-/* アルバイト画面：○月のシフト（確定したもの。自分の出勤日に色が付く） */
+/* 助勤画面：○月のシフト（確定したもの。自分の出勤日に色が付く） */
 let bvMonthOff = 0;
 function bvMonthShift(p) {
   const m = new Date(TODAY.getFullYear(), TODAY.getMonth() + bvMonthOff, 1);
@@ -2447,7 +2479,7 @@ function vBaitoView() {
   posts.forEach(b => { if (!b.reads[p.id]) { b.reads[p.id] = Date.now(); save(); } });
   return `
   <div class="bv">
-    <div class="bv-top"><img class="mark" src="${ICON_MARK}" alt="" style="width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700"><div><b>品川神社 アルバイト</b><div class="small muted">シフトの提出と確認</div></div><span class="sp"></span>
+    <div class="bv-top"><img class="mark" src="${ICON_MARK}" alt="" style="width:34px;height:34px;border-radius:10px;background:var(--brand);color:#fff;display:grid;place-items:center;font-weight:700"><div><b>品川神社 助勤</b><div class="small muted">シフトの提出と確認</div></div><span class="sp"></span>
       ${avatar(p.name, p.color, true)}<b class="small">${esc(p.name)}</b><button class="btn sm" data-act="logout">ログアウト</button></div>
     ${bvTabs()}
     <div class="card card-p" style="margin-bottom:14px;border-color:var(--brand)"><div class="card-h"><h3>お知らせ</h3><span class="sp"></span><span class="tag brand">${posts.length}件</span></div><ul class="mini-list">${posts.map(b => `<li style="flex-direction:column;align-items:flex-start;gap:2px"><b>${esc(b.title)}</b><span class="small muted">${esc(b.body)}</span><span class="small" style="color:var(--text-3)">${md(new Date(b.at))}</span></li>`).join('') || '<li class="muted">お知らせはありません</li>'}</ul></div>
@@ -2485,13 +2517,100 @@ function applicationForm(r) {
 /* =========================================================
    モーダル・トースト
    ========================================================= */
+function warekiField(value, {id = '', label, min = '', max = '', month = false, clear = false, change = '', data = {}, heading = false}) {
+  const text = warekiFieldLabel(value, month, heading);
+  const dataAttrs = Object.entries(data).map(([name, v]) => ` data-${name}="${esc(v)}"`).join('');
+  return `<span class="wareki-field"><button type="button" class="${heading ? 'cal-title wareki-heading' : 'btn'}" data-act="warekiPicker" data-label="${esc(label)}" data-month="${month}" data-clear="${clear}" data-heading="${heading}" aria-label="${esc(label + ' ' + text)}" aria-haspopup="dialog"><span>${esc(text)}</span> <span aria-hidden="true">▾</span></button><input type="hidden" ${id ? `id="${esc(id)}"` : ''} value="${esc(value)}" data-min="${esc(min)}" data-max="${esc(max)}" ${change ? `data-chg="${change}"` : ''}${dataAttrs}></span>`;
+}
+
+function warekiFieldLabel(value, month, heading) {
+  if (!value) return month ? '年月を選ぶ' : '日付を選ぶ';
+  if (month) {
+    const [y, m] = value.split('-').map(Number);
+    return warekiMonth(y, m);
+  }
+  return heading ? ymdw(parse(value)) : warekiDate(parse(value));
+}
+
+function openWarekiPicker(button) {
+  if (document.getElementById('warekiPicker')) return;
+  const input = button.nextElementSibling;
+  const {min, max} = input.dataset;
+  const {label} = button.dataset;
+  const month = button.dataset.month === 'true';
+  const heading = button.dataset.heading === 'true';
+  const fallback = key(TODAY).slice(0, month ? 7 : 10);
+  const initial = input.value || (min && fallback < min ? min : max && fallback > max ? max : fallback);
+  const [year, initialMonth] = initial.split('-').map(Number);
+  let cursor = new Date(year, initialMonth - 1, 1);
+  const dialog = document.createElement('dialog');
+  dialog.id = 'warekiPicker';
+  dialog.className = 'wareki-dialog';
+  dialog.setAttribute('aria-label', label);
+  const allowed = v => (!min || v >= min) && (!max || v <= max);
+  const interval = d => {
+    const y = d.getFullYear(), m = d.getMonth();
+    if (month) return [ym(new Date(y, 0, 1)), ym(new Date(y, 11, 1))];
+    return [key(d), key(new Date(y, m + 1, 0))];
+  };
+  const overlaps = d => {
+    const [start, end] = interval(d);
+    return (!min || end >= min) && (!max || start <= max);
+  };
+  const move = n => new Date(cursor.getFullYear(), cursor.getMonth() + n, 1);
+  function show(focusStep) {
+    const y = cursor.getFullYear(), m = cursor.getMonth();
+    const step = month ? 12 : 1;
+    const nav = (n, text) => `<button type="button" class="btn sm" data-step="${n}" ${overlaps(move(n)) ? '' : 'disabled'}>${text}</button>`;
+    const option = (value, text, name) => `<button type="button" class="btn sm${value === input.value ? ' pri' : ''}" data-value="${value}" aria-label="${name}" aria-pressed="${value === input.value}" ${allowed(value) ? '' : 'disabled'}>${text}</button>`;
+    const options = month
+      ? Array.from({length: 12}, (_, i) => option(ym(new Date(y, i, 1)), `${i + 1}月`, warekiMonth(y, i + 1))).join('')
+      : WD.map(w => `<span aria-hidden="true">${w}</span>`).join('')
+        + '<span></span>'.repeat(cursor.getDay())
+        + daysOfMonth(cursor).map(d => option(key(d), d.getDate(), ymdw(d))).join('');
+    dialog.innerHTML = `<div class="wareki-nav">${nav(-step, month ? '前年' : '前月')}<strong aria-live="polite">${month ? warekiYear(y) : warekiMonth(y, m + 1)}</strong>${nav(step, month ? '翌年' : '翌月')}</div>
+      <div class="wareki-options${month ? ' months' : ''}">${options}</div>
+      <div class="wareki-footer">${button.dataset.clear === 'true' ? '<button type="button" class="btn sm" data-clear>未設定にする</button>' : ''}<button type="button" class="btn sm" data-close>閉じる</button></div>`;
+    if (focusStep != null) {
+      const next = dialog.querySelector(`[data-step="${focusStep}"]:not(:disabled)`);
+      (next || dialog.querySelector('[data-value]:not(:disabled)') || dialog.querySelector('[data-close]')).focus();
+    }
+  }
+  dialog.addEventListener('click', e => {
+    const action = e.target.closest('button');
+    if (!action) return;
+    if (action.hasAttribute('data-step')) {
+      const step = Number(action.dataset.step);
+      cursor = move(step);
+      show(step);
+      return;
+    }
+    if (action.hasAttribute('data-close')) return dialog.close();
+    const value = action.hasAttribute('data-clear') ? '' : action.dataset.value;
+    if (value == null || (value && !allowed(value))) return;
+    dialog.close();
+    if (!input.isConnected || value === input.value) return;
+    input.value = value;
+    const text = warekiFieldLabel(value, month, heading);
+    button.firstElementChild.textContent = text;
+    button.setAttribute('aria-label', label + ' ' + text);
+    input.dispatchEvent(new Event('change', {bubbles: true}));
+  });
+  dialog.addEventListener('close', () => dialog.remove());
+  show();
+  document.body.appendChild(dialog);
+  dialog.showModal();
+  const selected = dialog.querySelector('[aria-pressed="true"]:not(:disabled)');
+  if (selected) selected.focus();
+}
+
 function modal(html, wide) {
   closeModal();
   const bg = document.createElement('div'); bg.className = 'modal-bg'; bg.id = 'modalBg';
   bg.innerHTML = `<div class="modal${wide ? ' wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
   bg.addEventListener('click', e => { if (e.target === bg) closeModal(); });
   document.body.appendChild(bg);
-  const f = bg.querySelector('input:not([type=checkbox]):not([type=date]),textarea'); if (f && !('ontouchstart' in window)) setTimeout(() => f.focus(), 30);
+  const f = bg.querySelector('input:not([type=checkbox]):not([type=hidden]),textarea'); if (f && !('ontouchstart' in window)) setTimeout(() => f.focus(), 30);
 }
 /* 確認・入力はページ内の画面で行う（埋め込み表示ではブラウザ標準のダイアログが出ないため） */
 let askCb = null;
@@ -2503,7 +2622,10 @@ function askText(title, placeholder, onOk) {
   askCb = onOk;
   modal(`<div class="modal-h"><h3>${esc(title)}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div><div class="modal-b"><input class="input" id="askInput" placeholder="${esc(placeholder)}" data-enter="askYes"></div><div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="askYes">追加する</button></div>`);
 }
-function closeModal() { document.getElementById('modalBg')?.remove(); }
+function closeModal() {
+  document.getElementById('warekiPicker')?.remove();
+  document.getElementById('modalBg')?.remove();
+}
 function toast(msg) { document.querySelector('.toast')?.remove(); const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2400); }
 function menuModal() {
   modal(`<div class="modal-h"><h3>メニュー</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
@@ -2524,7 +2646,8 @@ function render() {
   const { r, p } = route();
   if (r === 'diary' && p) diaryDay = p > TK ? TK : p;
   if (PROD && hiddenRoutes().includes(r)) { location.hash = '#/home'; return; }
-  const V = { admin: () => typeof vAdmin === 'function' ? vAdmin() : '', home: vHome, diary: vDiary, board: vBoard, manual: vManual, kigan: vKigan, juyo: () => vJuyo(p), baito: vBaito, tasks: vTasks, analytics: vAnalytics, seasons: vSeasons, ujiko: vUjiko };
+  const V = { admin: () => typeof vAdmin === 'function' ? vAdmin() : '', home: vHome, diary: vDiary, board: vBoard, manual: vManual, kigan: vKigan, juyo: () => vJuyo(p), baito: vBaito, shogatsu: vShogatsu, tasks: vTasks, analytics: vAnalytics, seasons: vSeasons, ujiko: vUjiko };
+  if (r === 'shogatsu' && sgKeep()) return;   // 正月を開いたままなら埋め込みはそのまま
   const y = window.scrollY;
   root.innerHTML = shell(r, (V[r] || vHome)());
   window.scrollTo(0, y);
@@ -2533,7 +2656,7 @@ function render() {
 let loginRole = 'staff', loginWho = null, loginPin = '', loginErr = '', loginFails = 0, loginLockUntil = 0;
 function vLogin() {
   const GL = { staff: '', shuin: '御朱印', reitaisai: '例大祭（巫女）', shichigosan: '七五三（巫女）', shogatsu: '正月（巫女）' };
-  const MIKO = ['reitaisai', 'shichigosan', 'shogatsu'];
+  const MIKO = ['reitaisai', 'shichigosan'];
   const isStaffTab = loginRole === 'staff';
   const people = isStaffTab ? [...HOSTS, ...TEMP_STAFF].map(s => ({ id: s.id, name: s.name, color: s.color, groups: [], temp: TEMP_STAFF.includes(s) }))
     : loginRole === 'shuin' ? S.regulars.map(r => ({ id: r.id, name: r.name, color: r.color, groups: [] }))
@@ -2545,7 +2668,7 @@ function vLogin() {
   <div class="login">
     <div class="login-card card">
       <div class="brand" style="justify-content:center;padding:0 0 14px"><img class="mark" src="${ICON_MARK}" alt=""><div><b>神社くん<span class="demo-pill">デモ</span></b><span>品川神社</span></div></div>
-      <div class="seg" style="display:flex;margin-bottom:10px"><button style="flex:1" class="${isStaffTab ? 'on' : ''}" data-act="loginRole" data-v="staff">職員</button><button style="flex:1" class="${!isStaffTab ? 'on' : ''}" data-act="loginRole" data-v="${isStaffTab ? 'shuin' : loginRole}">アルバイト</button></div>
+      <div class="seg" style="display:flex;margin-bottom:10px"><button style="flex:1" class="${isStaffTab ? 'on' : ''}" data-act="loginRole" data-v="staff">職員</button><button style="flex:1" class="${!isStaffTab ? 'on' : ''}" data-act="loginRole" data-v="${isStaffTab ? 'shuin' : loginRole}">助勤</button></div>
       ${!isStaffTab && !who ? `<div class="seg" style="display:flex;margin-bottom:12px;background:transparent;border:1px solid var(--line)"><button style="flex:1" class="${loginRole === 'shuin' ? 'on' : ''}" data-act="loginRole" data-v="shuin">御朱印</button><button style="flex:1" class="${loginRole === 'miko' ? 'on' : ''}" data-act="loginRole" data-v="miko">巫女</button></div>` : ''}
       ${!who ? `<div class="small muted" style="margin-bottom:8px;text-align:center">名前を選んでください</div>
         ${isStaffTab ? `<div class="login-people">${people.filter(p => !p.temp).map(p => `<button class="login-person" data-act="loginWho" data-id="${p.id}" aria-label="${esc(p.name)}">${avatar(p.name, p.color)}<span>${esc(p.name)}</span></button>`).join('')}</div>
@@ -2671,7 +2794,7 @@ const ACT = {
   },
   diaryMove(el) { const d = addDays(parse(diaryDay), +el.dataset.n); if (key(d) > TK) return; location.hash = '#/diary/' + key(d); },
   diaryToday() { location.hash = '#/diary/' + TK; },
-  diaryPick(el) { try { el.showPicker(); } catch (e) { } },   // 日付を押すとカレンダー（スマホは端末のカレンダーが開く）
+  warekiPicker(el) { openWarekiPicker(el); },
   diaryCmp(el) { S.ui.diaryCmp = el.dataset.v; save(); render(); },
   diarySearch() { diaryQ = val('dyQ'); render(); },
   diaryGo(el) { location.hash = '#/diary/' + el.dataset.k; },
@@ -2777,12 +2900,12 @@ const ACT = {
   copyEvent(el) {
     const e = S.events.find(x => x.id === el.dataset.id);
     const ne = { id: 'ev' + Date.now(), name: e.name, year: e.year + 1, items: e.items.map(i => ({ ...i, done: false, due: i.due ? (Number(i.due.slice(0, 4)) + 1) + i.due.slice(4) : '' })) };
-    S.events.push(ne); openEvent = ne.id; save(); render(); toast(`${ne.year}年用のチェックリストを作りました`);
+    S.events.push(ne); openEvent = ne.id; save(); render(); toast(`${warekiYear(ne.year)}用のチェックリストを作りました`);
   },
   paintType(el) { paintType = el.dataset.v; render(); },
   paint(el) { const k = el.dataset.k; if (paintType && S.seasons[k] !== paintType) S.seasons[k] = paintType; else delete S.seasons[k]; save(); render(); },
   seasonYear(el) { seasonYear += +el.dataset.n; render(); },
-  autoReitaisai() { reitaisaiDays(seasonYear).forEach(k => S.seasons[k] = 'reitaisai'); save(); render(); toast(`${seasonYear}年の例大祭（${reitaisaiDays(seasonYear).map(k => md(parse(k))).join('・')}）を入れました`); },
+  autoReitaisai() { reitaisaiDays(seasonYear).forEach(k => S.seasons[k] = 'reitaisai'); save(); render(); toast(`${warekiYear(seasonYear)}の例大祭（${reitaisaiDays(seasonYear).map(k => md(parse(k))).join('・')}）を入れました`); },
   copySeasons() {
     let n = 0;
     Object.entries(S.seasons).forEach(([k, t]) => { if (k.startsWith(String(seasonYear - 1)) && t !== 'reitaisai') { const nk = seasonYear + k.slice(4); if (!S.seasons[nk]) { S.seasons[nk] = t; n++; } } });
@@ -2954,7 +3077,11 @@ document.addEventListener('touchend', e => {
 }, { passive: true });
 document.addEventListener('change', e => { const el = e.target.closest('[data-chg]'); if (el && CHG[el.dataset.chg]) CHG[el.dataset.chg](el, e); });
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') closeModal();
+  if (e.key === 'Escape') {
+    const picker = document.getElementById('warekiPicker');
+    if (picker?.open) { e.preventDefault(); picker.close(); return; }
+    closeModal();
+  }
   if (e.key === 'Enter' && e.target.dataset.enter && !e.isComposing) ACT[e.target.dataset.enter](e.target);
 });
 
@@ -3030,6 +3157,7 @@ function fromServer(d, me) {
   st.items = (d.items || []).map(r => ({ id: r.id, name: r.name, cat: r.cat || '', price: num(r.price) || 0, perBox: num(r.perBox), perCase: num(r.perCase), big: yes(r.big), ord: num(r.ord) ?? 999, active: r.active === '' || r.active == null ? true : yes(r.active) })).sort((a, b) => a.ord - b.ord);
   st.stockLog = (d.stockLog || []).map(r => ({ id: r.id, item: r.item, date: r.date, type: r.type, boxes: num(r.boxes) || 0, note: r.note || '' }));
   st.stock = stockFromLog(st.items, st.stockLog);
+  st.shogatsu = {}; (d.shogatsu || []).forEach(r => { if (r.data != null) st.shogatsu[r.id] = r.data; });   // 正月（宮司・職員だけに届く）
   // 第一弾で使わないもの（空のまま）
   Object.assign(st, { res: [], tasks: [], inbox: [], events: [], suppliers: [], analytics: {}, seasonal: [], seasonShifts: {}, order: {}, nextDelivery: key(addDays(TODAY, 60)) });
   // ログインしている人
@@ -3071,6 +3199,7 @@ function toRows(st) {
   R.settings = [{ id: 'rules', value: st.rules }, { id: 'places', value: st.places || {} }];
   R.items = st.items.map(i => ({ id: i.id, name: i.name, cat: i.cat || '', price: i.price || 0, perBox: i.perBox ?? '', perCase: i.perCase ?? '', big: !!i.big, ord: i.ord ?? 999, active: i.active !== false }));
   R.stockLog = st.stockLog.map(l => ({ id: l.id, item: l.item, date: l.date, type: l.type, boxes: l.boxes, note: l.note || '' }));
+  R.shogatsu = Object.entries(st.shogatsu || {}).map(([id, data]) => ({ id, data }));
   return R;
 }
 const snap = st => { const R = toRows(st), m = {}; Object.entries(R).forEach(([c, rows]) => { m[c] = {}; rows.forEach(r => m[c][r.id] = JSON.stringify(r)); }); return m; };
@@ -3127,7 +3256,7 @@ async function refresh(force) {
   if (!(await sendPending())) return;
   const ae = document.activeElement, editing = ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName);
   const dirty = diaryDirty();
-  if (!force && (document.getElementById('modalBg') || editing || dirty || Date.now() - P.lastInput < 4000 || document.visibilityState !== 'visible')) return;
+  if (!force && (document.getElementById('modalBg') || document.getElementById('warekiPicker') || editing || dirty || Date.now() - P.lastInput < 4000 || document.visibilityState !== 'visible')) return;
   try {
     const r = await api('data');
     P.me = r.me; const ui = S && S.ui; S = fromServer(r.data, r.me); if (ui) S.ui = ui; P.last = snap(S); keepCache(r);
@@ -3186,7 +3315,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261103011042';
+const BUILD = '20261112083751';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3195,7 +3324,7 @@ async function checkUpdate() {
     const r = await fetch(location.pathname + '?v=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
     const stamp = Date.parse(r.headers.get('last-modified') || '');
     if ((!stamp || stamp <= pageStamp + 1000) && key(new Date()) === TK) return;
-    const ae = document.activeElement, busy = document.getElementById('modalBg') || (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) || (REGI.on && Object.keys(REGI.cart).length) || diaryDirty();
+    const ae = document.activeElement, busy = document.getElementById('modalBg') || document.getElementById('warekiPicker') || (ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName)) || (REGI.on && Object.keys(REGI.cart).length) || diaryDirty();
     if (busy) return;   // 入力中・レジの会計中は読み直さない（次の確認で）
     location.reload();
   } catch (e) { if (key(new Date()) !== TK && !document.getElementById('modalBg')) location.reload(); }
@@ -3279,7 +3408,14 @@ if (PROD) Object.assign(ACT, {
   logout() { closeModal(); api('logout').catch(() => { }); if (typeof anReset === 'function') anReset(); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; loginWho = null; loginPin = ''; P.screen = 'login'; P.msg = ''; window.scrollTo(0, 0); loadPeople(); },
   reset() { toast('本番では使えません'); },
   // 人の登録・変更は管理画面で（暗証番号を発行するため）
-  editRegular() { goAdmin(); }, saveRegular() { goAdmin(); }, editMember() { goAdmin(); }, saveMember() { goAdmin(); }, delMember() { goAdmin(); }, bulkMember() { goAdmin(); }, saveBulkMember() { goAdmin(); },
+  editRegular() { goAdmin(); }, saveRegular() { goAdmin(); }, editMember(el) {
+    const group = el.dataset.t;
+    if (!el.dataset.id && ['reitaisai', 'shichigosan'].includes(group)) {
+      if (!P.me || !P.me.isAdmin) return goAdmin();
+      return ACT.admAdd(el);
+    }
+    goAdmin();
+  }, saveMember() { goAdmin(); }, delMember() { goAdmin(); }, bulkMember() { goAdmin(); }, saveBulkMember() { goAdmin(); },
   async manPdfOpen(el) {
     const w = window.open('', '_blank');
     try { const r = await api('file', { id: el.dataset.id }); const bytes = Uint8Array.from(atob(r.b64), c => c.charCodeAt(0)); const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })); if (w) w.location = url; else location.href = url; }
@@ -3333,7 +3469,7 @@ function vAdmin() {
     ${ADM.invites.length ? `<h4 class="small muted" style="margin:14px 0 6px">使われていない招待コード</h4><ul class="mini-list">${ADM.invites.map(i => `<li>${esc(i.label || '—')}<span class="small muted">${i.type === 'register' ? 'レジ' : i.type === 'shared' ? '共有' : esc(nameOf(i.userId))}・${fmt(i.expires)}まで</span></li>`).join('')}</ul>` : ''}`;
   } else {
     const TB = { leaves: '休み', tempWork: '臨時職員の出勤', visits: '来訪者', outings: '外出', rituals: '祭典', seasons: '時期', board: '掲示板', reads: '既読', manual: 'マニュアル', diary: '日報', shifts: 'シフト', extraNeed: '追加の人数', requests: '希望シフト', seasonReq: '巫女の希望', draft: 'シフトの下書き', settings: '設定' };
-    const logTarget = t => { const m = /^(\w+):(.*)$/.exec(t || ''); return m && TB[m[1]] ? TB[m[1]] + (/^\d{4}-\d{2}(-\d{2})?$/.test(m[2]) ? '（' + m[2] + '）' : '') : (t || ''); };
+    const logTarget = t => { const m = /^(\w+):(.*)$/.exec(t || ''); return m && TB[m[1]] ? TB[m[1]] + (/^\d{4}-\d{2}(-\d{2})?$/.test(m[2]) ? '（' + (m[2].length === 10 ? warekiDate(parse(m[2])) : warekiMonth(Number(m[2].slice(0, 4)), Number(m[2].slice(5)))) + '）' : '') : (t || ''); };
     const A = { login: 'ログイン', login_fail: 'ログイン失敗', lock: 'ロック', add: '追加', update: '変更', delete: '削除', upload: 'PDFの登録', device_register: '端末の登録', device_register_fail: '招待コードの失敗', device_revoke: '端末の取り消し', invite: '招待コード', pin_change: '暗証番号の変更', user_add: '人の登録', user_resetPin: '番号の再発行', user_unlock: 'ロック解除', user_disable: '無効化', user_enable: '有効化', user_update: '人の編集', setup: '最初の設定' };
     body = `<div class="card" style="overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>日時</th><th>だれが</th><th>何を</th><th>対象</th></tr></thead><tbody>${ADM.logs.map(l => `<tr><td class="small num" style="white-space:nowrap">${esc(String(l.at).slice(5, 16))}</td><td class="small">${esc(nameOf(l.userId) === '—' ? (l.userId || '—') : nameOf(l.userId))}</td><td class="small">${esc(A[l.action] || l.action)}</td><td class="small muted">${esc(logTarget(l.target))}</td></tr>`).join('')}</tbody></table></div></div>`;
   }
@@ -3348,13 +3484,17 @@ function showOnce(title, big, note) {
 if (PROD) Object.assign(ACT, {
   admTab(el) { admTab = el.dataset.v; render(); },
   admReload() { ADM = null; render(); },
-  admAdd() {
-    modal(`<div class="modal-h"><h3>人を登録</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  admAdd(el) {
+    const group = el?.dataset.t;
+    const groupFixed = ['reitaisai', 'shichigosan'].includes(group);
+    if (!P.me || !P.me.isAdmin) return goAdmin();
+    const title = groupFixed ? GRP_LABEL[group] + 'の巫女を登録' : '人を登録';
+    modal(`<div class="modal-h"><h3>${title}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
     <div class="modal-b">
       <div class="field"><label for="auName">名前（画面に出る名前）</label><input class="input" id="auName" maxlength="30" placeholder="例：田中 美咲"></div>
-      <div class="field"><label for="auRole">種別</label><select class="input" id="auRole" data-chg="auRole"><option value="shuin">御朱印（アルバイト）</option><option value="miko">巫女</option><option value="temp">臨時職員</option><option value="staff">職員</option></select></div>
-      <div class="field" id="auGrpBox" hidden><label for="auGrp">巫女の時期</label><select class="input" id="auGrp"><option value="reitaisai">例大祭</option><option value="shichigosan">七五三</option><option value="shogatsu">正月</option></select><div class="small muted">複数の時期に入る人は、時期ごとに同じ名前で登録してください（同じ人として扱われます）</div></div>
-      <div class="field" id="auDaysBox"><label>出られる曜日</label><div class="row" id="auDays">${WD.map((w, i) => `<label class="chip ${i === 0 || i === 6 ? 'on' : ''}" style="cursor:pointer"><input type="checkbox" value="${i}" ${i === 0 || i === 6 ? 'checked' : ''} style="display:none" data-chg="chipToggle">${w}</label>`).join('')}</div></div>
+      <div class="field"><label for="auRole">種別</label><select class="input" id="auRole" data-chg="auRole" ${groupFixed ? 'disabled' : ''}><option value="shuin">御朱印（助勤）</option><option value="miko" ${groupFixed ? 'selected' : ''}>巫女</option><option value="temp">臨時職員</option><option value="staff">職員</option></select></div>
+      <div class="field" id="auGrpBox" ${groupFixed ? '' : 'hidden'}><label for="auGrp">巫女の時期</label><select class="input" id="auGrp" ${groupFixed ? 'disabled' : ''}><option value="reitaisai">例大祭</option><option value="shichigosan" ${group === 'shichigosan' ? 'selected' : ''}>七五三</option></select><div class="small muted">複数の時期に入る人は、時期ごとに同じ名前で登録してください（同じ人として扱われます）</div></div>
+      <div class="field" id="auDaysBox" ${groupFixed ? 'hidden' : ''}><label>出られる曜日</label><div class="row" id="auDays">${WD.map((w, i) => `<label class="chip ${i === 0 || i === 6 ? 'on' : ''}" style="cursor:pointer"><input type="checkbox" value="${i}" ${i === 0 || i === 6 ? 'checked' : ''} style="display:none" data-chg="chipToggle">${w}</label>`).join('')}</div></div>
       <div class="note">${ICON.info}<span>電話番号などの個人情報は、このシステムには入れません。</span></div>
     </div>
     <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="admAddSave">登録して暗証番号を出す</button></div>`);
@@ -3585,7 +3725,7 @@ function juyoSalesProd() {
   const yoy = qty(inLY) ? Math.round((sum / qty(inLY) - 1) * 100) : null;
   return `
   <div class="note" style="margin-bottom:14px">${ICON.info}<span>出数は<b>授与所のレジ端末</b>の記録です。宮司が接客した分などは入らないので、在庫とは合わせません。</span></div>
-  <div class="row" style="margin-bottom:14px;gap:8px"><button class="icon-btn" data-act="sumMonth" data-n="-1" aria-label="前の月">${ICON.left}</button><h3 style="font-size:18px;margin:0">${y}年${m}月</h3><button class="icon-btn" data-act="sumMonth" data-n="1" aria-label="次の月">${ICON.right}</button><span class="sp"></span><button class="btn sm" data-act="sumCsv">日ごとの集計をCSVで保存</button><button class="btn sm ghost" data-act="sumReload">読み直す</button></div>
+  <div class="row" style="margin-bottom:14px;gap:8px"><button class="icon-btn" data-act="sumMonth" data-n="-1" aria-label="前の月">${ICON.left}</button><h3 style="font-size:18px;margin:0">${warekiMonth(y, m)}</h3><button class="icon-btn" data-act="sumMonth" data-n="1" aria-label="次の月">${ICON.right}</button><span class="sp"></span><button class="btn sm" data-act="sumCsv">日ごとの集計をCSVで保存</button><button class="btn sm ghost" data-act="sumReload">読み直す</button></div>
   <div class="grid3" style="margin-bottom:16px">
     <div class="card kpi"><div class="l">出数</div><div class="v">${sum.toLocaleString()}体</div><div class="small muted">${yoy == null ? '前年の記録なし' : `前年同月 ${yoy >= 0 ? '+' : ''}${yoy}%`}</div></div>
     <div class="card kpi"><div class="l">初穂料の合計</div><div class="v">${yen(amt(inM))}円</div><div class="small muted">レジ端末の記録</div></div>
@@ -3697,7 +3837,7 @@ function vDiaryProd() {
   <div class="diary">
     <section class="card card-p">
       <div class="row diary-h" style="margin-bottom:14px">
-        <div class="date-pick"><span class="cal-title"><h3 style="font-size:18px">${ymdw(a.d)}</h3><span class="caret">▾</span></span><input type="date" class="date-over" value="${k}" max="${TK}" data-chg="diaryDate" data-act="diaryPick" aria-label="日付を選ぶ" title="日付を選ぶ"></div>
+        ${warekiField(k, {max: TK, change: 'diaryDate', label: '日報の日付', heading: true})}
         <span class="sp"></span>
         <div class="cal-nav"><button class="btn sm" data-act="diaryMove" data-n="-1">${ICON.left}<span>前の日</span></button><button class="btn sm" data-act="diaryToday" ${k === TK ? 'disabled' : ''}>今日</button><button class="btn sm" data-act="diaryMove" data-n="1" ${k >= TK ? 'disabled' : ''}><span>次の日</span>${ICON.right}</button></div>
       </div>
@@ -3934,14 +4074,14 @@ function kgNyView(D) {
   // 前の季にも受けた団体（会社の印で照らす）
   // リピート率（前の季にも受けた団体の割合）とリピート・新規の社数、前の季の団体でまだ予約がない数。会社の印（1社目の名前）で社ごとに照らすので、前の季を取り込んでいない今年は「—」（2026-11-02・11-03 本人「枠だけ」）
   const pm = new Set(P0 ? P0.rows.map(r => r[14]).filter(Boolean) : []), am = new Set(A.map(r => r[14]).filter(Boolean)), repN = [...am].filter(x => pm.has(x)).length, rep = pm.size && am.size ? pc(repN, am.size) : null, notYet = pm.size ? [...pm].filter(x => !am.has(x)).length : null;
-  const later = (l, v, sub) => `<div class="card kpi"><div class="l">${l}</div><div class="v num">${v == null ? '—' : v}</div><div class="small muted">${v == null ? `${S.y + 1}年から` : sub}</div></div>`;
-  const seasonBar = `<div class="row" style="margin:0 0 14px;gap:10px;flex-wrap:wrap;align-items:center"><select class="input" data-chg="anNyY" aria-label="年" style="width:auto;font-weight:700">${SS.map(s => `<option value="${s.y}" ${s.y === S.y ? 'selected' : ''}>${s.y}年</option>`).join('')}</select><span class="tag ${live ? 'brand' : 'gray'}">${live ? '受付中（12/20まで）' : '受付終了'}</span><span class="small muted">予約サイトのCSV（${md(parse(S.at))}に取り込み）</span><span class="sp"></span>${imp}</div>`;
+  const later = (l, v, sub) => `<div class="card kpi"><div class="l">${l}</div><div class="v num">${v == null ? '—' : v}</div><div class="small muted">${v == null ? `${warekiYear(S.y + 1)}から` : sub}</div></div>`;
+  const seasonBar = `<div class="row" style="margin:0 0 14px;gap:10px;flex-wrap:wrap;align-items:center"><select class="input" data-chg="anNyY" aria-label="年" style="width:auto;font-weight:700">${SS.map(s => `<option value="${s.y}" ${s.y === S.y ? 'selected' : ''}>${warekiYear(s.y)}</option>`).join('')}</select><span class="tag ${live ? 'brand' : 'gray'}">${live ? '受付中（12/20まで）' : '受付終了'}</span><span class="small muted">予約サイトのCSV（${md(parse(S.at))}に取り込み）</span><span class="sp"></span>${imp}</div>`;
   // 申込件数：最新更新日までに入っていた予約の数（8/1の受付開始から12/20の締切まで1週間ごと）。過去3年分も同じ日付に重ねる
   const st = parse(`${S.y - 1}-08-01`), wk = []; for (let d = addDays(st, 6); key(addDays(d, -6)) <= `${S.y - 1}-12-20`; d = addDays(d, 7)) wk.push(key(d));
   const cum = (rows, k) => rows.filter(r => r[1] && r[1] <= k).length, shift = (k, n) => `${Number(k.slice(0, 4)) - n}${k.slice(4)}`;
   const pace = lineChart(wk.map((k, i) => i === 0 || k.slice(5, 7) !== wk[i - 1].slice(5, 7) ? `${Number(k.slice(5, 7))}月` : ''),
-    Object.assign([{ name: `${S.y}年`, vals: wk.map(k => live && k > S.at ? null : cum(A, k)), color: 'var(--brand)', width: 2.4, dots: false },
-      ...[[1, 'var(--text-2)', '5 3'], [2, 'var(--text-3)', '2 3'], [3, 'var(--text-3)', '1 4']].map(([n, color, dash]) => [SS.find(s => s.y === S.y - n), color, dash]).filter(([x]) => x).map(([x, color, dash]) => ({ name: `${x.y}年`, vals: wk.map(k => cum(x.rows, shift(k, S.y - x.y))), color, dash, dots: false }))], { tip: i => `${md(addDays(parse(wk[i]), -6))}〜${md(parse(wk[i]))}の週の終わり` }));
+    Object.assign([{ name: warekiYear(S.y), vals: wk.map(k => live && k > S.at ? null : cum(A, k)), color: 'var(--brand)', width: 2.4, dots: false },
+      ...[[1, 'var(--text-2)', '5 3'], [2, 'var(--text-3)', '2 3'], [3, 'var(--text-3)', '1 4']].map(([n, color, dash]) => [SS.find(s => s.y === S.y - n), color, dash]).filter(([x]) => x).map(([x, color, dash]) => ({ name: warekiYear(x.y), vals: wk.map(k => cum(x.rows, shift(k, S.y - x.y))), color, dash, dots: false }))], { tip: i => `${md(addDays(parse(wk[i]), -6))}〜${md(parse(wk[i]))}の週の終わり` }));
   // 日ごとの件数（1/1〜2/3）
   const days = []; for (let d = parse(`${S.y}-01-01`); key(d) <= `${S.y}-02-03`; d = addDays(d, 1)) days.push(key(d));
   const byD = {}; A.forEach(r => { const k = r[0].slice(0, 10); byD[k] = (byD[k] || 0) + 1; });
@@ -3980,21 +4120,21 @@ function kgNyView(D) {
     ${card('日ごとの件数', `<div class="small muted" style="display:grid;grid-template-columns:auto 1fr;gap:3px 14px;margin:0 0 12px"><span>1月第1週（${md(parse(wA[0]))}〜${md(parse(wA[4]))}）</span><span><b style="color:var(--text)">${nW}件（${pc(nW, A.length)}）</b>　${yoy(nW, nWB)}</span><span>それ以外</span><span><b style="color:var(--text)">${A.length - nW}件（${pc(A.length - nW, A.length)}）</b>　${yoy(A.length - nW, nWB == null ? null : B.length - nWB)}</span><span>ピーク</span><span><b style="color:var(--text)">${pk.t} ${pk.v}件</b>　${yoy(pk.v, pkB)}</span></div>${bars(dRows)}`, '', 'an-wide')}
     ${card('日付と時間帯の埋まり具合', heat, '', 'an-wide')}
     ${busy.length ? card('空き枠', `<ul class="an-open">${openList}</ul>`, '', 'an-wide') : ''}
-    <div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>地域</h3><span class="sp"></span><div class="seg">${[['all', '全体'], ['new', '新規']].map(([k, l]) => `<button class="${k === anNyWho ? 'on' : ''}" data-act="anNyWho" data-v="${k}">${l}</button>`).join('')}</div><div class="seg">${[['city', '市区町村'], ['pref', '都道府県']].map(([k, l]) => `<button class="${k === anKArea ? 'on' : ''}" data-act="anKArea" data-v="${k}">${l}</button>`).join('')}</div></div>${isNew && rep == null ? `<div class="empty small">${S.y + 1}年から</div>` : rank(area.slice(0, 10), areaT)}</div>
+    <div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>地域</h3><span class="sp"></span><div class="seg">${[['all', '全体'], ['new', '新規']].map(([k, l]) => `<button class="${k === anNyWho ? 'on' : ''}" data-act="anNyWho" data-v="${k}">${l}</button>`).join('')}</div><div class="seg">${[['city', '市区町村'], ['pref', '都道府県']].map(([k, l]) => `<button class="${k === anKArea ? 'on' : ''}" data-act="anKArea" data-v="${k}">${l}</button>`).join('')}</div></div>${isNew && rep == null ? `<div class="empty small">${warekiYear(S.y + 1)}から</div>` : rank(area.slice(0, 10), areaT)}</div>
   </div>`;
 }
 /* タスクのタブ：分析画面を完成させるまでにやること（2026-11-02 本人）。終わったら d を 1 にして作り直す。
    [見出し, 説明, [[やること, 担当, 終わったら1, 補足]]]。担当は 勝史・制作会社・Claude */
 const AN_TASKS = [
   ['1. 画面の形を決める', '見本（作り物の数字）で、祈願・HP・Google・SNSの画面を作る', [
-    ['祈願・HP・Google・SNSの画面を見本で作る', 'Claude', 1, '2026-11-02 見本 version 57'],
+    ['祈願・HP・Google・SNSの画面を見本で作る', 'Claude', 1, '令和8年11月2日 見本 version 57'],
     ['本人が見本を触って直しを出す', '勝史', 1, '']]],
   ['2. 本番に出す（HPタブが動き出す）', 'GA4の数字は、これが終わった夜から毎晩取り込まれる', [
-    ['Apps Script の［サービス］に「Google Analytics Data API」を追加する', '勝史', 1, '2026-11-02'],
-    ['appsscript.json に権限の一覧（oauthScopes）を足す', '勝史', 1, '2026-11-02 Claudeが書き足し、本人が許可。ビジネスプロフィール用も入れた'],
-    ['受け口（Code.gs）を貼り直し、recordAnalytics を1回実行して「新バージョン」でデプロイ', '勝史', 1, '2026-11-02 バージョン6'],
-    ['画面のファイル（dist/index.html）を GitHub に上げる', '勝史', 1, '2026-11-02'],
-    ['本物の数字が出ているか一緒に確かめる', 'Claude', 1, '2026-11-02 本人の端末で表示を確認']]],
+    ['Apps Script の［サービス］に「Google Analytics Data API」を追加する', '勝史', 1, '令和8年11月2日'],
+    ['appsscript.json に権限の一覧（oauthScopes）を足す', '勝史', 1, '令和8年11月2日 Claudeが書き足し、本人が許可。ビジネスプロフィール用も入れた'],
+    ['受け口（Code.gs）を貼り直し、recordAnalytics を1回実行して「新バージョン」でデプロイ', '勝史', 1, '令和8年11月2日 バージョン6'],
+    ['画面のファイル（dist/index.html）を GitHub に上げる', '勝史', 1, '令和8年11月2日'],
+    ['本物の数字が出ているか一緒に確かめる', 'Claude', 1, '令和8年11月2日 本人の端末で表示を確認']]],
   ['3. HPタブを仕上げる', '検索された言葉と、HPで押されたボタンの数を出す', [
     ['Search Console に神社のGoogleアカウントで登録する（https://shinagawajinja.tokyo/）', '勝史', 0, ''],
     ['Search Console の所有権の確認', '制作会社', 0, '確認用のタグを1行入れてもらう／GTMの権限／DNS のどれか'],
@@ -4014,7 +4154,7 @@ const AN_TASKS = [
   ['7. 仕上げ', '本物の数字が入ってから', [
     ['本物の数字で見直す（言葉・グラフ・足りない数字）', '勝史', 0, 'Claude と一緒に'],
     ['数字の相談に使うAIのプロジェクトに「読み方メモ」を置く', 'Claude', 0, 'どのプロジェクトで相談するか決まったら'],
-    ['職員にも見せる', '勝史', 1, '2026-11-02 宮司・職員・臨時職員に公開']]]];
+    ['職員にも見せる', '勝史', 1, '令和8年11月2日 宮司・職員・臨時職員に公開']]]];
 const AN_WHO = { 勝史: 'var(--brand)', 制作会社: 'var(--viz2)', Claude: 'var(--viz3)' };
 function anTaskView() {
   const all = AN_TASKS.flatMap(g => g[2]), done = all.filter(t => t[2]).length, next = AN_TASKS.find(g => g[2].some(t => !t[2]));
@@ -4060,7 +4200,7 @@ function vAnalyticsProd() {
   // 数字と表の期間：1か月＝選んだ月、1年＝その年の1月から（今年なら昨日まで）。前年は同じ日付の範囲
   const last = DAILY[DAILY.length - 1][0], isY = anSpan === 'y', mEnd = isY ? `${y}-12-31` : key(new Date(y, m, 0)), to = mEnd < last ? mEnd : last, from = isY ? `${y}-01-01` : `${anMonth}-01`;
   const lyFrom = `${y - 1}${from.slice(4)}`, lyTo = `${y - 1}${to.slice(4)}`;
-  const PL = isY ? `${y}年` : `${m}月`, curMs = isY ? Array.from({ length: Number(to.slice(5, 7)) }, (_, i) => `${y}-${pad(i + 1)}`) : [anMonth], lyMs = curMs.map(k => `${y - 1}${k.slice(4)}`);
+  const PL = isY ? warekiYear(y) : `${m}月`, curMs = isY ? Array.from({ length: Number(to.slice(5, 7)) }, (_, i) => `${y}-${pad(i + 1)}`) : [anMonth], lyMs = curMs.map(k => `${y - 1}${k.slice(4)}`);
   const pct = (a, b) => b ? Math.round((a / b - 1) * 100) : null;
   const pctTxt = p => p == null ? '—' : (p >= 0 ? '+' : '') + p + '%', pctCls = p => p == null ? 'muted' : p >= 0 ? 'up' : 'down';
   const kpi = (l, v, p, sub, inv) => `<div class="card kpi"><div class="l">${l}</div><div class="v num">${v}</div><div class="small ${pctCls(inv && p != null ? -p : p)}">${p == null ? sub : `前年比 ${pctTxt(p)}`}</div></div>`;
@@ -4078,13 +4218,13 @@ function vAnalyticsProd() {
     const ly = Number(last.slice(0, 4)), lm = Number(last.slice(5, 7)), full = key(addDays(parse(last), 1)).slice(8) === '01' ? 0 : 1, ms = Array.from({ length: 12 }, (_, i) => ym(new Date(ly, lm - 12 - full + i, 1)));
     chLabels = ms.map(k => `${Number(k.slice(5))}月`);
     chSeries = [{ name: '直近1年', vals: ms.map(k => hpM(k) || null), color: C_NOW, width: 2.4, dots: true }, { name: '前年', vals: ms.map(k => hpM(`${Number(k.slice(0, 4)) - 1}${k.slice(4)}`) || null), color: C_LY, dash: '4 3' }];
-    chSeries.tip = i => `${ms[i].slice(0, 4)}年${Number(ms[i].slice(5))}月`;
+    chSeries.tip = i => warekiMonth(ms[i].slice(0, 4), Number(ms[i].slice(5)));
   } else if (anRange === '1m') {
     // 選んだ月の1日ごと。前年は同じ曜日の日（52週前）
     const dim = new Date(y, m, 0).getDate(), days = Array.from({ length: dim }, (_, i) => `${anMonth}-${pad(i + 1)}`).filter(k => k <= last);
     // 日付は日曜日と祝日だけ出す（赤）（2026-11-02 本人）
     chLabels = days.map(k => (parse(k).getDay() === 0 || HOLIDAYS[k]) ? { t: Number(k.slice(8)), c: 'var(--red)' } : '');   // 日曜と祝日が並んでも重ならないよう数字だけ
-    chSeries = [{ name: `${y}年${m}月`, vals: days.map(k => isStock ? stockAt(k) : (byDay[k] || {})[f] || 0), color: C_NOW, width: 2.4, dots: true }, { name: '前年の同じ曜日', vals: days.map(k => { const q = key(addDays(parse(k), -364)); return isStock ? stockAt(q) : (byDay[q] || {})[f] || 0; }), color: C_LY, dash: '4 3' }];
+    chSeries = [{ name: warekiMonth(y, m), vals: days.map(k => isStock ? stockAt(k) : (byDay[k] || {})[f] || 0), color: C_NOW, width: 2.4, dots: true }, { name: '前年の同じ曜日', vals: days.map(k => { const q = key(addDays(parse(k), -364)); return isStock ? stockAt(q) : (byDay[q] || {})[f] || 0; }), color: C_LY, dash: '4 3' }];
     if (isS && anSns !== 'all') { const ps = ((D.sns || {}).posts || []).filter(r => r[1] === anSns); chMarks = days.map((k, i) => ({ i, d: `${md(k)}（${'日月火水木金土'[parse(k).getDay()]}）`, t: ps.filter(r => r[0] === k).map(r => r[2]) })).filter(m => m.t.length); }   // 投稿した日の印
     chSeries.tip = i => `${md(days[i])}（${'日月火水木金土'[parse(days[i]).getDay()]}）${HOLIDAYS[days[i]] ? ' ' + HOLIDAYS[days[i]] : ''}`;
   } else if (rng === '3y') {
@@ -4092,7 +4232,7 @@ function vAnalyticsProd() {
     const ly = Number(last.slice(0, 4)), full = key(addDays(parse(last), 1)).slice(8) === '01' ? last.slice(0, 7) : ym(new Date(ly, Number(last.slice(5, 7)) - 2, 1));
     const mSum = (yy, mm) => { const k = `${yy}-${pad(mm)}`; if (isStock) return k > last.slice(0, 7) ? null : stockAt(key(new Date(yy, mm, 0))); if (isHp) return k > full ? null : hpM(k) || null; return k > full ? null : sum(`${k}-01`, key(new Date(yy, mm, 0)), f) || null; };
     chLabels = Array.from({ length: 12 }, (_, i) => (i + 1) + '月');
-    chSeries = [{ name: `${ly}年`, vals: chLabels.map((_, i) => mSum(ly, i + 1)), color: C_NOW, width: 2.4, dots: true }, { name: `${ly - 1}年`, vals: chLabels.map((_, i) => mSum(ly - 1, i + 1)), color: C_LY, dash: '4 3' }, { name: `${ly - 2}年`, vals: chLabels.map((_, i) => mSum(ly - 2, i + 1)), color: C_LY, width: 1.2, dash: '1 3' }];
+    chSeries = [{ name: warekiYear(ly), vals: chLabels.map((_, i) => mSum(ly, i + 1)), color: C_NOW, width: 2.4, dots: true }, { name: warekiYear(ly - 1), vals: chLabels.map((_, i) => mSum(ly - 1, i + 1)), color: C_LY, dash: '4 3' }, { name: warekiYear(ly - 2), vals: chLabels.map((_, i) => mSum(ly - 2, i + 1)), color: C_LY, width: 1.2, dash: '1 3' }];
   } else {
     // 3か月・1年は1週間ごと。前年は同じ曜日にそろえる（52週前）
     const nW = anRange === '3m' ? 13 : 52, weeks = Array.from({ length: nW }, (_, i) => key(addDays(parse(last), -7 * (nW - 1 - i))));   // 各週の最後の日
@@ -4155,7 +4295,7 @@ function vAnalyticsProd() {
     : card('検索回数とキーワード（' + PL + '）' + AN_PRE, tiles([['検索結果', '—'], ['クリック数', '—'], ['クリック率', '—']]).replace('class="an-tiles"', 'class="an-tiles c3"') + later('Search Console の登録が済むと自動で入ります'), scSub);
   const isCur = isY ? String(y) === last.slice(0, 4) : anMonth === ym(parse(last));
   // 月・年の切り替え。ページの一番上と、入口ページの上の2か所に同じものを置く
-  const periodBar = `<button class="icon-btn" data-act="anMonth" data-n="-1" aria-label="${isY ? '前の年' : '前の月'}">${ICON.left}</button><button class="cal-title" data-act="anPicker" title="年月を選ぶ"><h3 style="font-size:18px;margin:0;white-space:nowrap">${isY ? `${y}年` : `${y}年${m}月`}</h3></button><button class="icon-btn" data-act="anMonth" data-n="1" aria-label="${isY ? '次の年' : '次の月'}" ${isCur ? 'disabled' : ''}>${ICON.right}</button><div class="seg">${[['m', '1か月'], ['y', '1年']].map(([k, l]) => `<button class="${k === anSpan ? 'on' : ''}" data-act="anSpan" data-v="${k}">${l}</button>`).join('')}</div>${isCur ? `<span class="small muted">（${isY ? md(to) : Number(to.slice(8)) + '日'}までの数字）</span>` : ''}`;
+  const periodBar = `<button class="icon-btn" data-act="anMonth" data-n="-1" aria-label="${isY ? '前の年' : '前の月'}">${ICON.left}</button><button class="cal-title" data-act="anPicker" title="年月を選ぶ"><h3 style="font-size:18px;margin:0;white-space:nowrap">${isY ? warekiYear(y) : warekiMonth(y, m)}</h3></button><button class="icon-btn" data-act="anMonth" data-n="1" aria-label="${isY ? '次の年' : '次の月'}" ${isCur ? 'disabled' : ''}>${ICON.right}</button><div class="seg">${[['m', '1か月'], ['y', '1年']].map(([k, l]) => `<button class="${k === anSpan ? 'on' : ''}" data-act="anSpan" data-v="${k}">${l}</button>`).join('')}</div>${isCur ? `<span class="small muted">（${isY ? md(to) : Number(to.slice(8)) + '日'}までの数字）</span>` : ''}`;
   const chMarkName = isS && anSns !== 'all' ? { 投稿: '投稿した日', 動画: '動画を出した日', メッセージ: 'メッセージを送った日' }[snsCfg(anSns)[9]] : '';
   if (chMarks) { const base = chSeries.tip; chSeries.tip = i => { const m = chMarks.find(x => x.i === i); return base(i) + (m ? `\n${chMarkName}：${m.t.join('、')}` : ''); }; }   // 線に触れたときも投稿のタイトルを出す
   const chartCard = `<div class="card card-p" style="margin-bottom:16px">
@@ -4235,7 +4375,7 @@ function vAnalyticsProd() {
     const [dA, dB] = tot3('dl'), lnRate = (a, b) => b ? `${(a / b * 100).toFixed(1)}%` : '—';
     const l12 = (() => { const ly = Number(last.slice(0, 4)), lm = Number(last.slice(5, 7)), sk = key(addDays(parse(last), 1)).slice(8) === '01' ? 0 : 1; return Array.from({ length: 12 }, (_, i) => ym(new Date(ly, lm - 12 - sk + i, 1))); })();
     const mS = (k, f) => sum(`${k}-01`, key(new Date(Number(k.slice(0, 4)), Number(k.slice(5)), 0)), f), rM = (k, a, b) => { const d = mS(k, b); return d ? mS(k, a) / d * 100 : null; }, lyK = k => `${Number(k.slice(0, 4)) - 1}${k.slice(4)}`;
-    const rChart = (a, b) => { const se = [{ name: '直近1年', vals: l12.map(k => rM(k, a, b)), color: C_NOW, width: 2.4, dots: true }, { name: '前年', vals: l12.map(k => rM(lyK(k), a, b)), color: C_LY, dash: '4 3' }]; se.tip = i => `${l12[i].slice(0, 4)}年${Number(l12[i].slice(5))}月`; return lineChart(l12.map(k => `${Number(k.slice(5))}月`), se, { w: 420, h: 200, fmt: v => `${v.toFixed(1)}%` }); };
+    const rChart = (a, b) => { const se = [{ name: '直近1年', vals: l12.map(k => rM(k, a, b)), color: C_NOW, width: 2.4, dots: true }, { name: '前年', vals: l12.map(k => rM(lyK(k), a, b)), color: C_LY, dash: '4 3' }]; se.tip = i => warekiMonth(l12[i].slice(0, 4), Number(l12[i].slice(5))); return lineChart(l12.map(k => `${Number(k.slice(5))}月`), se, { w: 420, h: 200, fmt: v => `${v.toFixed(1)}%` }); };
     const lineCard = `<div class="card card-p an-wide"><div class="card-h"><h3>開封率・クリック率（${PL}）</h3></div>
       <div class="an-lr"><div>${tiles([['開封率', lnRate(vA, dA), null, `前年 ${lnRate(vB, dB)}<div style="margin-top:6px">開封数 <b class="num" style="color:var(--text)">${vA.toLocaleString()}</b> ÷ 送った人数 <b class="num" style="color:var(--text)">${dA.toLocaleString()}</b></div>`]])}<h4 class="small muted" style="margin:14px 0 4px">開封率の推移（1年）</h4>${rChart('v', 'dl')}</div><div>${tiles([['クリック率', lnRate(eA, vA), null, `前年 ${lnRate(eB, vB)}<div style="margin-top:6px">クリック数 <b class="num" style="color:var(--text)">${eA.toLocaleString()}</b> ÷ 開封数 <b class="num" style="color:var(--text)">${vA.toLocaleString()}</b></div>`]])}<h4 class="small muted" style="margin:14px 0 4px">クリック率の推移（1年）</h4>${rChart('e', 'v')}</div></div></div>`;
     const rxCard = anSns === 'line' ? lineCard : cfg[8].length < 2 ? '' : `<div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:6px"><h3>${cfg[8].slice(0, 2).join('・')}などの数（${PL}）</h3><span class="sp"></span><span class="small muted" title="反応率＝${cfg[4]}÷${cfg[3]}">反応率 <b class="num" style="color:var(--text);font-size:16px">${rate(eA, vA)}</b>（前年 ${rate(eB, vB)}）</span></div>
@@ -4262,7 +4402,7 @@ function vAnalyticsProd() {
     const avgIn = (a, b) => { const x = rv.filter(r => r[0] >= a && r[0] <= b); return x.length ? x.reduce((n, r) => n + r[1], 0) / x.length : null; }, aNow = avgIn(from, to), aLy = avgIn(lyFrom, lyTo);
     const RV_F = [['all', 'すべて', () => true], ['low', '★1〜2', n => n <= 2], ['mid', '★3', n => n === 3], ['high', '★4〜5', n => n >= 4]], rvF = (RV_F.find(x => x[0] === anRvF) || RV_F[0])[2];
     const rvNew = rv.filter(r => r[2] && rvF(r[1])).sort((a, b) => a[0] < b[0] ? 1 : -1);
-    const rvList = `<div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>口コミの本文（新しい順）</h3><span class="sp"></span><div class="seg">${RV_F.map(([k, l]) => `<button class="${k === anRvF ? 'on' : ''}" data-act="anRvF" data-v="${k}">${l}</button>`).join('')}</div></div>${rvNew.length ? `<ul class="an-rv">${rvNew.slice(0, anRvN).map(r => `<li><div class="row" style="gap:10px"><b class="an-star">${'★'.repeat(r[1])}<span>${'★'.repeat(5 - r[1])}</span></b><span class="small muted">${Number(r[0].slice(0, 4))}年${Number(r[0].slice(5, 7))}月${Number(r[0].slice(8))}日</span></div><p>${esc(r[2])}</p></li>`).join('')}</ul>${rvNew.length > 5 ? `<div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${rvNew.length > anRvN ? `<button class="btn sm ghost" data-act="anRvMore">もっと見る（残り${(rvNew.length - anRvN).toLocaleString()}件）</button>` : ''}${anRvN > 5 ? '<button class="btn sm ghost" data-act="anRvLess">表示を減らす</button>' : ''}</div>` : ''}` : `<div class="empty small">${anRvF === 'all' ? '本文のある口コミはまだありません' : '当てはまる口コミはありません'}</div>`}</div>`;
+    const rvList = `<div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>口コミの本文（新しい順）</h3><span class="sp"></span><div class="seg">${RV_F.map(([k, l]) => `<button class="${k === anRvF ? 'on' : ''}" data-act="anRvF" data-v="${k}">${l}</button>`).join('')}</div></div>${rvNew.length ? `<ul class="an-rv">${rvNew.slice(0, anRvN).map(r => `<li><div class="row" style="gap:10px"><b class="an-star">${'★'.repeat(r[1])}<span>${'★'.repeat(5 - r[1])}</span></b><span class="small muted">${warekiDate(parse(r[0].slice(0, 10)))}</span></div><p>${esc(r[2])}</p></li>`).join('')}</ul>${rvNew.length > 5 ? `<div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">${rvNew.length > anRvN ? `<button class="btn sm ghost" data-act="anRvMore">もっと見る（残り${(rvNew.length - anRvN).toLocaleString()}件）</button>` : ''}${anRvN > 5 ? '<button class="btn sm ghost" data-act="anRvLess">表示を減らす</button>' : ''}</div>` : ''}` : `<div class="empty small">${anRvF === 'all' ? '本文のある口コミはまだありません' : '当てはまる口コミはありません'}</div>`}</div>`;
     const rvCard = card('口コミ', tiles([['平均の評価（これまで）', `★ ${rvAvg.toFixed(1)}`], ['口コミの数', rv.length.toLocaleString()], [`平均の評価（${PL}）`, aNow == null ? '—' : `★ ${aNow.toFixed(1)}`, null, aLy == null ? '前年の記録なし' : `前年 ★ ${aLy.toFixed(1)}`], [`新しい口コミ（${PL}）`, inR(from, to).toLocaleString(), pct(inR(from, to), inR(lyFrom, lyTo))]]) + `<h4 class="small muted" style="margin:14px 0 6px">星の内訳（これまでの全部）</h4>${starList}`);
     return head + `
   <div class="row" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">${periodBar}</div>
@@ -4325,9 +4465,9 @@ function anPickerModal() {
     return `<button class="ym-cell ${isCur ? 'cur' : ''}" data-act="anPick" data-ym="${k}" ${ok ? '' : 'disabled style="opacity:.35;cursor:default"'}><span class="ym-m">${i + 1}月</span><span class="small muted num">${ok ? (tot[k] || 0).toLocaleString() : '記録なし'}</span></button>`;
   }).join('');
   const yOk = String(y) >= first.slice(0, 4) && String(y) <= last.slice(0, 4);
-  modal(`<div class="modal-h"><button class="icon-btn" data-act="anPickYear" data-n="-1" aria-label="前の年" ${String(y - 1) < first.slice(0, 4) ? 'disabled' : ''}>${ICON.left}</button><h3 style="margin:0 10px">${y}年</h3><button class="icon-btn" data-act="anPickYear" data-n="1" aria-label="次の年" ${String(y + 1) > last.slice(0, 4) ? 'disabled' : ''}>${ICON.right}</button><span class="sp"></span><button class="icon-btn" data-act="closeModal" aria-label="閉じる">${ICON.x}</button></div>
+  modal(`<div class="modal-h"><button class="icon-btn" data-act="anPickYear" data-n="-1" aria-label="前の年" ${String(y - 1) < first.slice(0, 4) ? 'disabled' : ''}>${ICON.left}</button><h3 style="margin:0 10px">${warekiYear(y)}</h3><button class="icon-btn" data-act="anPickYear" data-n="1" aria-label="次の年" ${String(y + 1) > last.slice(0, 4) ? 'disabled' : ''}>${ICON.right}</button><span class="sp"></span><button class="icon-btn" data-act="closeModal" aria-label="閉じる">${ICON.x}</button></div>
   <div class="modal-b"><div class="ym-grid" style="grid-template-columns:repeat(4,1fr)">${cells}</div>
-    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm ${anSpan === 'y' && cy === y ? '' : 'ghost'}" data-act="anPick" data-year="${y}" ${yOk ? '' : 'disabled'}>${y}年（1年）</button><span class="small muted">月の下の数字は「${esc(mk[1])}」の${isS && mk[0] === 'f' ? '月末の人数' : '合計'}</span></div></div>`);
+    <div class="row" style="margin-top:12px;gap:8px;flex-wrap:wrap"><button class="btn sm ${anSpan === 'y' && cy === y ? '' : 'ghost'}" data-act="anPick" data-year="${y}" ${yOk ? '' : 'disabled'}>${warekiYear(y)}（1年）</button><span class="small muted">月の下の数字は「${esc(mk[1])}」の${isS && mk[0] === 'f' ? '月末の人数' : '合計'}</span></div></div>`);
 }
 if (PROD) {
   vAnalytics = vAnalyticsProd;
@@ -4353,7 +4493,7 @@ if (PROD) {
           const s = await nyFromCsv(await f.arrayBuffer());
           await api('kiganNyImport', { season: s });
           const K = AN.data.kigan = AN.data.kigan || {}; K.ny = (K.ny || []).filter(x => x.y !== s.y).concat([s]);
-          anNyY = s.y; anKg = 'ny'; render(); toast(`${s.y}年の団体（正月）の予約 ${s.rows.length}件を取り込みました`);
+          anNyY = s.y; anKg = 'ny'; render(); toast(`${warekiYear(s.y)}の団体（正月）の予約 ${s.rows.length}件を取り込みました`);
         } catch (e) { toast('取り込めませんでした：' + e.message); }
       };
       inp.click();
@@ -4367,6 +4507,48 @@ if (PROD) {
     anPostBy(el) { anPostBy = el.dataset.v; render(); },
     anRvLess() { anRvN = 5; render(); const el = document.querySelector('.an-rv'); if (el) el.closest('.card').scrollIntoView({ block: 'start' }); }
   });
+}
+
+/* =========================================================
+   正月（2026-11-12 結合。仕様：../20261112_正月システム結合_仕様書.md）
+   - 正月の画面は別ページ shogatsu.html（正月巫女デモを本番向けにしたもの）を画面の中に埋め込む
+   - 保存は神社くんがまとめて行う：表 shogatsu（id と data）。埋め込んだページは SG_HOST を通して読み書きする
+   - 見られるのは宮司・職員・臨時職員（2026-11-12 本人）。助勤のログインには出さない
+   ========================================================= */
+const SG_PAGE = PROD ? 'shogatsu.html' : 'shogatsu-demo.html';
+const sgFrame = () => document.getElementById('sgFrame');
+window.SG_HOST = {
+  prod: PROD,
+  rows() { if (!S.shogatsu) S.shogatsu = {}; return S.shogatsu; },
+  /* 変えた行だけ受け取る（set：書いた行、del：消した行）。読み直しの間にURLから届いた行はそのまま残る */
+  put(d) {
+    const m = Object.assign({}, S.shogatsu || {}, (d && d.set) || {});
+    ((d && d.del) || []).forEach(k => delete m[k]);
+    S.shogatsu = m; save();
+  },
+  /* 神職の休み（ホームの休み申告）：日付 → 名前の一覧 */
+  leaves() {
+    const o = {}, nm = id => (HOSTS.find(h => h.id === id) || {}).name;
+    (S.leaves || []).forEach(l => { const n = nm(l.staff); if (n) (o[l.date] = o[l.date] || []).push(n); });
+    return o;
+  },
+  /* 臨時職員の出勤（ホーム）：日付 → 名前の一覧 */
+  temps() {
+    const o = {}, nm = id => (TEMP_STAFF.find(h => h.id === id) || {}).name;
+    (S.tempWork || []).forEach(w => { const n = nm(w.staff); if (n) (o[w.date] = o[w.date] || []).push(n); });
+    return o;
+  },
+  touch() { if (typeof P !== 'undefined') P.lastInput = Date.now(); },
+  theme() { return document.documentElement.getAttribute('data-theme') || ''; }
+};
+function vShogatsu() {
+  return `<div class="sg-wrap"><iframe id="sgFrame" class="sg-frame" src="${SG_PAGE}" title="正月"></iframe></div>`;
+}
+/* 画面を作り直すたびに埋め込みを作り直すと、入力中の内容や位置が消える。正月を開いたままなら、中に新しいデータを知らせるだけにする */
+function sgKeep() {
+  const f = sgFrame(); if (!f) return false;
+  try { const w = f.contentWindow; if (w && typeof w.sgHostUpdated === 'function') w.sgHostUpdated(); } catch (e) { }
+  return true;
 }
 
 boot();
