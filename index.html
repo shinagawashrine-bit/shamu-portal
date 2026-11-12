@@ -1616,8 +1616,8 @@ function addEventModal(k, type = 'visit') {
   const visitors = [...new Set(S.visits.map(v => v.who))];
   modal(`<div class="modal-h"><h3>予定を追加</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="seg" style="margin-bottom:14px" id="evType">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事'], ...(canSetTemp() ? [['temp', '臨時職員']] : [])].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
-    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付'})}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>開始（先方での開始）</label>${tsel('evStart', '10:00')}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>長さ</label>${dsel('evDur', 60)}</div></div>
+    <div class="seg" style="margin-bottom:14px" id="evType" data-sai="${type === 'sai' ? '1' : ''}">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事'], ...(canSetTemp() ? [['temp', '臨時職員']] : [])].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付'})}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>開始（先方での開始）</label>${tsel('evStart', type === 'sai' ? '11:00' : '10:00')}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>長さ</label>${dsel('evDur', type === 'sai' ? 30 : 60)}</div></div>
     ${canSetTemp() ? `<div class="evsec" data-sec="temp" ${type !== 'temp' ? 'hidden' : ''}>
       <div class="field"><label>だれが</label><select class="input" id="twStaff">${TEMP_STAFF.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
     </div>` : ''}
@@ -2391,7 +2391,7 @@ function vSeasons() {
         <select class="input rt-w" id="rtWd" style="width:auto" hidden>${WD.map((w, i) => `<option value="${i}">${w}曜日</option>`).join('')}</select>
       </div>
       <label class="row small" style="gap:6px;margin-bottom:12px"><input type="checkbox" id="rtAllDay" data-chg="rtAllDay" style="width:18px;height:18px;accent-color:var(--brand)"> 終日（時間を決めずに一日中）</label>
-      <div class="row rt-time" style="gap:8px;margin-bottom:14px"><div class="field" style="margin:0"><label>開始</label><input class="input num" id="rtStart" value="10:00" style="width:90px"></div><div class="field" style="margin:0"><label>長さ</label><select class="input" id="rtDur" style="width:auto"><option value="30">30分</option><option value="60" selected>1時間</option><option value="90">1時間半</option><option value="120">2時間</option></select></div></div>
+      <div class="row rt-time" style="gap:8px;margin-bottom:14px"><div class="field" style="margin:0"><label>開始</label><input class="input num" id="rtStart" value="11:00" style="width:90px"></div><div class="field" style="margin:0"><label>長さ</label><select class="input" id="rtDur" style="width:auto"><option value="30" selected>30分</option><option value="60">1時間</option><option value="90">1時間半</option><option value="120">2時間</option></select></div></div>
       <button class="btn pri" data-act="saveRitual">追加する</button>
     </div>
   </div>
@@ -2748,7 +2748,7 @@ const ACT = {
   addOutStaff() { const used = [...document.querySelectorAll('.oStaffSel')].map(x => x.value); const next = HOSTS.find(h => !used.includes(h.id)); if (!next) return toast('全員選ばれています'); document.getElementById('oStaffList').insertAdjacentHTML('beforeend', outStaffRow(next.id, true)); },
   delOutStaff(el) { el.closest('.row').remove(); },
   addEvent(el) { addEventModal(el.dataset.k || selDay); },
-  evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); document.querySelectorAll('.ev-time').forEach(x => x.style.display = el.dataset.v === 'temp' ? 'none' : ''); },
+  evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); document.querySelectorAll('.ev-time').forEach(x => x.style.display = el.dataset.v === 'temp' ? 'none' : ''); { const ds = document.getElementById('evStart'), dd = document.getElementById('evDur'), sai = el.dataset.v === 'sai', was = el.parentElement.dataset.sai === '1'; el.parentElement.dataset.sai = sai ? '1' : ''; if (ds && dd && sai !== was) { ds.value = sai ? '11:00' : '10:00'; dd.value = sai ? '30' : '60'; } } },   // 日中の祭典は11:00・30分から（2026-11-12 本人）
   saveEvent() {
     const type = document.querySelector('#evType .on').dataset.v, date = val('evDate'), start = val('evStart'), dur = +val('evDur');
     if (!date) return toast('日付を選んでください');
@@ -3338,7 +3338,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261112123756';
+const BUILD = '20261112124802';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
