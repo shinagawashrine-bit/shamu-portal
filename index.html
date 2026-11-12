@@ -994,6 +994,22 @@ function reitaisaiDays(y) {
   return [addDays(best, -2), addDays(best, -1), best].map(key);
 }
 
+/* 正月の受付区分を正月の日程から毎年自動で出す（2026-11-12 本人。正月の画面の日程と同じ決め方）
+   三が日・成人の日の三連休・1月第3日曜までの土日＝予約なし・受付順、仕事始めの平日（1/4から三連休の前まで）＝法人のみ。
+   成人の日の後の平日と大晦日には付けない。時期の表（seasons）に手で入れた日があれば、そちらを優先する */
+function shogatsuAuto(k) {
+  if (k.slice(5, 7) !== '01') return null;
+  const y = +k.slice(0, 4), d = parse(k), dd = d.getDate(), w = d.getDay();
+  let sm = new Date(y, 0, 1); while (sm.getDay() !== 1) sm = addDays(sm, 1); sm = addDays(sm, 7);   // 成人の日（1月の第2月曜）
+  let end = new Date(y, 0, 1); while (end.getDay() !== 0) end = addDays(end, 1); end = addDays(end, 14);   // 1月の第3日曜
+  const satB = addDays(sm, -2);
+  if (d > end) return null;
+  if (dd <= 3 || (d >= satB && d <= sm) || w === 0 || w === 6) return 'shogatsu';
+  if (d < satB) return 'shogatsu_hou';
+  return null;
+}
+const seasonType = k => S.seasons[k] || shogatsuAuto(k);
+
 /* =========================================================
    状態（ブラウザ内保存）
    ========================================================= */
@@ -1268,7 +1284,7 @@ S = PROD ? null : (load() || seed());
    データの取り出し
    ========================================================= */
 function seasonOf(k) {
-  const t = S.seasons[k];
+  const t = seasonType(k);
   if (t) return { type: t, label: SEASON_TYPES[t].label, mode: SEASON_TYPES[t].mode };
   return null;
 }
@@ -1278,7 +1294,7 @@ function nearDay(y, r) { const t = new Date(y, r.month - 1, r.day); let diff = (
 function ritualWhen(r) { return r.repeat === 'monthly' ? `毎月${r.day}日${(r.skip || []).length ? `（${r.skip.join('・')}月はなし）` : ''}` : r.repeat === 'nth' ? `毎年${r.month}月の第${r.nth}${WD[r.wd]}曜日` : r.repeat === 'near' ? `毎年${r.month}月${r.day}日に近い${WD[r.wd]}曜日${r.nth ? `の${Math.abs(r.nth)}日${r.nth < 0 ? '前' : '後'}` : ''}` : r.repeat === 'yearly' ? `毎年${r.month}月${r.day}日` : mdw(parse(r.date)); }
 function ritualsOn(k) { const d = parse(k); return S.rituals.filter(r => r.repeat === 'monthly' ? d.getDate() === r.day && !(r.skip || []).includes(d.getMonth() + 1) : r.repeat === 'yearly' ? (d.getMonth() + 1 === r.month && d.getDate() === r.day) : r.repeat === 'nth' ? (d.getMonth() + 1 === r.month && d.getDay() === r.wd && Math.ceil(d.getDate() / 7) === r.nth) : r.repeat === 'near' ? nearDay(d.getFullYear(), r) === k : r.date === k).sort((a, b) => tmin(a.start) - tmin(b.start)); }
 const outingsOn = k => S.outings.filter(o => o.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
-const isEventDay = k => !!S.seasons[k] || ritualsOn(k).length > 0;
+const isEventDay = k => !!seasonType(k) || ritualsOn(k).length > 0;
 function leaveCapOn(k) { const c = S.rules.leaveCap; return isEventDay(k) ? c.event : isWeekend(parse(k)) ? c.weekend : c.weekday; }
 const visitsOn = k => S.visits.filter(v => v.date === k).sort((a, b) => tmin(a.start) - tmin(b.start));
 const leavesOn = k => { const s = seasonOf(k); if (s && s.mode === 'off') return STAFF.map(x => x.id); return S.leaves.filter(l => l.date === k).map(l => l.staff).sort((a, b) => hostOrder(a) - hostOrder(b)); };
@@ -2047,7 +2063,7 @@ const seasonLabel = t => (SEASON_TABS.find(x => x[0] === t) || [, ''])[1];
 let shiftMonth = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 1);
 function daysOfMonth(m) { const out = []; for (let d = new Date(m); d.getMonth() === m.getMonth(); d = addDays(d, 1)) out.push(new Date(d)); return out; }
 function needOn(d, post) {
-  const k = key(d), t = S.seasons[k], r = S.rules.posts[post];
+  const k = key(d), t = seasonType(k), r = S.rules.posts[post];
   if (post === 'shuin' && S.extraNeed[k]) return (t === 'shichigosan' || t === 'reitaisai' ? r[t] : isWeekend(d) ? r.weekend : r.weekday) + S.extraNeed[k];
   if (t === 'shogatsu' || t === 'shogatsu_hou') return post === 'honden' ? r.shogatsu : null;
   if (t === 'shichigosan' || t === 'reitaisai') return r[t];
@@ -2377,7 +2393,7 @@ function vSeasons() {
   <div class="grid2" style="align-items:start">
     <div class="card card-p">
       <div class="card-h"><h3>登録している祭典・行事</h3></div>
-      <ul class="mini-list">${S.rituals.filter(r => r.repeat !== 'once').sort((a, b) => (a.repeat === 'monthly' ? 0 : a.month * 100 + a.day) - (b.repeat === 'monthly' ? 0 : b.month * 100 + b.day)).map(r => `<li><div style="flex:1;min-width:0"><b>${esc(r.name)}</b><div class="small muted">${when(r)}・${r.allDay ? '終日' : `${r.start}〜${tstr(tmin(r.start) + r.dur)}`}</div></div><button class="btn sm ghost" data-act="delRitual" data-id="${r.id}">削除</button></li>`).join('') || '<li class="muted">まだありません</li>'}</ul>
+      <ul class="mini-list">${S.rituals.filter(r => r.repeat !== 'once').sort((a, b) => (a.repeat === 'monthly' ? 0 : a.month * 100 + a.day) - (b.repeat === 'monthly' ? 0 : b.month * 100 + b.day)).map(r => `<li><div style="flex:1;min-width:0"><b>${esc(r.name)}</b><div class="small muted">${when(r)}・${r.allDay ? '終日' : `${r.start}〜${tstr(tmin(r.start) + r.dur)}`}</div></div><button class="btn sm ghost" data-act="editRitual" data-id="${r.id}">編集</button><button class="btn sm ghost" data-act="delRitual" data-id="${r.id}">削除</button></li>`).join('') || '<li class="muted">まだありません</li>'}</ul>
       ${PROD ? '' : '<div class="small muted" style="margin-top:8px">月次祭（毎月1日11時・30分）は確認済み。ほかの祭典は後で設定します。</div>'}
     </div>
     <div class="card card-p">
@@ -2791,6 +2807,28 @@ const ACT = {
     S.rituals.push({ id: 'rt' + Date.now(), name, repeat, month: repeat !== 'monthly' ? +val('rtMonth') : undefined, day: +val('rtDay'), nth: +val('rtNth'), wd: +val('rtWd'), start: allDay ? '00:00' : start, dur: allDay ? 0 : +val('rtDur'), allDay });
     save(); render(); toast(`${name}を登録しました`);
   },
+  /* 登録済みの祭典の名前・時刻を直す（2026-11-12 本人。日付・繰り返しを変えるときは削除して追加し直す） */
+  editRitual(el) {
+    const r = S.rituals.find(x => x.id === el.dataset.id); if (!r) return;
+    const durs = [[30, '30分'], [60, '1時間'], [90, '1時間半'], [120, '2時間'], [180, '3時間']];
+    if (!r.allDay && !durs.some(d => d[0] === +r.dur)) durs.push([+r.dur, r.dur + '分']);
+    modal(`<div class="modal-h"><h3>祭典の編集</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+    <div class="modal-b">
+      <div class="field"><label>名前</label><input class="input" id="reName" value="${esc(r.name)}"></div>
+      <div class="small muted" style="margin:-4px 0 12px">${ritualWhen(r)}（日付・繰り返しを変えるときは、削除して追加し直してください）</div>
+      <label class="row small" style="gap:6px;margin-bottom:12px"><input type="checkbox" id="reAllDay" data-chg="reAllDay" ${r.allDay ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> 終日（時間を決めずに一日中）</label>
+      <div class="row re-time" style="gap:8px;${r.allDay ? 'display:none' : ''}"><div class="field" style="margin:0"><label>開始</label><input class="input num" id="reStart" value="${r.allDay ? '11:00' : esc(r.start)}" style="width:90px"></div><div class="field" style="margin:0"><label>長さ</label><select class="input" id="reDur" style="width:auto">${durs.map(([m, l]) => `<option value="${m}" ${(r.allDay ? 30 : +r.dur) === m ? 'selected' : ''}>${l}</option>`).join('')}</select></div></div>
+    </div>
+    <div class="modal-f"><button class="btn" data-act="closeModal">戻る</button><button class="btn pri" data-act="saveRitualEdit" data-id="${r.id}">保存する</button></div>`);
+  },
+  saveRitualEdit(el) {
+    const r = S.rituals.find(x => x.id === el.dataset.id); if (!r) return;
+    const name = val('reName').trim(), allDay = document.getElementById('reAllDay').checked, start = val('reStart').trim();
+    if (!name) return toast('名前を入れてください');
+    if (!allDay && !/^\d{1,2}:\d{2}$/.test(start)) return toast('時間は 11:00 の形で入れてください');
+    r.name = name; r.allDay = allDay; r.start = allDay ? '00:00' : start.padStart(5, '0'); r.dur = allDay ? 0 : +val('reDur');
+    save(); closeModal(); render(); toast(`${name}を${allDay ? '終日' : r.start + '〜' + tstr(tmin(r.start) + r.dur)}にしました`);
+  },
   delRitual(el) { askConfirm('この祭典を削除しますか？', () => { S.rituals = S.rituals.filter(r => r.id !== el.dataset.id); save(); render(); }); },
   openPost(el) {
     const p = S.board.find(x => x.id === el.dataset.id); if (!p) return;
@@ -3051,6 +3089,7 @@ const CHG = {
     if (tmp) toast('この端末ではブラウザに保存できないため、ページを閉じると消えます（デモの制限）');
   },
   rtRepeat(el) { const v = el.value; document.getElementById('rtMonth').hidden = v === 'monthly'; document.getElementById('rtDay').hidden = v === 'nth'; document.querySelectorAll('.rt-n').forEach(x => x.hidden = v !== 'nth'); document.getElementById('rtWd').hidden = v !== 'nth' && v !== 'near'; },
+  reAllDay(el) { document.querySelector('.re-time').style.display = el.checked ? 'none' : ''; },
   rtAllDay(el) { document.querySelector('.rt-time').style.display = el.checked ? 'none' : ''; },
   leaveCap(el) { S.rules.leaveCap[el.dataset.f] = Math.max(0, parseInt(el.value, 10) || 0); save(); },
   leaveQuota(el) { S.rules.leaveQuota = Math.max(0, parseInt(el.value, 10) || 0); save(); },
@@ -3338,7 +3377,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261112124802';
+const BUILD = '20261112125546';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
