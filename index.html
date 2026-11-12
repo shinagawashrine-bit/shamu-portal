@@ -2404,6 +2404,7 @@ function vSeasons() {
         <select class="input rt-y" id="rtMonth" style="width:auto" hidden>${opt(12, i => `<option value="${i + 1}">${i + 1}月</option>`)}</select>
         <select class="input rt-d" id="rtDay" style="width:auto">${opt(31, i => `<option value="${i + 1}">${i + 1}日</option>`)}</select>
         <select class="input rt-n" id="rtNth" style="width:auto" hidden>${opt(5, i => `<option value="${i + 1}">第${i + 1}</option>`)}</select>
+        <select class="input rt-s" id="rtShift" style="width:auto" hidden>${[-3, -2, -1, 0, 1, 2, 3].map(n => `<option value="${n}" ${n === 0 ? 'selected' : ''}>${n === 0 ? 'その日' : n < 0 ? `その${-n}日前` : `その${n}日後`}</option>`).join('')}</select>
         <select class="input rt-w" id="rtWd" style="width:auto" hidden>${WD.map((w, i) => `<option value="${i}">${w}曜日</option>`).join('')}</select>
       </div>
       <label class="row small" style="gap:6px;margin-bottom:12px"><input type="checkbox" id="rtAllDay" data-chg="rtAllDay" style="width:18px;height:18px;accent-color:var(--brand)"> 終日（時間を決めずに一日中）</label>
@@ -2804,7 +2805,7 @@ const ACT = {
     if (!name) return toast('名前を入れてください');
     if (!allDay && !/^\d{1,2}:\d{2}$/.test(start)) return toast('時間は 10:00 の形で入れてください');
     const repeat = val('rtRepeat');
-    S.rituals.push({ id: 'rt' + Date.now(), name, repeat, month: repeat !== 'monthly' ? +val('rtMonth') : undefined, day: +val('rtDay'), nth: +val('rtNth'), wd: +val('rtWd'), start: allDay ? '00:00' : start, dur: allDay ? 0 : +val('rtDur'), allDay });
+    S.rituals.push({ id: 'rt' + Date.now(), name, repeat, month: repeat !== 'monthly' ? +val('rtMonth') : undefined, day: +val('rtDay'), nth: repeat === 'near' ? +val('rtShift') : +val('rtNth'), wd: +val('rtWd'), start: allDay ? '00:00' : start, dur: allDay ? 0 : +val('rtDur'), allDay });
     save(); render(); toast(`${name}を登録しました`);
   },
   /* 登録済みの祭典の名前・時刻を直す（2026-11-12 本人。日付・繰り返しを変えるときは削除して追加し直す） */
@@ -3088,7 +3089,7 @@ const CHG = {
     { const box = document.getElementById('manFiles'); if (box) box.innerHTML = manFilesHtml(); }
     if (tmp) toast('この端末ではブラウザに保存できないため、ページを閉じると消えます（デモの制限）');
   },
-  rtRepeat(el) { const v = el.value; document.getElementById('rtMonth').hidden = v === 'monthly'; document.getElementById('rtDay').hidden = v === 'nth'; document.querySelectorAll('.rt-n').forEach(x => x.hidden = v !== 'nth'); document.getElementById('rtWd').hidden = v !== 'nth' && v !== 'near'; },
+  rtRepeat(el) { const v = el.value; document.getElementById('rtMonth').hidden = v === 'monthly'; document.getElementById('rtDay').hidden = v === 'nth'; document.querySelectorAll('.rt-n').forEach(x => x.hidden = v !== 'nth'); document.getElementById('rtWd').hidden = v !== 'nth' && v !== 'near'; document.getElementById('rtShift').hidden = v !== 'near'; },   // 近い曜日から何日ずらすか（例：例大祭の金曜＝6/7に近い日曜の2日前。2026-11-12 本人）
   reAllDay(el) { document.querySelector('.re-time').style.display = el.checked ? 'none' : ''; },
   rtAllDay(el) { document.querySelector('.rt-time').style.display = el.checked ? 'none' : ''; },
   leaveCap(el) { S.rules.leaveCap[el.dataset.f] = Math.max(0, parseInt(el.value, 10) || 0); save(); },
@@ -3377,7 +3378,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261112125546';
+const BUILD = '20261112131516';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
