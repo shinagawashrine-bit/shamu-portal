@@ -2801,7 +2801,7 @@ const ACT = {
     save(); closeModal(); render(); toast('削除しました');
   },
   saveRitual() {
-    const name = val('rtName'), start = val('rtStart'), allDay = document.getElementById('rtAllDay').checked;
+    const name = val('rtName'), start = val('rtStart').trim().padStart(5, '0'), allDay = document.getElementById('rtAllDay').checked;
     if (!name) return toast('名前を入れてください');
     if (!allDay && !/^\d{1,2}:\d{2}$/.test(start)) return toast('時間は 10:00 の形で入れてください');
     const repeat = val('rtRepeat');
@@ -3196,9 +3196,11 @@ function fromServer(d, me) {
   (d.users || []).filter(u => u.role === 'miko' && st.seasonMembers[u.grp]).forEach(u => st.seasonMembers[u.grp].push({ id: u.id, name: u.name, tel: '', note: u.note || '', color: u.color }));
   st.leaves = (d.leaves || []).map(r => ({ id: r.id, staff: r.staff, date: r.date, memo: r.memo || '' }));
   st.tempWork = (d.tempWork || []).map(r => ({ id: r.id, staff: r.staff, date: r.date }));
-  st.visits = (d.visits || []).map(r => ({ id: r.id, date: r.date, start: r.start, dur: num(r.dur) || 60, who: r.who, purpose: r.purpose || '', host: r.host || '' }));
-  st.outings = (d.outings || []).map(r => ({ id: r.id, date: r.date, start: r.start, dur: num(r.dur) || 60, staff: r.staff, staffs: r.staffs || [r.staff], place: r.place, purpose: r.purpose || '', travel: num(r.travel) || 0, buffer: num(r.buffer) ?? 15 }));
-  st.rituals = (d.rituals || []).map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: num(r.day), month: num(r.month), nth: num(r.nth), wd: num(r.wd), date: r.repeat === 'monthly' ? undefined : r.date || undefined, skip: r.repeat === 'monthly' ? String(r.date || '').split(',').filter(Boolean).map(Number) : undefined, start: r.start || '00:00', dur: num(r.dur) || 0, allDay: yes(r.allDay) }));
+  // 時刻は「11:00」の形だけ受け取る（形が違う値は画面に組み込まない。2026-11-12 Codex指摘）
+  const tm = v => { const t = String(v ?? ''); return /^\d{2}:\d{2}$/.test(t) ? t : /^\d:\d{2}$/.test(t) ? '0' + t : '00:00'; };
+  st.visits = (d.visits || []).map(r => ({ id: r.id, date: r.date, start: tm(r.start), dur: num(r.dur) || 60, who: r.who, purpose: r.purpose || '', host: r.host || '' }));
+  st.outings = (d.outings || []).map(r => ({ id: r.id, date: r.date, start: tm(r.start), dur: num(r.dur) || 60, staff: r.staff, staffs: r.staffs || [r.staff], place: r.place, purpose: r.purpose || '', travel: num(r.travel) || 0, buffer: num(r.buffer) ?? 15 }));
+  st.rituals = (d.rituals || []).map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: num(r.day), month: num(r.month), nth: num(r.nth), wd: num(r.wd), date: r.repeat === 'monthly' ? undefined : r.date || undefined, skip: r.repeat === 'monthly' ? String(r.date || '').split(',').filter(Boolean).map(Number) : undefined, start: tm(r.start) || '00:00', dur: num(r.dur) || 0, allDay: yes(r.allDay) }));
   st.seasons = {}; (d.seasons || []).forEach(r => st.seasons[r.id] = r.type);
   (d.weather || []).forEach(([t, code, tmax, tmin, prec, cloud]) => { if (!WX[t]) WX[t] = { code, tmax, tmin, prec, cloud, real: true }; });   // 受け口に記録した天気
   const reads = {}; (d.reads || []).forEach(r => { (reads[r.post] = reads[r.post] || {})[r.user] = num(r.at); });
@@ -3320,11 +3322,13 @@ async function refresh(force) {
   const ae = document.activeElement, editing = ae && ['INPUT', 'TEXTAREA', 'SELECT'].includes(ae.tagName);
   const dirty = diaryDirty();
   if (!force && (document.getElementById('modalBg') || document.getElementById('warekiPicker') || editing || dirty || Date.now() - P.lastInput < 4000 || document.visibilityState !== 'visible')) return;
+  const tok = P.token;   // 読み直しの途中でログアウト・期限切れになったら、後から届いた応答は捨てる（2026-11-12 Codex指摘）
   try {
     const r = await api('data');
+    if (!P.token || P.token !== tok) return;
     P.me = r.me; const ui = S && S.ui; S = fromServer(r.data, r.me); if (ui) S.ui = ui; P.last = snap(S); keepCache(r);
     if (!document.getElementById('modalBg')) render();
-  } catch (e) { if (e.code === 'session') expired(e.message); }
+  } catch (e) { if (e.code === 'session' && P.token === tok) expired(e.message); }
 }
 function syncBadge(on) { let b = document.getElementById('syncBadge'); if (!b) { b = document.createElement('div'); b.id = 'syncBadge'; b.className = 'sync-badge'; b.textContent = '保存中…'; document.body.appendChild(b); } b.hidden = !on; }
 function expired(msg) { if (typeof anReset === 'function') anReset(); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; P.screen = 'login'; P.msg = msg || 'もう一度ログインしてください'; closeModal(); render(); }
@@ -3378,7 +3382,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261112131516';
+const BUILD = '20261112161250';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -4580,6 +4584,7 @@ if (PROD) {
    ========================================================= */
 const SG_PAGE = PROD ? 'shogatsu.html' : 'shogatsu-demo.html';
 const sgFrame = () => document.getElementById('sgFrame');
+const SG_BOOK = { tok: undefined, d: null, p: null, cbs: [] };   // 正月の団体予約の読み込み（ログインごと）
 window.SG_HOST = {
   prod: PROD,
   rows() { if (!S.shogatsu) S.shogatsu = {}; return S.shogatsu; },
@@ -4600,6 +4605,23 @@ window.SG_HOST = {
     const o = {}, nm = id => (TEMP_STAFF.find(h => h.id === id) || {}).name;
     (S.tempWork || []).forEach(w => { const n = nm(w.staff); if (n) (o[w.date] = o[w.date] || []).push(n); });
     return o;
+  },
+  /* 正月の団体予約：分析に取り込んだ予約サイトのCSV（その年の分）から、日付→件数と取り込んだ日を返す（2026-11-12 Codex指摘）。
+     まだ読み込んでいなければ null を返して読み込み、届いたら cb を呼ぶ。ログインが変わったら読み直す */
+  book(y, cb) {
+    const pick = d => { const s = ((((d || {}).kigan || {}).ny) || []).find(x => Number(x.y) === Number(y)); if (!s) return { at: '', days: {} };
+      const days = {}; (s.rows || []).forEach(r => { const k = String(r[0]).slice(0, 10); days[k] = (days[k] || 0) + 1; }); return { at: String(s.at || ''), days }; };
+    if (typeof AN !== 'undefined' && AN.data) return pick(AN.data);
+    const tok = typeof P !== 'undefined' ? P.token : null;
+    if (SG_BOOK.tok !== tok) Object.assign(SG_BOOK, { tok, d: null, p: null, cbs: [] });
+    if (SG_BOOK.d) return pick(SG_BOOK.d);
+    if (cb) SG_BOOK.cbs.push(cb);
+    if (!SG_BOOK.p) SG_BOOK.p = api('analytics').then(d => d, () => ({})).then(d => {
+      if (SG_BOOK.tok !== tok) return;
+      SG_BOOK.d = d || {}; const cbs = SG_BOOK.cbs; SG_BOOK.cbs = [];
+      cbs.forEach(f => { try { f(); } catch (e) { } });
+    });
+    return null;
   },
   touch() { if (typeof P !== 'undefined') P.lastInput = Date.now(); },
   theme() { return document.documentElement.getAttribute('data-theme') || ''; }

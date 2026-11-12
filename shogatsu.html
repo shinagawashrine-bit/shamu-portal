@@ -463,8 +463,16 @@ function buildDays() {
 }
 let DAYS = buildDays();
 
-/* 団体（正月）の予約数：神社くんに取り込んだ2027年分（2026-11-03時点の件数） */
+/* 団体（正月）の予約数。見本は神社くんに取り込んだ2027年分（2026-11-03時点の件数）。
+   本番の神社くんの中では、分析に取り込んだ予約サイトのCSV（その年の分）から日ごとの件数を数える（2026-11-12 Codex指摘） */
 const BOOK = { '2027-01-01': 2, '2027-01-03': 1, '2027-01-04': 54, '2027-01-05': 60, '2027-01-06': 39, '2027-01-07': 15, '2027-01-08': 20, '2027-01-09': 1, '2027-01-13': 10, '2027-01-14': 3, '2027-01-15': 3 };
+const BOOK_AT = '2026-11-03';
+function bookInfo() {   // { at：何日時点か, days：日付→件数 }。本番でまだ届いていなければ null
+  try { if (typeof HOST !== 'undefined' && HOST && HOST.prod && HOST.book) return HOST.book(Y, () => render()); } catch (e) { }
+  return Y === 2027 ? { at: BOOK_AT, days: BOOK } : { at: '', days: {} };
+}
+const jpMD = at => `${wareki(+at.slice(0, 4))}${+at.slice(5, 7)}月${+at.slice(8, 10)}日`;   // 取り込んだ日（和暦）
+const bookOf = k => { const b = bookInfo(); return (b && b.days[k]) || 0; };
 
 /* ---- 初期データ（見本） ---- */
 const DEFAULT_RULES = {
@@ -638,7 +646,7 @@ function sizeOf(m) {
 /* ---- 必要人数 ---- */
 function needOf(d) {
   const rule = Number(S.rules.need[d.kind]) || 0;
-  const bookN = S.rules.bookOn && BOOK[d.k] ? Math.ceil(BOOK[d.k] / (Number(S.rules.perPerson) || 10)) : 0;
+  const bk = bookOf(d.k), bookN = S.rules.bookOn && bk ? Math.ceil(bk / (Number(S.rules.perPerson) || 10)) : 0;
   const base = Math.max(rule, bookN), adj = S.adj[d.k] || 0;
   return { n: Math.max(0, base + adj), rule, bookN, byBook: bookN > rule, adj };
 }
@@ -1022,7 +1030,7 @@ function vShift() {
   const head = DAYS.map(d => `<th class="dh ${dayCls(d)}">${d.kind === 'eve' ? `${d.label}<br>${d.sub}` : `<button class="dbtn" data-goday="${d.k}" title="${dayName(d)}の配置表を見る">${d.label}<br>${d.sub}</button>`}<div class="kind">${kindShort[d.kind]}</div>${d.extra ? `<button class="delday" data-delday="${d.k}" title="${dayName(d)}を日程から外す" aria-label="${dayName(d)}を日程から外す">×</button>` : ''}</th>`).join('');
   const needRow = DAYS.map(d => { const x = needOf(d); return `<td><span class="need"><button data-adj="-1" data-k="${d.k}" aria-label="${d.label}の人数を減らす">−</button><b>${x.n}</b><button data-adj="1" data-k="${d.k}" aria-label="${d.label}の人数を増やす">＋</button></span>${x.byBook ? `<span class="src" title="予約${BOOK[d.k]}件から">予約から</span>` : x.adj ? '<span class="src">手直し</span>' : ''}</td>`; }).join('');
   const gotRow = DAYS.map(d => { const n = needOf(d).n, a = assigned(d.k).length, bad = madeMiko() && checkDay(d).length; return `<td><span class="chk ${!n && !a || !madeMiko() ? '' : bad ? 'bad' : 'good'}">${n || a ? `${a}/${n}${!madeMiko() ? '' : bad ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
-  const bookRow = DAYS.map(d => `<td class="kind">${BOOK[d.k] ? BOOK[d.k] + '件' : ''}</td>`).join('');
+  const bookRow = DAYS.map(d => `<td class="kind">${bookOf(d.k) ? bookOf(d.k) + '件' : ''}</td>`).join(''), bi = bookInfo();
   const groups = ORDER.map(r => [r, S.members.filter(m => rankOf(m) === r)]).filter(([, ms]) => ms.length);
   const body = groups.map(([r, ms]) => `<tr class="grp"><td class="name">${RANKS[r][0]}（${ms.length}人）</td><td colspan="${DAYS.length}"></td></tr>` + ms.map(m => `<tr><td class="name">${mbadge(m)} ${esc(m.name)} <span class="kind">${daysOf(m.id).length}日</span></td>${DAYS.map(d => {
     const as = assigned(d.k).includes(m.id), a = S.avail[m.id]?.[d.k];
@@ -1036,7 +1044,7 @@ function vShift() {
       <thead><tr><th class="name">名前</th>${head}</tr></thead>
       <tbody>
         <tr><td class="name"><b>必要人数</b></td>${needRow}</tr>
-        <tr><td class="name kind">団体（正月）の予約</td>${bookRow}</tr>
+        <tr><td class="name kind">団体（正月）の予約<br><span style="font-weight:400;font-size:11px">${!bi ? '読み込み中' : bi.at ? jpMD(bi.at) + '時点' : '予約データなし'}</span></td>${bookRow}</tr>
         <tr><td class="name"><b>奉仕</b></td>${gotRow}</tr>
         ${body}
       </tbody></table></div>
