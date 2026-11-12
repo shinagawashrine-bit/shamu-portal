@@ -524,7 +524,10 @@ function seedState() {
 }
 const SKEY = 'miko-shogatsu-demo-v21';
 let S;   // 読み込みは一番下（関数と定数がそろってから）
-const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps'];
+const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps', 'made'];   // made：その年に「シフトを作る」を押したか（miko・g）
+/* 「シフトを作る」を最初に押すまでは警報を出さない（2026-11-12 本人：見づらいため） */
+const madeMiko = () => !!(S.made && S.made.miko), madeG = () => !!(S.made && S.made.g);
+const markMade = t => { S.made = Object.assign({}, S.made || {}, { [t]: Date.now() }); };
 function switchYear(y) {   // 2026-11-11 本人：来年以降も使えるように。巫女の登録は続けて使い、シフト・希望・配置は年ごとに分ける
   if (!y || y === Y) return;
   S.years = S.years || {};
@@ -955,6 +958,7 @@ function checkDay(d) {
 
 /* ---- 下書き：録事 → ベテラン → 残り（出勤日数が少ない人から。新人は上限まで） ---- */
 function draft() {
+  markMade('miko');
   S.assign = {};
   const cnt = {}; S.members.forEach(m => cnt[m.id] = 0);
   const can = (m, d) => S.avail[m.id]?.[d.k] === 'ok';
@@ -1008,6 +1012,7 @@ function shozokuNos() {
 
 const dayName = d => d.kind === 'eve' ? '12/31（夜）' : `${d.label}（${d.sub}）`;
 function vIssues(days) {
+  if (!madeMiko()) return '';
   const issues = days.map(d => [d, checkDay(d)]).filter(([, x]) => x.length);
   if (!issues.length) return '';
   return `<div class="card noprint" style="display:grid;gap:10px"><h2>直すところ（${issues.length}日）</h2><ul class="warnlist">${issues.map(([d, x]) => `<li><b>${dayName(d)}</b>　${x.join('／')}</li>`).join('')}</ul></div>`;
@@ -1016,7 +1021,7 @@ let mkSure = false;
 function vShift() {
   const head = DAYS.map(d => `<th class="dh ${dayCls(d)}">${d.kind === 'eve' ? `${d.label}<br>${d.sub}` : `<button class="dbtn" data-goday="${d.k}" title="${dayName(d)}の配置表を見る">${d.label}<br>${d.sub}</button>`}<div class="kind">${kindShort[d.kind]}</div>${d.extra ? `<button class="delday" data-delday="${d.k}" title="${dayName(d)}を日程から外す" aria-label="${dayName(d)}を日程から外す">×</button>` : ''}</th>`).join('');
   const needRow = DAYS.map(d => { const x = needOf(d); return `<td><span class="need"><button data-adj="-1" data-k="${d.k}" aria-label="${d.label}の人数を減らす">−</button><b>${x.n}</b><button data-adj="1" data-k="${d.k}" aria-label="${d.label}の人数を増やす">＋</button></span>${x.byBook ? `<span class="src" title="予約${BOOK[d.k]}件から">予約から</span>` : x.adj ? '<span class="src">手直し</span>' : ''}</td>`; }).join('');
-  const gotRow = DAYS.map(d => { const n = needOf(d).n, a = assigned(d.k).length, bad = checkDay(d).length; return `<td><span class="chk ${!n && !a ? '' : bad ? 'bad' : 'good'}">${n || a ? `${a}/${n}${bad ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
+  const gotRow = DAYS.map(d => { const n = needOf(d).n, a = assigned(d.k).length, bad = madeMiko() && checkDay(d).length; return `<td><span class="chk ${!n && !a || !madeMiko() ? '' : bad ? 'bad' : 'good'}">${n || a ? `${a}/${n}${!madeMiko() ? '' : bad ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
   const bookRow = DAYS.map(d => `<td class="kind">${BOOK[d.k] ? BOOK[d.k] + '件' : ''}</td>`).join('');
   const groups = ORDER.map(r => [r, S.members.filter(m => rankOf(m) === r)]).filter(([, ms]) => ms.length);
   const body = groups.map(([r, ms]) => `<tr class="grp"><td class="name">${RANKS[r][0]}（${ms.length}人）</td><td colspan="${DAYS.length}"></td></tr>` + ms.map(m => `<tr><td class="name">${mbadge(m)} ${esc(m.name)} <span class="kind">${daysOf(m.id).length}日</span></td>${DAYS.map(d => {
@@ -1096,7 +1101,7 @@ function vDay() {
     <div class="dchips">${chips}</div>
     <div class="row"><button class="btn" id="repair">シフトを作る</button><span class="sp"></span>
       <button class="btn pri" id="hpdf">PDFにする</button></div>
-    ${warn.length ? `<ul class="warnlist">${warn.map(w => `<li>${w}</li>`).join('')}</ul>` : ''}
+    ${warn.length && madeMiko() ? `<ul class="warnlist">${warn.map(w => `<li>${w}</li>`).join('')}</ul>` : ''}
   </div>
   <div class="sheetwrap"><div class="sheet" style="--ns:${slots.length}">
     <div class="sh-top">
@@ -1486,6 +1491,7 @@ const kDays = () => DAYS.filter(d => d.kind !== 'eve');   // 台所と食事は�
 const gDaysOf = id => DAYS.filter(d => gAs(d.k).includes(id) || S.kitchen[d.k] === id).length;
 const daysFor = m => m && m.team === 'kitchen' ? kDays() : DAYS;
 function gDraft() {   // 神社くんの御朱印と同じ：出られる人が少ない日から、出勤の少ない人を入れる
+  markMade('g');
   const cnt = {}, G = gTeam('goshuin'); G.forEach(p => cnt[p.id] = 0); S.goAssign = {};
   DAYS.map(d => ({ k: d.k, need: gNeed(d.k), av: G.filter(p => gOk(p.id, d.k)).length })).filter(x => x.need > 0).sort((a, b) => a.av - b.av)
     .forEach(x => { S.goAssign[x.k] = G.filter(p => gOk(p.id, x.k)).sort((a, b) => cnt[a.id] - cnt[b.id]).slice(0, x.need).map(p => (cnt[p.id]++, p.id)); });
@@ -1500,9 +1506,9 @@ function gSub(m) { return S.goSent[m.id] ? `<span class="kind">提出 ${sentLabe
 function vGoshuin() {
   const G = gTeam('goshuin'), K = gTeam('kitchen'), KD = kDays();
   const needRow = DAYS.map(d => `<td><span class="need"><button data-gadj="-1" data-k="${d.k}" aria-label="${d.label}の人数を減らす">−</button><b>${gNeed(d.k)}</b><button data-gadj="1" data-k="${d.k}" aria-label="${d.label}の人数を増やす">＋</button></span>${S.goNeed[d.k] != null ? '<span class="src">手直し</span>' : ''}</td>`).join('');
-  const gotRow = DAYS.map(d => { const n = gNeed(d.k), a = gAs(d.k).length; return `<td><span class="chk ${!n && !a ? '' : a < n ? 'bad' : 'good'}">${n || a ? `${a}/${n}${a < n ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
+  const gotRow = DAYS.map(d => { const n = gNeed(d.k), a = gAs(d.k).length; return `<td><span class="chk ${!n && !a || !madeG() ? '' : a < n ? 'bad' : 'good'}">${n || a ? `${a}/${n}${!madeG() ? '' : a < n ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
   const gRows = G.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${DAYS.map(d => `<td class="c" tabindex="0" data-gcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, gAs(d.k).includes(m.id))}</td>`).join('')}</tr>`).join('');
-  const kWho = KD.map(d => { const m = gById(S.kitchen[d.k]); return `<td><span class="chk ${m ? 'good' : 'bad'}">${m ? esc(m.name.split(' ')[0]) : '未定 !'}</span></td>`; }).join('');
+  const kWho = KD.map(d => { const m = gById(S.kitchen[d.k]); return `<td><span class="chk ${m ? 'good' : madeG() ? 'bad' : ''}">${m ? esc(m.name.split(' ')[0]) : madeG() ? '未定 !' : '—'}</span></td>`; }).join('');
   const kRows = K.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${KD.map(d => `<td class="c" tabindex="0" data-kcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, S.kitchen[d.k] === m.id)}</td>`).join('')}</tr>`).join('');
   const list = t => gTeam(t).map(m => `<li><button class="linkish" data-gedit="${m.id}">${esc(m.name)}</button>${m.note ? `<span class="kind">${esc(m.note)}</span>` : ''}</li>`).join('') || '<li class="kind">まだいません</li>';
   return `<div class="card" style="display:grid;gap:12px">
