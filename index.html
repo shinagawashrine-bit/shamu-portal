@@ -1291,6 +1291,8 @@ const me = () => staffById(S.me);
 const isGuji = () => S.me === 'guji';
 const isTemp = () => TEMP_STAFF.some(t => t.id === S.me);
 const tempOn = k => TEMP_STAFF.filter(t => S.tempWork.some(w => w.staff === t.id && w.date === k));
+/* 臨時職員の出勤を、宮司・職員が「予定を追加」から入れる（2026-11-12 本人。ホームにボタンは置かない） */
+const canSetTemp = () => !isTemp() && TEMP_STAFF.length > 0 && (typeof P === 'undefined' || !P.me || ['guji', 'staff'].includes(P.me.role));
 const boardTargets = p => Array.isArray(p.target) ? p.target : p.target === 'all' ? ['shuin'] : [];
 const targetLabel = p => { const t = boardTargets(p); return !t.length ? '職員のみ' : t.map(g => g === 'shuin' ? '御朱印' : '巫女').join('・') + 'にも表示'; };
 const mikoPeople = () => { const seen = new Set(), out = []; ['reitaisai', 'shichigosan'].forEach(t => (S.seasonMembers[t] || []).forEach(m => { if (!seen.has(m.name)) { seen.add(m.name); out.push(m); } })); return out; };
@@ -1543,7 +1545,7 @@ function dayPanel(k) {
     </div>
     ${prevNote(k) && k >= key(addDays(TODAY, -7)) ? `<div class="day-sec">${noteCard(k, true)}</div>` : ''}
     <div class="day-sec"><h4>職員</h4><div class="people">${STAFF.map(status).join('')}</div>
-      ${tempOn(k).length ? `<h4 style="margin-top:10px">臨時職員</h4><div class="people">${tempOn(k).map(t => `<span class="person temp-on">${avatar(t.name, t.color, true)}${t.name}　出勤</span>`).join('')}</div>` : ''}</div>
+      ${tempOn(k).length ? `<h4 style="margin-top:10px">臨時職員</h4><div class="people">${tempOn(k).map(t => canSetTemp() ? `<button class="person temp-on" style="cursor:pointer;font:inherit" data-act="tempDetail" data-k="${k}" data-s="${t.id}">${avatar(t.name, t.color, true)}${t.name}　出勤</button>` : `<span class="person temp-on">${avatar(t.name, t.color, true)}${t.name}　出勤</span>`).join('')}</div>` : ''}</div>
     <div class="day-sec"><h4>助勤</h4>${rg.length ? `<div class="people">${POSTS.map(([po, pl]) => regularsOn(k, po).map(r => `<span class="person"><span class="mk as ${po}" style="width:22px;height:22px;font-size:11px;border-radius:50%">${pl.slice(0, 1)}</span>${pl}　${esc(r.name)}</span>`).join('')).join('')}</div>` : '<span class="small muted">なし</span>'}</div>
     <div class="day-sec"><h4>予定 <span class="sp"></span>${rt.length ? `<span class="tag" style="background:var(--shu-soft);color:var(--shu)">祭典 ${rt.length}</span>` : ''}${PROD || (s && s.mode !== 'hou') ? '' : `<span class="tag brand">祈願 ${rs.filter(r => r.type !== '外祭').length}</span>${rs.some(r => r.type === '外祭') ? '<span class="tag brand">外祭</span>' : ''}`}${vs.length ? `<span class="tag" style="background:var(--violet-soft);color:var(--violet)">来訪 ${vs.length}</span>` : ''}${os.length ? `<span class="tag gray">外出 ${os.length}</span>` : ''}</h4>${tl}</div>
     ${k === TK && unread.length ? `<div class="day-sec"><h4>未読の掲示板 <span class="badge">${unread.length}</span></h4><ul class="mini-list">${unread.slice(0, 3).map(p => `<li style="cursor:pointer" data-act="openPost" data-id="${p.id}"><span class="unread" style="width:7px;height:7px;border-radius:50%;background:var(--brand)"></span>${esc(p.title)}</li>`).join('')}</ul></div>` : ''}
@@ -1614,8 +1616,11 @@ function addEventModal(k, type = 'visit') {
   const visitors = [...new Set(S.visits.map(v => v.who))];
   modal(`<div class="modal-h"><h3>予定を追加</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="seg" style="margin-bottom:14px" id="evType">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事']].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
-    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付'})}</div><div class="field"><label>開始（先方での開始）</label>${tsel('evStart', '10:00')}</div><div class="field"><label>長さ</label>${dsel('evDur', 60)}</div></div>
+    <div class="seg" style="margin-bottom:14px" id="evType">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事'], ...(canSetTemp() ? [['temp', '臨時職員']] : [])].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付'})}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>開始（先方での開始）</label>${tsel('evStart', '10:00')}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>長さ</label>${dsel('evDur', 60)}</div></div>
+    ${canSetTemp() ? `<div class="evsec" data-sec="temp" ${type !== 'temp' ? 'hidden' : ''}>
+      <div class="field"><label>だれが</label><select class="input" id="twStaff">${TEMP_STAFF.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+    </div>` : ''}
     <div class="evsec" data-sec="visit" ${type !== 'visit' ? 'hidden' : ''}>
       <div class="field"><label>来訪者（だれが来るか）</label><input class="input" id="vWho" list="vWhoList" placeholder="例：京都奉製、さわやか信用金庫"><datalist id="vWhoList">${visitors.map(v => `<option value="${esc(v)}">`).join('')}</datalist></div>
       <div class="grid2"><div class="field"><label>用件（任意）</label><input class="input" id="vPurpose" placeholder="例：授与品の打合せ"></div><div class="field"><label>対応する職員</label><select class="input" id="vHost"><option value="">未定</option>${HOSTS.map(s => `<option value="${s.id}">${s.name}</option>`).join('')}</select></div></div>
@@ -2743,12 +2748,20 @@ const ACT = {
   addOutStaff() { const used = [...document.querySelectorAll('.oStaffSel')].map(x => x.value); const next = HOSTS.find(h => !used.includes(h.id)); if (!next) return toast('全員選ばれています'); document.getElementById('oStaffList').insertAdjacentHTML('beforeend', outStaffRow(next.id, true)); },
   delOutStaff(el) { el.closest('.row').remove(); },
   addEvent(el) { addEventModal(el.dataset.k || selDay); },
-  evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); },
+  evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); document.querySelectorAll('.ev-time').forEach(x => x.style.display = el.dataset.v === 'temp' ? 'none' : ''); },
   saveEvent() {
     const type = document.querySelector('#evType .on').dataset.v, date = val('evDate'), start = val('evStart'), dur = +val('evDur');
     if (!date) return toast('日付を選んでください');
     if (type === 'visit') { const who = val('vWho'); if (!who) return toast('来訪者を入れてください'); S.visits.push({ id: 'v' + Date.now(), date, start, dur, who, purpose: val('vPurpose'), host: val('vHost') }); }
     if (type === 'out') { const place = val('oPlace'); if (!place) return toast('行き先を入れてください'); const staffs = [...new Set([...document.querySelectorAll('.oStaffSel')].map(x => x.value))]; const travel = Math.max(0, +val('oTravel') || 0), buffer = Math.max(0, val('oBuffer') === '' ? 15 : +val('oBuffer')); if (travel) S.places[place] = travel; S.outings.push({ id: 'o' + Date.now(), date, start, dur, staff: staffs[0], staffs, place, purpose: val('oPurpose'), travel, buffer }); }
+    if (type === 'temp') {
+      const st = val('twStaff'), t = staffById(st);
+      if (!t) return toast('臨時職員を選んでください');
+      if (S.tempWork.some(w => w.staff === st && w.date === date)) return toast(`${t.name}さんは${md(parse(date))}にもう出勤が入っています`);
+      S.tempWork.push({ id: 'tw' + Date.now(), staff: st, date });
+      selDay = date; calCursor = new Date(parse(date).getFullYear(), parse(date).getMonth(), 1);
+      save(); closeModal(); render(); return toast(`${t.name}さん ${md(parse(date))}の出勤を登録しました`);
+    }
     if (type === 'sai') { const name = val('sName'); if (!name) return toast('名前を入れてください'); const allDay = document.getElementById('sAllDay')?.checked; S.rituals.push({ id: 'rt' + Date.now(), name, repeat: 'once', date, start: allDay ? '00:00' : start, dur: allDay ? 0 : dur, allDay: !!allDay }); }
     selDay = date; calCursor = new Date(parse(date).getFullYear(), parse(date).getMonth(), 1);
     save(); closeModal(); render(); toast('予定を追加しました');
@@ -2948,6 +2961,16 @@ const ACT = {
     const k = el.dataset.k, st = el.dataset.s, w = S.tempWork.find(x => x.staff === st && x.date === k);
     if (w) S.tempWork = S.tempWork.filter(x => x !== w); else S.tempWork.push({ id: 'tw' + Date.now(), staff: st, date: k });
     save(); render(); toast(`${staffById(st).name}さん ${md(parse(k))}の出勤を${w ? '取り消しました' : '登録しました'}`);
+  },
+  tempDetail(el, e) {
+    if (e) e.stopPropagation();
+    const k = el.dataset.k, st = el.dataset.s, t = staffById(st);
+    modal(`<div class="modal-h"><h3>臨時職員の出勤</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div><div class="modal-b" style="line-height:1.9"><p><b style="font-size:18px">${esc(t.name)}さん</b></p><p class="muted">${mdw(parse(k))}　出勤</p></div><div class="modal-f"><button class="btn" style="color:var(--red)" data-act="tempCancel" data-k="${k}" data-s="${st}">出勤を取り消す</button><span class="sp"></span><button class="btn pri" data-act="closeModal">閉じる</button></div>`);
+  },
+  tempCancel(el) {
+    const k = el.dataset.k, st = el.dataset.s;
+    S.tempWork = S.tempWork.filter(x => !(x.staff === st && x.date === k));
+    save(); closeModal(); render(); toast(`${staffById(st).name}さん ${md(parse(k))}の出勤を取り消しました`);
   },
   bvSwitch(el) { S.session.id = el.dataset.id; S.session.group = el.dataset.g; S.ui.baitoDraft = null; save(); window.scrollTo(0, 0); render(); },
   extraModal() { extraModal(); },
@@ -3315,7 +3338,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261112083751';
+const BUILD = '20261112123756';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
