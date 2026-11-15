@@ -114,12 +114,28 @@ a{color:var(--brand)}
 .reji-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--hair)}
 .reji-h .mark{width:30px;height:30px;border-radius:9px;background:var(--brand);color:var(--brand-ink);display:inline-grid;place-items:center;font-weight:700;font-size:14px}
 .reji-b{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:14px;padding:14px 16px;align-items:start}
-.reji-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));grid-auto-rows:96px;gap:10px}
-.reji-item{position:relative;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
-.reji-item:active{transform:scale(.98)}.reji-item.in{border:2px solid var(--brand);background:var(--brand-soft)}
-.reji-item.big{grid-column:span 2;grid-row:span 2}.reji-item.big .nm{font-size:24px}.reji-item.big .pr{font-size:18px}
-.reji-item .nm{font-weight:700;font-size:16px;line-height:1.3}.reji-item .pr{font-size:14px;color:var(--text-2)}
-.reji-item .q{position:absolute;top:8px;right:8px;min-width:26px;height:26px;border-radius:99px;background:var(--brand);color:var(--brand-ink);font-weight:700;font-size:14px;display:grid;place-items:center;padding:0 6px}
+.reji-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.reji-chip{border:1px solid var(--line);background:var(--card);border-radius:980px;padding:8px 18px;font-size:15px;color:var(--text-2);touch-action:manipulation}
+.reji-chip.on{background:var(--text);border-color:var(--text);color:var(--bg)}
+.reji-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.reji-item{position:relative;display:flex;flex-direction:column;text-align:left;padding:0;border:0;overflow:hidden;border-radius:var(--r-md);background:var(--card);box-shadow:var(--shadow);color:inherit;cursor:pointer;transition:transform .08s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.reji-item:active{transform:scale(.96)}
+.reji-item.in{box-shadow:0 0 0 2px var(--brand),var(--shadow)}
+.reji-item .ph{display:block;width:100%;aspect-ratio:3/2;background:#fff center/cover no-repeat;border-bottom:3px solid var(--brand)}
+.reji-item .ph.none{display:grid;place-items:center;background:var(--fill);color:var(--text-3);font-size:34px;font-weight:600}
+.reji-item .tx{display:flex;flex-direction:column;padding:10px 14px 12px}
+.reji-item .nm{font-size:18px;font-weight:600;line-height:1.3}
+.reji-item .pr{font-size:14px;color:var(--text-2);margin-top:2px}
+.reji-item.big{grid-column:span 2;grid-row:span 2;background:var(--brand-soft)}
+.reji-item.big .ph{aspect-ratio:auto;flex:1;min-height:0;border-bottom-width:5px}
+.reji-item.big .ph.none{font-size:96px}
+.reji-item.big .tx{flex-direction:row;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 22px 16px}
+.reji-item.big .nm{font-size:40px;letter-spacing:.04em;line-height:1.1}
+.reji-item.big .pr{font-size:22px}
+.reji-item .q{z-index:1;position:absolute;top:10px;right:10px;min-width:30px;height:30px;padding:0 8px;border-radius:15px;background:var(--brand);color:var(--brand-ink);font-size:15px;font-weight:700;display:grid;place-items:center;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.reji-item.big .q{top:16px;right:16px;min-width:42px;height:42px;border-radius:21px;font-size:22px}
+.reji-item.flash{animation:rjflash .25s}
+@keyframes rjflash{0%{box-shadow:0 0 0 3px var(--brand)}100%{box-shadow:var(--shadow)}}
 .reji-cart{position:sticky;top:14px;padding:14px;display:flex;flex-direction:column}
 .reji-lines{max-height:46vh;overflow:auto;margin-bottom:10px}
 .reji-line{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--hair)}
@@ -127,7 +143,21 @@ a{color:var(--brand)}
 .reji-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;border-top:2px solid var(--text);margin-top:4px}
 .reji-total b{font-size:30px}.reji-total small{font-size:15px;margin-left:2px}
 .reji-go{width:100%;min-height:56px;font-size:18px;border-radius:14px}
-@media (max-width:760px){.reji-b{grid-template-columns:1fr}.reji-cart{position:static}.reji-items{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:760px){.reji-b{grid-template-columns:1fr}.reji-cart{position:static}.reji-items{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}.reji-item.big .nm{font-size:30px}}
+/* レジの写真（2026-11-15）：写真が1枚でもあれば、ボタンを上に写真・下に品名の形にする */
+.reji-cash{margin:2px 0 10px}
+.reji-cash-b{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:5px}
+.reji-cash-b button{border:1px solid var(--line);background:var(--card);color:inherit;border-radius:10px;padding:10px 0;font-size:13.5px;touch-action:manipulation}
+.reji-cash-b button.on{border:2px solid var(--brand);background:var(--brand-soft);font-weight:700}
+.reji-cash-b button:disabled{opacity:.4}
+.reji-change{display:flex;justify-content:space-between;align-items:baseline;margin-top:8px;font-size:13px;color:var(--text-2)}
+.reji-change b{font-size:22px;color:var(--text)}.reji-change small{font-size:13px;margin-left:1px}
+.reji-change.short b{color:var(--red)}
+.it-thumb{display:block;width:54px;height:36px;border-radius:6px;object-fit:cover;background:var(--fill)}
+.it-thumb.lg{width:120px;height:80px;border-radius:8px}
+.it-thumb.none{border:1px dashed var(--line)}
+.wxmx{width:auto}.wxmx td.c{text-align:center;min-width:96px;border:3px solid var(--card);border-radius:10px}.wxmx td.c b{font-size:18px}.wxmx td.c.weak{opacity:.45}
+.sub-h{font-weight:700;font-size:13.5px;margin:16px 0 6px}
 .btn.act-btn{display:inline-flex;align-items:center;justify-content:center;min-height:38px;font-size:15px;font-weight:700;padding:0 14px;border-radius:10px;line-height:1.2;text-decoration:none;white-space:nowrap}
 .day-acts{gap:6px;flex-wrap:wrap;justify-content:flex-end}
 @media (max-width:900px){
@@ -3382,7 +3412,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115105401';
+const BUILD = '20261115122026';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3622,9 +3652,9 @@ if (PROD) Object.assign(CHG, {
    - 会計はまず端末に保存してから送る。電波が悪くても、あとで自動で送り直す
    - 出数（レジ）と在庫（箱）は分けて扱い、数を合わせない（宮司が接客した分はレジに入らないため）
    ========================================================= */
-const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items';
+const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items', REG_IMG_KEY = 'shamu-reg-imgs';
 const lsJson = (k, d) => { try { return JSON.parse(lsGet(k) || 'null') ?? d; } catch (e) { return d; } };
-let REGI = { on: false, label: '', items: [], cart: {}, sending: false, err: '' };
+let REGI = { cat: 'all', on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
 
 const regDay = () => key(new Date());
 function regToday() { const t = lsJson(REG_TODAY_KEY, null), d = regDay(); return t && t.date === d ? t : { date: d, sales: [] }; }
@@ -3632,13 +3662,17 @@ function regQueue() { return lsJson(REG_QUEUE_KEY, []); }
 
 async function startReji(label) {
   REGI.on = true; REGI.label = label || REGI.label; REGI.items = lsJson(REG_ITEMS_KEY, []);
+  const im = lsJson(REG_IMG_KEY, null); if (im) { REGI.imgs = im.imgs || {}; REGI.imgVer = im.imgVer || ''; }
   S = S || { ui: loadUi() }; S.session = null;
   render();
   await regLoadItems();
   regFlush();
 }
 async function regLoadItems() {
-  try { const r = await api('regItems'); REGI.items = r.items; REGI.label = r.label || REGI.label; REGI.err = ''; lsSet(REG_ITEMS_KEY, JSON.stringify(r.items)); }
+  try {
+    const r = await api('regItems', { imgVer: REGI.imgVer }); REGI.items = r.items; REGI.label = r.label || REGI.label; REGI.err = ''; lsSet(REG_ITEMS_KEY, JSON.stringify(r.items));
+    if (r.imgs) { REGI.imgs = r.imgs; REGI.imgVer = r.imgVer || ''; lsSet(REG_IMG_KEY, JSON.stringify({ imgs: r.imgs, imgVer: REGI.imgVer })); }
+  }
   catch (e) {
     if (e.code === 'device') { REGI.on = false; P.device = null; lsSet(DEVICE_KEY, null); P.screen = 'register'; P.msg = 'この端末の登録が取り消されました。管理者に確認してください'; }
     else REGI.err = '受け口につながりません。前回の品目で動いています';
@@ -3668,17 +3702,26 @@ function vReji() {
   const total = cart.reduce((a, [id, q]) => a + (byId(id).price || 0) * q, 0), count = cart.reduce((a, [, q]) => a + q, 0);
   const today = regToday(), live = today.sales.filter(s => !s.undone), q = regQueue().length;
   const tSum = live.reduce((a, s) => a + s.total, 0), tCnt = live.reduce((a, s) => a + s.lines.reduce((b, l) => b + l.qty, 0), 0);
+  const cats = [...new Set(items.map(i => i.cat || 'その他'))], cat = cats.includes(REGI.cat) ? REGI.cat : 'all';
+  const shown = items.filter(i => cat === 'all' || (i.cat || 'その他') === cat).sort((x, y) => (y.big ? 1 : 0) - (x.big ? 1 : 0));   // よく出る品を先頭に大きく
+  const tile = i => { const im = REGI.imgs[i.id], n = REGI.cart[i.id]; return `<button class="reji-item ${i.big ? 'big' : ''} ${n ? 'in' : ''}" data-act="regAdd" data-id="${i.id}">${n ? `<span class="q num">${n}</span>` : ''}${im ? `<span class="ph" style="background-image:url('${im}')"></span>` : `<span class="ph none">${esc([...i.name][0] || '')}</span>`}<span class="tx"><span class="nm">${esc(i.name)}</span><span class="pr num">${yen(i.price)}円</span></span></button>`; };
+  const recv = REGI.recv === 'exact' ? total : REGI.recv, change = recv == null ? null : recv - total;
   return `<div class="reji">
     <header class="reji-h"><img class="mark" src="${ICON_MARK}" alt=""><b>授与所レジ</b><span class="small muted">${esc(REGI.label)}</span><span class="sp"></span>
       <span class="small">${mdw(new Date())}　本日 <b>${tCnt}</b>体・<b>${yen(tSum)}</b>円</span>
       ${q ? `<span class="tag warn">未送信 ${q}件</span>` : ''}<button class="btn sm" data-act="regHistory">今日の記録</button></header>
     ${REGI.err ? `<div class="note" style="margin:10px 16px 0">${ICON.info}<span>${esc(REGI.err)}</span></div>` : ''}
     <div class="reji-b">
-      <div class="reji-items">${items.length ? items.map(i => `<button class="reji-item ${i.big ? 'big' : ''} ${REGI.cart[i.id] ? 'in' : ''}" data-act="regAdd" data-id="${i.id}"><span class="nm">${esc(i.name)}</span><span class="pr">${yen(i.price)}円</span>${REGI.cart[i.id] ? `<span class="q">${REGI.cart[i.id]}</span>` : ''}</button>`).join('')
-        : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>神社くんの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div>
+      <div>${cats.length > 1 ? `<div class="reji-chips">${[['all', 'すべて'], ...cats.map(c => [c, c])].map(([v, l]) => `<button class="reji-chip ${cat === v ? 'on' : ''}" data-act="regCat" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</div>` : ''}
+      <div class="reji-items">${shown.length ? shown.map(tile).join('')
+        : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>神社くんの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div></div>
       <aside class="reji-cart card">
         <div class="reji-lines">${cart.length ? cart.map(([id, n]) => { const it = byId(id); return `<div class="reji-line"><div style="flex:1;min-width:0"><b>${esc(it.name || '')}</b><div class="small muted">${yen(it.price || 0)}円</div></div><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="-1" aria-label="減らす">−</button><b class="num" style="min-width:24px;text-align:center">${n}</b><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="1" aria-label="増やす">＋</button></div>`; }).join('') : '<div class="empty small">品目を押すと、ここに入ります</div>'}</div>
         <div class="reji-total"><span>${count}体</span><b>${yen(total)}<small>円</small></b></div>
+        <div class="reji-cash"><div class="small muted">お預かり（押さなくても記録できます）</div>
+          <div class="reji-cash-b">${[['exact', 'ちょうど'], [1000, '1,000円'], [5000, '5,000円'], [10000, '10,000円']].map(([v, l]) => `<button class="${String(REGI.recv) === String(v) ? 'on' : ''}" data-act="regRecv" data-v="${v}" ${cart.length ? '' : 'disabled'}>${l}</button>`).join('')}</div>
+          ${change == null || !cart.length ? '' : change < 0 ? `<div class="reji-change short"><span>足りません</span><b>${yen(-change)}<small>円</small></b></div>` : `<div class="reji-change"><span>お預かり ${yen(recv)}円　お釣り</span><b>${yen(change)}<small>円</small></b></div>`}
+        </div>
         <button class="btn pri reji-go" data-act="regCommit" ${cart.length ? '' : 'disabled'}>記録する</button>
         <button class="btn ghost" style="width:100%;margin-top:6px" data-act="regClear" ${cart.length ? '' : 'disabled'}>はじめから</button>
       </aside>
@@ -3691,9 +3734,11 @@ function regHistoryModal() {
   <div class="small muted" style="margin-top:10px">押し間違えたときは「取り消す」。取り消せるのは、この端末で記録した24時間以内の会計です。</div></div>`);
 }
 if (PROD) Object.assign(ACT, {
-  regAdd(el) { const id = el.dataset.id; REGI.cart[id] = (REGI.cart[id] || 0) + 1; render(); },
-  regQty(el) { const id = el.dataset.id; REGI.cart[id] = Math.max(0, (REGI.cart[id] || 0) + +el.dataset.n); if (!REGI.cart[id]) delete REGI.cart[id]; render(); },
-  regClear() { REGI.cart = {}; render(); },
+  regAdd(el) { const id = el.dataset.id; REGI.cart[id] = (REGI.cart[id] || 0) + 1; render(); const nb = document.querySelector(`.reji-item[data-id="${id}"]`); if (nb) nb.classList.add('flash'); },
+  regCat(el) { REGI.cat = el.dataset.v; render(); },
+  regQty(el) { const id = el.dataset.id; REGI.cart[id] = Math.max(0, (REGI.cart[id] || 0) + +el.dataset.n); if (!REGI.cart[id]) delete REGI.cart[id]; if (!Object.keys(REGI.cart).length) REGI.recv = null; render(); },
+  regClear() { REGI.cart = {}; REGI.recv = null; render(); },
+  regRecv(el) { const v = el.dataset.v === 'exact' ? 'exact' : +el.dataset.v; REGI.recv = String(REGI.recv) === String(v) ? null : v; render(); },
   regCommit() {
     const lines = Object.entries(REGI.cart).filter(([, q]) => q > 0).map(([id, qty]) => { const it = REGI.items.find(i => i.id === id); return { item: id, name: it.name, price: it.price, qty }; });
     if (!lines.length) return;
@@ -3701,11 +3746,11 @@ if (PROD) Object.assign(ACT, {
     const t = regToday(); t.sales.push(sale); lsSet(REG_TODAY_KEY, JSON.stringify(t));
     lsSet(REG_QUEUE_KEY, JSON.stringify(regQueue().concat([sale])));
     if (!regQueue().some(x => x.id === sale.id)) {   // 端末に残せなかったとき（容量不足など）は、その場で送り、送れたときだけ会計を消す
-      api('regSale', { sale }).then(() => { REGI.cart = {}; render(); toast(`記録しました（${yen(sale.total)}円）`); })
+      api('regSale', { sale }).then(() => { REGI.cart = {}; REGI.recv = null; render(); toast(`記録しました（${yen(sale.total)}円）`); })
         .catch(() => toast('記録できませんでした。電波を確かめて、もう一度「記録する」を押してください'));
       return;
     }
-    REGI.cart = {}; render(); toast(`記録しました（${yen(sale.total)}円）`);
+    REGI.cart = {}; REGI.recv = null; render(); toast(`記録しました（${yen(sale.total)}円）`);
     regFlush();
   },
   regHistory() { regHistoryModal(); },
@@ -3731,7 +3776,102 @@ if (PROD) {
 }
 
 /* ── 職員：授与品（在庫・出数と集計・授与品の登録） ── */
-let SUM = { rows: null, at: 0, loading: false, err: '' }, sumMonth = ym(TODAY), sumItem = 'all';
+let SUM = { rows: null, at: 0, loading: false, err: '' }, sumMonth = ym(TODAY), sumItem = 'all', sumSpan = 'month';
+let JIMG = { imgs: null, loading: false };   // 授与品の写真（職員の画面用。品目の登録を開いたときに読む）
+async function loadItemImgs(force) {
+  if (JIMG.loading || (JIMG.imgs && !force)) return;
+  JIMG.loading = true;
+  try { const r = await api('itemImgs'); JIMG.imgs = r.imgs || {}; }
+  catch (e) { JIMG.imgs = JIMG.imgs || {}; }
+  finally { JIMG.loading = false; if (route().r === 'juyo') render(); }
+}
+/* 写真を横480×320に切り抜いて小さくする（受け口の1マスに収まる大きさまで画質を下げる） */
+/* 写真を整える：背景を白く明るく → 向きを直す（紐のある側を上に）→ 御守の本体に合わせて切り抜く */
+function photoFlatten(c) {   // 机など端につながる暗い所を外し、紙の明るさのむら（影・暗い隅）をならして背景を真っ白にする
+  const w = c.width, h = c.height, g = c.getContext('2d'), im = g.getImageData(0, 0, w, h), d = im.data;
+  const dark = j => { const r = d[j], gg = d[j + 1], b = d[j + 2]; return r * 0.3 + gg * 0.59 + b * 0.11 < 100 && Math.max(r, gg, b) - Math.min(r, gg, b) < 45; };
+  const off = new Uint8Array(w * h), q = new Int32Array(w * h); let qh = 0, qt = 0;
+  const push = k => { if (!off[k] && dark(k * 4)) { off[k] = 1; q[qt++] = k; } };
+  for (let x = 0; x < w; x++) { push(x); push((h - 1) * w + x); } for (let y = 0; y < h; y++) { push(y * w); push(y * w + w - 1); }
+  while (qh < qt) { const k = q[qh++], x = k % w, y = (k / w) | 0; if (x > 0) push(k - 1); if (x < w - 1) push(k + 1); if (y > 0) push(k - w); if (y < h - 1) push(k + w); }
+  const band = Math.max(3, Math.round(w * 0.15));
+  const edgeVal = (y, x0, x1) => { const a = [[], [], []]; for (let x = x0; x < x1; x += 2) { const k = y * w + x; if (off[k]) continue; const i = k * 4; a[0].push(d[i]); a[1].push(d[i + 1]); a[2].push(d[i + 2]); } return a[0].length ? a.map(v => v.sort((m, n) => m - n)[Math.floor(v.length * 0.9)]) : null; };
+  const L0 = [], R0 = []; for (let y = 0; y < h; y++) { L0.push(edgeVal(y, 0, band)); R0.push(edgeVal(y, w - band, w)); }
+  const fill = A => { let last = A.find(Boolean) || [235, 235, 235]; return A.map(v => v ? (last = v) : last); };   // 端が全部机の行は、近くの行の値を使う
+  const win = Math.max(5, Math.round(h * 0.06)), smooth = A => A.map((_, y) => [0, 1, 2].map(k => { const v = []; for (let j = Math.max(0, y - win); j <= Math.min(h - 1, y + win); j += 2) v.push(A[j][k]); return v.sort((m, n) => m - n)[v.length >> 1]; }));
+  const L = smooth(fill(L0)), R = smooth(fill(R0));
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const t = x / (w - 1), k = y * w + x, i = k * 4;
+    if (off[k]) { d[i] = d[i + 1] = d[i + 2] = 255; continue; }
+    for (let z = 0; z < 3; z++) { const bb = Math.max(60, L[y][z] + (R[y][z] - L[y][z]) * t); d[i + z] = Math.min(255, d[i + z] * 255 * 1.04 / bb); }
+  }
+  g.putImageData(im, 0, 0); return c;
+}
+function photoScan(c) {   // 背景の色と、本体の範囲・紐のある側を調べる
+  const w = c.width, h = c.height, d = c.getContext('2d').getImageData(0, 0, w, h).data, st = 2;
+  const edge = [], bw = Math.max(4, Math.round(Math.min(w, h) * 0.03));
+  for (let y = 0; y < h; y += st) for (let x = 0; x < w; x += st) if (x < bw || y < bw || x >= w - bw || y >= h - bw) { const i = (y * w + x) * 4; edge.push([d[i], d[i + 1], d[i + 2]]); }
+  const med = k => { const a = edge.map(p => p[k]).sort((m, n) => m - n); return a[a.length >> 1] || 255; };
+  const bg = [med(0), med(1), med(2)];
+  const rows = new Array(h).fill(0), cols = new Array(w).fill(0), on = new Uint8Array(w * h);
+  for (let y = 0; y < h; y += st) for (let x = 0; x < w; x += st) {
+    const i = (y * w + x) * 4, df = Math.max(Math.abs(d[i] - bg[0]), Math.abs(d[i + 1] - bg[1]), Math.abs(d[i + 2] - bg[2]));
+    const lu = j => d[j] * 0.3 + d[j + 1] * 0.59 + d[j + 2] * 0.11, j1 = x + 2 < w ? i + 8 : i, j2 = y + 2 < h ? i + w * 8 : i;
+    const gr = Math.abs(lu(i) - lu(j1)) + Math.abs(lu(i) - lu(j2));   // 模様の細かさ（影はなめらかなので小さい）
+    if (df > 90 || (df > 24 && gr > 14)) { on[y * w + x] = 1; rows[y]++; cols[x]++; }
+  }
+  const span = (arr, len) => {   // 中身のある行（列）が続く固まりのうち、いちばん量の多い所（影の線1本などは選ばれない）
+    const nz = arr.filter(v => v > 0).sort((m, n) => m - n), p90 = nz.length ? nz[Math.floor(nz.length * 0.9)] : 0;
+    const t = Math.max(2, len / st * 0.012, p90 * 0.3), gap = Math.max(8, Math.round(arr.length * 0.03)); let best = null, cur = null, miss = 0;
+    arr.forEach((v, i) => { if (v >= t) { if (!cur) cur = { a: i, b: i, m: 0 }; cur.b = i; cur.m += v; miss = 0; } else if (cur && ++miss > gap) { if (!best || cur.m > best.m) best = cur; cur = null; } });
+    if (cur && (!best || cur.m > best.m)) best = cur;
+    return best ? [best.a, best.b] : null;
+  };
+  const ry = span(rows, w);
+  if (!ry) return { bg, box: null, cord: null };
+  const cols2 = new Array(w).fill(0); for (let y = ry[0]; y <= ry[1]; y++) for (let x = 0; x < w; x += st) if (on[y * w + x]) cols2[x]++;   // 選んだ行の範囲だけで列を数える
+  const rx = span(cols2, ry[1] - ry[0] + 1);
+  if (!rx) return { bg, box: null, cord: null };
+  const box = { x0: rx[0], x1: rx[1], y0: ry[0], y1: ry[1] };
+  const out = { top: 0, bottom: 0, left: 0, right: 0 };   // 本体の外にある線（紐）の量
+  for (let y = 0; y < h; y += st) for (let x = 0; x < w; x += st) if (on[y * w + x]) {
+    if (y < box.y0 && x >= box.x0 && x <= box.x1) out.top++; else if (y > box.y1 && x >= box.x0 && x <= box.x1) out.bottom++;
+    else if (x < box.x0 && y >= box.y0 && y <= box.y1) out.left++; else if (x > box.x1 && y >= box.y0 && y <= box.y1) out.right++;
+  }
+  const bwF = (box.x1 - box.x0) / w, bhF = (box.y1 - box.y0) / h;
+  if (bwF * bhF < 0.015 || Math.min(bwF, bhF) < 0.06 || bwF * bhF > 0.9) return { bg, box: null, cord: null };   // 自信がない → 写真全体を使う
+  const side = Object.keys(out).sort((m, n) => out[n] - out[m]), area = (box.x1 - box.x0) * (box.y1 - box.y0) / (st * st);
+  const cord = out[side[0]] > area * 0.02 && out[side[0]] > out[side[1]] * 2 ? side[0] : null;
+  return { bg, box, cord };
+}
+function photoRotate(src, deg) {
+  if (!deg) return src;
+  const c = document.createElement('canvas'), q = deg % 180 !== 0; c.width = q ? src.height : src.width; c.height = q ? src.width : src.height;
+  const g = c.getContext('2d'); g.translate(c.width / 2, c.height / 2); g.rotate(deg * Math.PI / 180); g.drawImage(src, -src.width / 2, -src.height / 2); return c;
+}
+async function shrinkPhoto(file, extraRot, whole) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, ng) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ng; im.src = url; });
+    const k = Math.min(1, 1200 / Math.max(img.naturalWidth, img.naturalHeight));
+    let c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    photoFlatten(c);
+    const s0 = photoScan(c), auto = { left: 90, right: 270, bottom: 180 }[s0.cord] || 0;   // 紐が左にあれば右へ90度回す（紐のない品は「向きを回す」で直す）
+    const rot = (auto + (extraRot || 0)) % 360;
+    c = photoRotate(c, rot);
+    const sc = rot ? photoScan(c) : s0;
+    const W = 480, H = 320, o = document.createElement('canvas'); o.width = W; o.height = H;
+    const g = o.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    if (sc.box && !whole) {   // 本体の高さが枠の86%になるように合わせて、真ん中に置く
+      const bw = sc.box.x1 - sc.box.x0 + 1, bh = sc.box.y1 - sc.box.y0 + 1, r = Math.min(H * 0.86 / bh, W * 0.92 / bw);
+      const cx = (sc.box.x0 + sc.box.x1) / 2, cy = (sc.box.y0 + sc.box.y1) / 2;
+      g.drawImage(c, W / 2 - cx * r, H / 2 - cy * r, c.width * r, c.height * r);
+    } else { const r = Math.min(W / c.width, H / c.height); g.drawImage(c, (W - c.width * r) / 2, (H - c.height * r) / 2, c.width * r, c.height * r); }
+    for (const q of [0.8, 0.7, 0.6, 0.5, 0.4]) { const d = o.toDataURL('image/jpeg', q); if (d.length <= 45000) return d; }
+    return null;
+  } finally { URL.revokeObjectURL(url); }
+}
 async function loadSalesSummary(force) {
   if (SUM.loading || (!force && SUM.rows && Date.now() - SUM.at < 60000)) return;
   SUM.loading = true;
@@ -3781,6 +3921,13 @@ function juyoSalesProd() {
   const rank = Object.values(per).sort((a, b) => b.q - a.q), sum = qty(inM); let acc = 0;
   rank.forEach(t => { acc += t.q; t.abc = acc / sum <= 0.7 ? 'A' : acc / sum <= 0.9 ? 'B' : 'C'; });
   const max = rank[0]?.q || 1;
+  // 前月（今月が途中なら同じ日までどうし）と、最後に出た日
+  const pmK = ym(new Date(y, m - 2, 1)), cut = sumMonth === ym(TODAY) ? TK.slice(8) : '31';
+  const prevQ = {}; rows.filter(r => r[0].startsWith(pmK) && r[0].slice(8) <= cut).forEach(r => prevQ[r[1]] = (prevQ[r[1]] || 0) + r[3]);
+  const last = {}; rows.forEach(r => { if (r[3] > 0 && (!last[r[1]] || r[0] > last[r[1]])) last[r[1]] = r[0]; });
+  const pct = (a, b) => !b ? '' : `<span class="small ${a >= b ? '' : 'muted'}">${a >= b ? '▲' : '▼'}${Math.abs(Math.round((a / b - 1) * 100))}%</span>`;
+  const lastTxt = id => { const d = last[id]; if (!d) return '記録なし'; const n = Math.round((parse(TK) - parse(d)) / 864e5); return `最後 ${md(parse(d))}${n > 30 ? `（${n}日前）` : ''}`; };
+  const still = activeItems().filter(i => !per[i.id]);   // この月に1体も出ていない品（死に筋の候補）
   // 日ごと（この月）
   const days = {}; inM.forEach(r => { const d = days[r[0]] || (days[r[0]] = { q: 0, a: 0 }); d.q += r[3]; d.a += r[4]; });
   const dim = new Date(y, m, 0).getDate();
@@ -3800,31 +3947,72 @@ function juyoSalesProd() {
   </div>
   <div class="grid2" style="align-items:start">
     <div class="card card-p"><div class="card-h"><h3>よく出ている順</h3></div>
-      ${rank.length ? `<ul class="rank">${rank.map((t, i) => `<li style="cursor:pointer;${pick === t.id ? 'background:var(--brand-soft);border-radius:8px' : ''}" data-act="sumItem" data-id="${t.id}"><span class="n">${i + 1}</span><span><b>${esc(t.name)}</b><span class="abc ${t.abc}">${t.abc}</span></span><span class="bar"><i style="width:${t.q / max * 100}%"></i></span><span class="r num">${t.q.toLocaleString()}</span><span class="r num small">${yen(t.a)}円</span></li>`).join('')}</ul>
-      <div class="small muted" style="margin-top:8px">A＝上位で全体の7割／B＝9割まで／C＝残り。品名を押すと右のグラフがその品だけになります</div>` : '<div class="empty">この月の記録はありません</div>'}</div>
+      ${rank.length ? `<ul class="rank">${rank.map((t, i) => `<li style="cursor:pointer;${pick === t.id ? 'background:var(--brand-soft);border-radius:8px' : ''}" data-act="sumItem" data-id="${t.id}"><span class="n">${i + 1}</span><span><b>${esc(t.name)}</b><span class="abc ${t.abc}">${t.abc}</span><div class="small muted">前月 ${pct(t.q, prevQ[t.id] || 0) || '—'}</div></span><span class="bar"><i style="width:${t.q / max * 100}%"></i></span><span class="r num">${t.q.toLocaleString()}</span><span class="r num small">${yen(t.a)}円</span></li>`).join('')}</ul>
+      <div class="small muted" style="margin-top:8px">A＝上位で全体の7割／B＝9割まで／C＝残り。前月は${cut === '31' ? '前の月全体' : `前の月の1〜${Number(cut)}日`}と比べています。品名を押すと右のグラフがその品だけになります</div>` : '<div class="empty">この月の記録はありません</div>'}
+      ${still.length ? `<div class="sub-h">この月に出ていない品</div><ul class="mini-list">${still.map(i => `<li><span style="flex:1"><b>${esc(i.name)}</b></span><span class="small muted">${lastTxt(i.id)}</span></li>`).join('')}</ul>` : ''}</div>
     <div class="card card-p"><div class="card-h"><h3>${pick ? esc(pickName) : 'すべての授与品'}の月別</h3><span class="sp"></span>${pick ? '<button class="btn sm" data-act="sumItem" data-id="all">すべてに戻す</button>' : ''}</div>
       ${barChart(months.map(k => Number(k.split('-')[1]) + '月'), months.map(mq), prevMonths.map(mq), '直近12か月', '前年')}</div>
   </div>
+  ${juyoWxCard(rows, pick, pickName, y, m)}
   <div class="card" style="margin-top:16px"><div class="card-h card-p" style="margin:0;padding-bottom:6px"><h3>日ごとの集計</h3></div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>日付</th><th class="r">出数</th><th class="r">初穂料</th></tr></thead><tbody>
     ${Object.keys(days).sort().map(d => `<tr><td>${mdw(parse(d))}</td><td class="r num">${days[d].q.toLocaleString()}体</td><td class="r num">${yen(days[d].a)}円</td></tr>`).join('') || '<tr><td colspan="3" class="muted">記録はありません</td></tr>'}
   </tbody></table></div></div>`;
 }
+/* 天気×平日・土日と、曜日別。授与のあった日の1日あたりの出数で比べる（曜日の差と天気の差を混ぜないため） */
+function juyoWxCard(rows, pick, pickName, y, m) {
+  const end = sumSpan === 'month' ? `${y}-${pad(m)}-31` : ym(new Date(y, m, 1)) + '-00';
+  const start = sumSpan === 'month' ? `${y}-${pad(m)}-01` : ym(new Date(y, m - 12, 1)) + '-01';
+  const perDay = {}; rows.filter(r => r[0] >= start && r[0] <= end && r[0] <= TK && (!pick || r[1] === pick)).forEach(r => perDay[r[0]] = (perDay[r[0]] || 0) + r[3]);
+  const days = Object.keys(perDay).filter(d => perDay[d] > 0);
+  const avg = a => a.length ? a.reduce((x, v) => x + v, 0) / a.length : null;
+  const isWE = d => [0, 6].includes(parse(d).getDay());
+  const cell = {}; ['sun', 'cloud', 'rain'].forEach(k => ['wd', 'we'].forEach(p => cell[k + p] = []));
+  let noWx = 0;
+  days.forEach(d => { const w = wxOf(d); if (!w) { noWx++; return; } const k = w.kind === 'snow' ? 'rain' : w.kind; cell[k + (isWE(d) ? 'we' : 'wd')].push(perDay[d]); });
+  const mx = Math.max(1, ...Object.values(cell).map(a => avg(a) || 0));
+  const td = (a) => { const v = avg(a); if (v == null) return '<td class="c muted">—</td>'; const p = Math.round(10 + v / mx * 70); return `<td class="c ${a.length < 3 ? 'weak' : ''}" style="background:color-mix(in srgb,var(--brand) ${p}%,var(--card));${p > 50 ? 'color:#fff' : ''}"><b class="num">${v.toFixed(1)}</b><small>体</small><div class="small">${a.length}日</div></td>`; };
+  const say = [];
+  [['wd', '平日'], ['we', '土日']].forEach(([p, l]) => { const s = cell['sun' + p], r = cell['rain' + p]; if (s.length >= 3 && r.length >= 3) { const x = (avg(r) / avg(s) - 1) * 100; say.push(`${l}は、雨の日が晴れの日より <b>${Math.abs(Math.round(x))}% ${x < 0 ? '少ない' : '多い'}</b>`); } });
+  const dow = [[], [], [], [], [], [], []]; days.forEach(d => dow[parse(d).getDay()].push(perDay[d]));
+  const dmax = Math.max(1, ...dow.map(a => avg(a) || 0));
+  return `<div class="card card-p" style="margin-top:16px">
+    <div class="card-h"><h3>天気と曜日${pick ? `（${esc(pickName)}）` : ''}</h3><span class="sp"></span><div class="seg"><button class="${sumSpan === 'month' ? 'on' : ''}" data-act="sumSpan" data-v="month">この月</button><button class="${sumSpan === 'year' ? 'on' : ''}" data-act="sumSpan" data-v="year">直近12か月</button></div></div>
+    <div class="small muted" style="margin-bottom:10px">授与のあった日の、1日あたりの出数。天気は日報と同じ（北品川・降水1mm以上は雨）。3日未満の欄は薄く表示（参考）</div>
+    ${days.length ? `<div class="grid2" style="align-items:start">
+      <div>${say.length ? `<div style="margin-bottom:10px;line-height:1.8">${say.join('<br>')}</div>` : ''}
+        <table class="tbl wxmx"><thead><tr><th></th><th>平日</th><th>土日</th></tr></thead><tbody>
+        ${[['sun', '☀️ 晴れ'], ['cloud', '☁️ くもり'], ['rain', '☂️ 雨・雪']].map(([k, l]) => `<tr><td>${l}</td>${td(cell[k + 'wd'])}${td(cell[k + 'we'])}</tr>`).join('')}</tbody></table>
+        ${noWx ? `<div class="small muted" style="margin-top:6px">天気を読み込み中、または取れなかった日：${noWx}日</div>` : ''}</div>
+      <div><div class="sub-h" style="margin-top:0">曜日別</div><ul class="rank">${[1, 2, 3, 4, 5, 6, 0].filter(i => dow[i].length).map(i => `<li style="grid-template-columns:3em 1fr 64px"><span>${WD[i]}曜</span><span class="bar"><i style="width:${avg(dow[i]) / dmax * 100}%"></i></span><span class="r num">${avg(dow[i]).toFixed(1)}体</span></li>`).join('')}</ul></div>
+    </div>` : '<div class="empty">この期間の記録はありません</div>'}</div>`;
+}
 function juyoItemsProd() {
-  const can = !isTemp(), all = S.items;
+  const can = !isTemp(), all = S.items; loadItemImgs(); const im = JIMG.imgs || {};
   return `
   <div class="card"><div class="card-h card-p" style="margin:0;padding-bottom:6px"><h3>授与品（${all.filter(i => i.active !== false).length}品）</h3><span class="sp"></span>${can ? '<button class="btn pri sm" data-act="editItem" data-id="">＋ 登録</button>' : ''}</div>
-    <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="r">順</th><th>品名</th><th class="r">初穂料</th><th class="r">段ボール</th><th class="r">1箱</th><th>レジ</th><th></th></tr></thead>
-    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? '大きく' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
-  <div class="small muted" style="margin-top:8px">レジ端末には「出す」品が、順の小さい順に並びます。使わなくなった品は消さずに「レジに出さない」にすると、過去の集計が残ります。</div>`;
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="r">順</th><th>写真</th><th>品名</th><th class="r">初穂料</th><th class="r">段ボール</th><th class="r">1箱</th><th>レジ</th><th></th></tr></thead>
+    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td>${im[it.id] ? `<img class="it-thumb" src="${im[it.id]}" alt="">` : '<span class="it-thumb none"></span>'}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? '大きく' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
+  <div class="small muted" style="margin-top:8px">写真は「編集」から入れられます（白い紙の上で真上から撮れば、向き・大きさ・明るさは自動で整えます。紐は切れてもかまいません）。レジ端末には「出す」品が、順の小さい順に並びます。使わなくなった品は消さずに「レジに出さない」にすると、過去の集計が残ります。</div>`;
 }
+let ITEM_PHOTO, ITEM_FILE = null, ITEM_ROT = 0, ITEM_WHOLE = false;   // 選んだ写真の元ファイルと、手で回した角度
 function editItemModalProd(id) {
   const it = S.items.find(x => x.id === id) || { id: '', name: '', price: 1000, cat: '', perCase: '', perBox: '', big: false, ord: (Math.max(0, ...S.items.map(i => i.ord || 0)) + 10), active: true };
   const cats = [...new Set(S.items.map(i => i.cat).filter(Boolean))];
+  ITEM_FILE = null; ITEM_ROT = 0; ITEM_WHOLE = false;
+  ITEM_PHOTO = undefined;   // 選び直した写真（undefined＝変えない／''＝外す）
+  const cur = (JIMG.imgs || {})[it.id] || '';
   modal(`<div class="modal-h"><h3>${it.id ? '授与品の編集' : '授与品の登録'}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="grid2"><div class="field"><label for="itName">品名</label><input class="input" id="itName" value="${esc(it.name)}" maxlength="30"></div><div class="field"><label for="itCat">分類</label><input class="input" id="itCat" value="${esc(it.cat)}" list="itCatList" placeholder="例：御守"><datalist id="itCatList">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div></div>
     <div class="grid2"><div class="field"><label for="itPrice">初穂料（円）</label><input class="input num" type="number" min="0" inputmode="numeric" id="itPrice" value="${it.price}"></div><div class="field"><label for="itOrd">レジでの並び順（小さいほど前）</label><input class="input num" type="number" inputmode="numeric" id="itOrd" value="${it.ord ?? ''}"></div></div>
     <div class="grid2"><div class="field"><label for="itCase">段ボール1つに何箱</label><input class="input num" type="number" min="1" inputmode="numeric" id="itCase" value="${it.perCase || ''}" placeholder="分からなければ空欄"></div><div class="field"><label for="itBox">1箱に何体</label><input class="input num" type="number" min="1" inputmode="numeric" id="itBox" value="${it.perBox || ''}" placeholder="分からなければ空欄"></div></div>
+    <div class="field"><label>写真（レジのボタンに出ます）</label>
+      <div class="row" style="gap:10px;align-items:center"><span id="itPhotoPrev">${cur ? `<img class="it-thumb lg" src="${cur}" alt="">` : '<span class="it-thumb lg none"></span>'}</span>
+        <label class="btn sm">写真を選ぶ<input type="file" id="itPhoto" accept="image/*" style="display:none"></label>
+        <button class="btn sm ghost" data-act="itemPhotoRot" style="display:none" id="itPhotoRot">向きを回す</button>
+        <button class="btn sm ghost" data-act="itemPhotoWhole" style="display:none" id="itPhotoWhole">切り抜かない</button>
+        <button class="btn sm ghost" data-act="itemPhotoClear" ${cur ? '' : 'style="display:none"'} id="itPhotoClr">外す</button></div>
+      <div class="small muted" style="margin-top:6px">白い紙の上で真上から撮ってください。向き・大きさ・明るさは自動で整えます。うまくいかないときは「向きを回す」「切り抜かない」を押してください</div></div>
     <label class="row small" style="gap:6px;margin:4px 0 8px"><input type="checkbox" id="itBig" ${it.big ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジで大きく表示する（よく出る品）</label>
     <label class="row small" style="gap:6px"><input type="checkbox" id="itActive" ${it.active !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジに出す（外すとレジに出ません。記録は残ります）</label>
   </div>
@@ -3846,16 +4034,40 @@ if (PROD) {
       const id = el.dataset.id, n = v => v === '' ? null : Math.max(1, parseInt(v, 10) || 1);
       const d = { name: val('itName').trim(), cat: val('itCat').trim(), price: Math.max(0, parseInt(val('itPrice'), 10) || 0), ord: val('itOrd') === '' ? 999 : parseInt(val('itOrd'), 10) || 0, perCase: n(val('itCase')), perBox: n(val('itBox')), big: document.getElementById('itBig').checked, active: document.getElementById('itActive').checked };
       if (!d.name) return toast('品名を入れてください');
-      if (id) Object.assign(S.items.find(i => i.id === id), d); else { const nid = 'it' + Date.now().toString(36); S.items.push({ id: nid, ...d }); S.stock[nid] = 0; }
+      let iid = id;
+      if (id) Object.assign(S.items.find(i => i.id === id), d); else { iid = 'it' + Date.now().toString(36); S.items.push({ id: iid, ...d }); S.stock[iid] = 0; }
+      if (ITEM_PHOTO !== undefined) {
+        const img = ITEM_PHOTO; JIMG.imgs = Object.assign({}, JIMG.imgs || {}); if (img) JIMG.imgs[iid] = img; else delete JIMG.imgs[iid];
+        api('itemImgSet', { id: iid, img }).then(() => toast(img ? '写真を保存しました' : '写真を外しました')).catch(e => { toast('写真を保存できませんでした（' + e.message + '）'); loadItemImgs(true); });
+      }
       S.items.sort((a, b) => (a.ord ?? 999) - (b.ord ?? 999));
       save(); closeModal(); render(); toast('保存しました');
     },
     sumMonth(el) { const [y, m] = sumMonth.split('-').map(Number); sumMonth = ym(new Date(y, m - 1 + +el.dataset.n, 1)); render(); },
     sumItem(el) { sumItem = el.dataset.id; render(); },
+    sumSpan(el) { sumSpan = el.dataset.v; render(); },
+    itemPhotoWhole() { if (ITEM_FILE) { ITEM_WHOLE = !ITEM_WHOLE; document.getElementById('itPhotoWhole').textContent = ITEM_WHOLE ? '自動で切り抜く' : '切り抜かない'; usePhoto(); } },
+    itemPhotoRot() { if (ITEM_FILE) { ITEM_ROT = (ITEM_ROT + 90) % 360; usePhoto(); } },
+    itemPhotoClear() { ITEM_PHOTO = ''; ITEM_FILE = null; document.getElementById('itPhotoRot').style.display = 'none'; document.getElementById('itPhotoWhole').style.display = 'none'; document.getElementById('itPhotoPrev').innerHTML = '<span class="it-thumb lg none"></span>'; document.getElementById('itPhotoClr').style.display = 'none'; },
     sumReload() { loadSalesSummary(true); },
     sumCsv() { sumCsv(); }
   });
 }
+
+/* 写真を選んだとき（ファイル選択は change で届くので、ここで受ける） */
+async function usePhoto() {
+  try {
+    const d = await shrinkPhoto(ITEM_FILE, ITEM_ROT, ITEM_WHOLE);
+    if (!d) return toast('写真を小さくできませんでした。別の写真を選んでください');
+    ITEM_PHOTO = d;
+    document.getElementById('itPhotoPrev').innerHTML = `<img class="it-thumb lg" src="${d}" alt="">`;
+    document.getElementById('itPhotoClr').style.display = ''; document.getElementById('itPhotoRot').style.display = ''; document.getElementById('itPhotoWhole').style.display = '';
+  } catch (err) { toast('この写真は読み込めませんでした'); }
+}
+if (PROD) document.addEventListener('change', e => {
+  if (e.target.id !== 'itPhoto' || !e.target.files[0]) return;
+  ITEM_FILE = e.target.files[0]; ITEM_ROT = 0; ITEM_WHOLE = false; document.getElementById('itPhotoWhole').textContent = '切り抜かない'; e.target.value = ''; usePhoto();
+});
 
 /* =========================================================
    日報（本番）：人ごとに書く・申し送りは1件ずつ（2026-10-28）
