@@ -1616,7 +1616,7 @@ document.addEventListener('submit', e => { if (e.target.id !== 'gnf') return; e.
    お昼：その日に出ている全員（神職は神社くんの休み申告から、巫女・御朱印・台所はシフトから）。
    夕食：希望者だけ。その日に確かめて「あり」にする。小泉家（宮司・真奈美）は最初から「あり」。業者は毎日ちがう */
 const SHINSHOKU = ['宮司', '勝史', '鈴木', '今井'];
-const HELPERS = ['畠山'];   // 三が日のお手伝い（台所の下に出す）
+const HELPERS = ['はんぺん'];   // 三が日の「本殿」の人（台所の下に出す。2026-11-15 本人：畠山→はんぺん、お手伝い→本殿）
 const KOIZUMI = ['宮司', '真奈美'];   // 小泉家（宮司家）。勝史は別に住んでいるので神職として扱う（2026-11-11 本人）
 let mealK = null;
 function mealPeople(k) {
@@ -1627,7 +1627,7 @@ function mealPeople(k) {
   ORDER.flatMap(r => assigned(k).map(byId).filter(m => m && rankOf(m) === r)).forEach(m => out.push({ key: 'm:' + m.id, name: m.name, grp: '巫女' }));
   gAs(k).map(gById).filter(Boolean).forEach(m => out.push({ key: 'g:' + m.id, name: m.name, grp: '御朱印', canStay: true, tomari: !!stay[m.id] }));   // 泊まりは御朱印の人と宮司一家だけ
   const kc = gById(S.kitchen[k]); if (kc) out.push({ key: 'g:' + kc.id, name: kc.name, grp: '台所' });
-  if (hasDinner(k)) HELPERS.forEach(n => out.push({ key: 'h:' + n, name: n + 'さん', grp: 'お手伝い' }));   // 宮司の友達。毎年三が日だけ手伝いに来る（2026-11-15 本人）
+  if (hasDinner(k)) HELPERS.forEach(n => out.push({ key: 'h:' + n, name: n, grp: '本殿' }));   // 宮司の友達。毎年三が日だけ手伝いに来る（2026-11-15 本人）
   return out;
 }
 const MEAL0 = () => ({ lunchOff: {}, dinner: {}, extraL: 0, extraD: 0, stay: {}, order: {} });
@@ -1638,9 +1638,9 @@ const MEALS = { L: 'お昼', D: '夕食' };
 const ordOf = (k, m) => { const o = { vendor: '', tel: '', menu: '', place: '', note: '', how: '', ...((mealOf(k).order || {})[m] || {}) }; if (o.how === 'gaishoku' || o.how === 'jisui') o.how = 'nashi'; return o; };   // 版62の2択は「なし」へ
 const ordW = (k, m) => { const M = mealW(k); M.order = M.order || {}; return (M.order[m] = M.order[m] || {}); };
 /* 手配書の内訳（2026-11-11 本人）：お昼は神職・巫女・御朱印・台所。夕食は小泉家（宮司家）と御朱印、三が日などはほかに神職・巫女・台所も */
-const BREAK = { L: ['神職', '臨時神職', '巫女', '御朱印', '台所', 'お手伝い'], D: ['小泉家', '御朱印', '神職', '臨時神職', '巫女', '台所', 'お手伝い'] };
+const BREAK = { L: ['神職', '臨時神職', '巫女', '御朱印', '台所', ...HELPERS], D: ['小泉家', '御朱印', '神職', '臨時神職', '巫女', '台所', ...HELPERS] };   // 本殿の人は名前で出す（「はんぺん 1」。2026-11-15 本人）
 function mealBreak(k, m) {   // 内訳（担当ごとの数）
-  const ps = mealPeople(k).filter(p => m === 'L' ? lunchOn(k, p) : dinnerOn(k, p)), out = [], cat = p => m === 'D' && p.family ? '小泉家' : p.grp;
+  const ps = mealPeople(k).filter(p => m === 'L' ? lunchOn(k, p) : dinnerOn(k, p)), out = [], cat = p => m === 'D' && p.family ? '小泉家' : p.grp === '本殿' ? p.name : p.grp;
   BREAK[m].forEach(g => { const n = ps.filter(p => cat(p) === g).length; if (n) out.push(`${g} ${n}`); });
   const x = Number(mealOf(k)[m === 'L' ? 'extraL' : 'extraD']) || 0; if (x) out.push(`追加 ${x}`);
   return { list: out, names: ps.map(p => p.name) };
@@ -1736,7 +1736,7 @@ function vMeal() {
   const planOf = m => KD.filter(x => mealsOf(x.k).includes(m)).map(x => { const n = mealCount(x.k); return `<tr class="${x.k === k ? 'cur' : ''}"><td class="pd"><button class="linkish ${dayCls(x)}" data-mday="${x.k}" data-mgo="1">${x.label}（${x.sub}）</button></td>${planCells(x, m, m === 'L' ? n.L : n.D)}</tr>`; }).join('');
   const planTable = m => `<h3 class="plan-h">${MEALS[m]}${m === 'D' ? '<span class="kind">（三が日だけ）</span>' : ''}</h3><div class="scroll"><table class="t plan"><thead><tr><th>日付</th><th class="n">個数</th><th>業者</th><th>電話番号</th><th>お店の場所</th><th>お弁当</th><th>手配</th><th>備考</th></tr></thead><tbody>${planOf(m)}</tbody></table></div>`;
   const chips = KD.map(x => { const n = mealCount(x.k); return `<button class="dchip ${dayCls(x)} ${x.k === k ? 'on' : ''}" data-mday="${x.k}">${x.label}<small>（${x.sub}）昼${n.L}${hasDinner(x.k) ? `・夕${n.D}` : ''}</small></button>`; }).join('');
-  const grps = ['神職', '臨時神職', '巫女', '御朱印', '台所', 'お手伝い'];
+  const grps = ['神職', '臨時神職', '巫女', '御朱印', '台所', '本殿'];
   const hd = hasDinner(k), cs = hd ? 3 : 2;
   const rows = grps.map(g => { const xs = ps.filter(p => p.grp === g); if (!xs.length) return '';
     return `<tr class="grp"><td colspan="${cs}">${g}（${xs.filter(p => !p.off).length}人）${g === '神職' ? ' <span class="kind">神社くんの休み申告から</span>' : g === '臨時神職' ? ' <span class="kind">神社くんのホームから</span>' : ''}</td></tr>` + xs.map(p => p.off
