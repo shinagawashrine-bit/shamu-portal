@@ -2118,6 +2118,19 @@ function makeDraft() {
   Object.entries(old).forEach(([k, v]) => { if (!A[k] && v.honden.length) A[k] = { shuin: [], honden: [...v.honden] }; });
   S.draft[ymk] = A; save();
 }
+/* 助勤の登録URL・シフト入力URL（ログインなし。2026-11-15 本人：正月と同じ形） */
+const JK_HASH = { shuin: 'goshuin', reitaisai: 'reitaisai', shichigosan: 'shichigosan' };
+function jkUrl(team, reg) {
+  const base = location.href.split('#')[0].split('?')[0].replace(/[^/]*$/, '');
+  return base + (PROD ? 'jokin.html' : 'jokin-demo.html') + '#' + JK_HASH[team] + (reg ? '-touroku' : '');
+}
+function jkUrlCard(team, label) {
+  const row = (t, reg, note) => { const u = jkUrl(team, reg); return `<div style="margin-top:10px"><div class="small" style="font-weight:700">${t}</div><div class="small muted" style="margin-bottom:4px">${note}</div>
+    <div class="row" style="gap:6px;flex-wrap:nowrap"><a class="small" href="${esc(u)}" target="_blank" rel="noopener" style="word-break:break-all;flex:1;min-width:0">${esc(u)}</a><button class="btn sm" data-act="jkCopy" data-u="${esc(u)}">コピー</button></div></div>`; };
+  return `<div class="card card-p" style="margin-top:16px"><div class="card-h"><h3>${label}のURL</h3><span class="sp"></span><span class="small muted">ログインなし・名前を選ぶだけ</span></div>
+    ${row('登録URL', true, '初めての人に送ります。名前・ふりがな・電話を入れて登録します。')}
+    ${row('シフト入力URL', false, '登録した人に送ります。名前を選んで○×を入れて送信します（あとから直せます）。初めての人もここから登録できます。')}</div>`;
+}
 function vBaito() {
   const tabs = [['regular', '御朱印'], ['temporary', '巫女（臨時）'], ['rules', '🔒 シフトのルール']];   // 正月の巫女は左メニューの「正月」へ（2026-11-12 本人：タブは削除）
   const savedTab = S.ui.baitoTab;
@@ -2172,8 +2185,9 @@ function baitoRegular() {
       <table class="tbl"><thead><tr><th>名前</th><th class="r">先月</th><th class="r">今月</th><th class="r">今年の合計</th></tr></thead><tbody>${S.regulars.map(p => `<tr><td>${esc(p.name)}</td><td class="r num">${countIn(p.id, prevM)}日</td><td class="r num">${countIn(p.id, thisM)}日</td><td class="r num"><b>${countIn(p.id, thisY)}</b>日</td></tr>`).join('')}</tbody></table></div>
     <div class="card card-p"><div class="card-h"><h3>登録している助勤</h3><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="">＋ 登録</button></div>
       <ul class="mini-list">${S.regulars.map(p => `<li style="cursor:pointer" data-act="editRegular" data-id="${p.id}">${avatar(p.name, p.color, true)}<b>${esc(p.name)}</b><span class="small muted">${p.days.length === 7 ? '毎日可' : p.days.map(x => WD[x]).join('・') + 'のみ'}${p.note ? '・' + esc(p.note) : ''}</span></li>`).join('')}</ul>
-      <div class="small muted" style="margin-top:6px">${PROD ? '登録・変更は「管理」で行います（暗証番号を発行するため）。' : '連絡先は職員だけが見られます。'}</div></div>
-  </div>`;
+      <div class="small muted" style="margin-top:6px">登録URLから本人が登録するか、ここで職員が登録します。電話・メモは職員だけが見られます。</div></div>
+  </div>
+  ${jkUrlCard('shuin', '御朱印')}`;
 }
 /* 臨時で平日に入れる（必要人数を1人増やして、その場で割り当て） */
 function extraModal() {
@@ -2213,16 +2227,17 @@ function seasonPage(type) {
   <div class="grid2" style="margin-top:16px;align-items:start">
     <div class="card card-p"><div class="card-h"><h3>${label}の巫女</h3><span class="sp"></span><button class="btn sm" data-act="bulkMember" data-t="${type}">まとめて登録</button><button class="btn sm" data-act="editMember" data-t="${type}" data-id="">＋ 登録</button></div>
       <ul class="mini-list">${members.map(m => `<li style="cursor:pointer" data-act="editMember" data-t="${type}" data-id="${m.id}">${avatar(m.name, m.color, true)}<b>${esc(m.name)}</b><span class="small muted">${esc(m.tel || '')}${m.note ? '・' + esc(m.note) : ''}</span><span class="sp"></span><span class="small muted">出勤 ${days.filter(k => (S.shifts[k]?.honden || []).includes(m.id)).length}日</span></li>`).join('') || '<li class="muted">未登録</li>'}</ul>
-      <div class="small muted" style="margin-top:6px">御朱印Boysとは別のメンバーです。各自、助勤用ページから${label}の希望を提出します。</div></div>
+      <div class="small muted" style="margin-top:6px">御朱印Boysとは別のメンバーです。登録URLから本人が登録するか、ここで職員が登録します。シフト入力URLから${label}の希望を出します。</div></div>
     <div class="card card-p"><div class="card-h"><h3>提出状況</h3></div>
       <ul class="mini-list">${members.map(m => `<li>${avatar(m.name, m.color, true)}${esc(m.name)}<span class="sp"></span>${S.seasonReq[m.id] ? `<span class="tag green">提出済み ${md(new Date(S.seasonReq[m.id].at))}</span>` : '<span class="tag warn">未提出</span>'}</li>`).join('')}</ul></div>
-  </div>`;
+  </div>
+  ${jkUrlCard(type, label)}`;
 }
 function editMemberModal(type, id) {
-  const m = (S.seasonMembers[type] || []).find(x => x.id === id) || { id: '', name: '', tel: '', note: '' };
+  const m = (S.seasonMembers[type] || []).find(x => x.id === id) || { id: '', name: '', kana: '', tel: '', note: '' };
   modal(`<div class="modal-h"><h3>${seasonLabel(type)}のメンバー</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="field"><label>氏名</label><input class="input" id="mbName" value="${esc(m.name)}"></div>
+    <div class="grid2"><div class="field"><label>氏名</label><input class="input" id="mbName" value="${esc(m.name)}"></div><div class="field"><label>ふりがな</label><input class="input" id="mbKana" value="${esc(m.kana || '')}"></div></div>
     <div class="field"><label>電話</label><input class="input" id="mbTel" value="${esc(m.tel)}"></div>
     <div class="field"><label>メモ（職員のみ）</label><input class="input" id="mbNote" value="${esc(m.note)}"></div>
   </div>
@@ -3069,7 +3084,7 @@ const ACT = {
   },
   editMember(el) { editMemberModal(el.dataset.t, el.dataset.id); },
   saveMember(el) {
-    const t = el.dataset.t, id = el.dataset.id, d = { name: val('mbName'), tel: val('mbTel'), note: val('mbNote') };
+    const t = el.dataset.t, id = el.dataset.id, d = { name: val('mbName'), kana: val('mbKana'), tel: val('mbTel'), note: val('mbNote') };
     if (!d.name) return toast('氏名を入れてください');
     S.seasonMembers[t] = S.seasonMembers[t] || [];
     if (id) Object.assign(S.seasonMembers[t].find(m => m.id === id), d); else S.seasonMembers[t].push({ id: 'm' + t.slice(0, 2) + Date.now(), color: AV_COLORS[S.seasonMembers[t].length % 6], ...d });
@@ -3077,6 +3092,7 @@ const ACT = {
   },
   delMember(el) { const t = el.dataset.t, id = el.dataset.id; askConfirm('このメンバーを削除しますか？', () => { S.seasonMembers[t] = S.seasonMembers[t].filter(m => m.id !== id); save(); closeModal(); render(); }); },
   bulkMember(el) { bulkMemberModal(el.dataset.t); },
+  jkCopy(el) { const u = el.dataset.u, done = t => { el.textContent = t; setTimeout(() => el.textContent = 'コピー', 1600); }; try { navigator.clipboard.writeText(u).then(() => done('コピーしました'), () => done('コピーできません')); } catch (e) { done('コピーできません'); } },
   saveBulkMember(el) {
     const t = el.dataset.t, lines = document.getElementById('bulkText').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
     S.seasonMembers[t] = S.seasonMembers[t] || [];
@@ -3221,9 +3237,13 @@ function applyPeople(users) {
 function fromServer(d, me) {
   applyPeople(d.users || []);
   const st = { v: 'prod', ui: (S && S.ui) || loadUi(), pins: {} };
-  st.regulars = (d.users || []).filter(u => u.role === 'shuin').map(u => ({ id: u.id, name: u.name, kana: '', tel: '', color: u.color, note: u.note || '', days: String(u.days || '').split(',').filter(x => x !== '').map(Number) }));
+  // 助勤のメンバー：表 jokin（2026-11-15 本人：管理画面ではなく、助勤の画面とURLの登録ページで登録）。jokin がまだ空のときだけ、前の仕組み（users の助勤）から引き継ぐ
+  const jk = d.jokin || [], wdOf = v => String(v || '').split(',').filter(x => x !== '').map(Number);
+  const legacy = jk.length ? [] : (d.users || []).filter(u => u.role === 'shuin' || u.role === 'miko').map(u => ({ id: u.id, name: u.name, kana: '', tel: '', team: u.role === 'shuin' ? 'shuin' : u.grp, days: u.days, note: u.note || '', color: u.color, at: '', legacy: true }));
+  const members = [...jk, ...legacy];
+  st.regulars = members.filter(u => u.team === 'shuin').map(u => ({ id: u.id, name: u.name, kana: u.kana || '', tel: u.tel || '', color: u.color || '#9c545b', note: u.note || '', days: wdOf(u.days), at: num(u.at), legacy: !!u.legacy }));
   st.seasonMembers = { reitaisai: [], shichigosan: [], shogatsu: [] };
-  (d.users || []).filter(u => u.role === 'miko' && st.seasonMembers[u.grp]).forEach(u => st.seasonMembers[u.grp].push({ id: u.id, name: u.name, tel: '', note: u.note || '', color: u.color }));
+  members.filter(u => st.seasonMembers[u.team] && u.team !== 'shogatsu').forEach(u => st.seasonMembers[u.team].push({ id: u.id, name: u.name, kana: u.kana || '', tel: u.tel || '', note: u.note || '', color: u.color || '#9c545b', at: num(u.at), legacy: !!u.legacy }));
   st.leaves = (d.leaves || []).map(r => ({ id: r.id, staff: r.staff, date: r.date, memo: r.memo || '' }));
   st.tempWork = (d.tempWork || []).map(r => ({ id: r.id, staff: r.staff, date: r.date }));
   // 時刻は「11:00」の形だけ受け取る（形が違う値は画面に組み込まない。2026-11-12 Codex指摘）
@@ -3295,9 +3315,15 @@ function toRows(st) {
   R.items = st.items.map(i => ({ id: i.id, name: i.name, cat: i.cat || '', price: i.price || 0, perBox: i.perBox ?? '', perCase: i.perCase ?? '', big: !!i.big, ord: i.ord ?? 999, active: i.active !== false }));
   R.stockLog = st.stockLog.map(l => ({ id: l.id, item: l.item, date: l.date, type: l.type, boxes: l.boxes, note: l.note || '' }));
   R.shogatsu = Object.entries(st.shogatsu || {}).map(([id, data]) => ({ id, data }));
+  R.jokin = [...st.regulars.map(p => ({ id: p.id, name: p.name, kana: p.kana || '', tel: p.tel || '', team: 'shuin', days: (p.days || []).join(','), note: p.note || '', color: p.color || '', at: p.at || '' })),
+    ...['reitaisai', 'shichigosan'].flatMap(t => (st.seasonMembers[t] || []).map(m => ({ id: m.id, name: m.name, kana: m.kana || '', tel: m.tel || '', team: t, days: '', note: m.note || '', color: m.color || '', at: m.at || '' })))];
   return R;
 }
-const snap = st => { const R = toRows(st), m = {}; Object.entries(R).forEach(([c, rows]) => { m[c] = {}; rows.forEach(r => m[c][r.id] = JSON.stringify(r)); }); return m; };
+const snap = st => { const R = toRows(st), m = {}; Object.entries(R).forEach(([c, rows]) => { m[c] = {}; rows.forEach(r => m[c][r.id] = JSON.stringify(r)); });
+  // 前の仕組み（users）から引き継いだ助勤は、宮司・職員がログインしたときに表 jokin へ書き写す（差分に「新しい行」として出す）
+  if (P.me && ['guji', 'staff'].includes(P.me.role)) [...(st.regulars || []), ...Object.values(st.seasonMembers || {}).flat()].forEach(p => { if (p.legacy && m.jokin) delete m.jokin[p.id]; });
+  return m;
+};
 function diff(prev, cur) {
   const ch = [];
   Object.keys(cur).forEach(c => {
@@ -3412,7 +3438,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115122026';
+const BUILD = '20261115135732';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3504,15 +3530,7 @@ if (PROD) Object.assign(ACT, {
   },
   logout() { closeModal(); api('logout').catch(() => { }); if (typeof anReset === 'function') anReset(); P.token = null; lsSet(TOKEN_KEY, null); lsSet(CACHE_KEY, null); S.session = null; loginWho = null; loginPin = ''; P.screen = 'login'; P.msg = ''; window.scrollTo(0, 0); loadPeople(); },
   reset() { toast('本番では使えません'); },
-  // 人の登録・変更は管理画面で（暗証番号を発行するため）
-  editRegular() { goAdmin(); }, saveRegular() { goAdmin(); }, editMember(el) {
-    const group = el.dataset.t;
-    if (!el.dataset.id && ['reitaisai', 'shichigosan'].includes(group)) {
-      if (!P.me || !P.me.isAdmin) return goAdmin();
-      return ACT.admAdd(el);
-    }
-    goAdmin();
-  }, saveMember() { goAdmin(); }, delMember() { goAdmin(); }, bulkMember() { goAdmin(); }, saveBulkMember() { goAdmin(); },
+  // 助勤の登録・変更は助勤の画面で（2026-11-15 本人：管理画面ではなく、正月と同じ形）
   async manPdfOpen(el) {
     const w = window.open('', '_blank');
     try { const r = await api('file', { id: el.dataset.id }); const bytes = Uint8Array.from(atob(r.b64), c => c.charCodeAt(0)); const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })); if (w) w.location = url; else location.href = url; }
