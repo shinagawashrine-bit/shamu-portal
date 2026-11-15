@@ -1339,7 +1339,7 @@ const isTemp = () => TEMP_STAFF.some(t => t.id === S.me);
 const tempOn = k => TEMP_STAFF.filter(t => S.tempWork.some(w => w.staff === t.id && w.date === k));
 /* 臨時職員の出勤を、宮司・職員が「予定を追加」から入れる（2026-11-12 本人。ホームにボタンは置かない） */
 const canSetTemp = () => !isTemp() && TEMP_STAFF.length > 0 && (typeof P === 'undefined' || !P.me || ['guji', 'staff'].includes(P.me.role));
-const boardTargets = p => Array.isArray(p.target) ? p.target : p.target === 'all' ? ['shuin'] : [];
+const boardTargets = p => [];   // 助勤あてのお知らせはやめた（2026-11-15 本人：助勤はログインしない）。掲示板は職員だけ
 const targetLabel = p => { const t = boardTargets(p); return !t.length ? '職員のみ' : t.map(g => g === 'shuin' ? '御朱印' : '巫女').join('・') + 'にも表示'; };
 const mikoPeople = () => { const seen = new Set(), out = []; ['reitaisai', 'shichigosan'].forEach(t => (S.seasonMembers[t] || []).forEach(m => { if (!seen.has(m.name)) { seen.add(m.name); out.push(m); } })); return out; };
 /* 宮司は既読・未読の対象外 */
@@ -1806,8 +1806,6 @@ function newPostModal(prefill) {
   <div class="modal-b">
     <div class="field"><label>タイトル</label><input class="input" id="bpTitle" value="${esc(prefill?.title || '')}"></div>
     <div class="field"><label>本文</label><textarea class="input" id="bpBody" style="min-height:140px">${esc(prefill?.body || '')}</textarea></div>
-    <div class="field"><label>表示する相手</label><div class="small muted" style="margin-bottom:4px">職員には必ず表示されます。助勤にも見せる場合だけ選んでください。</div>
-      <div class="row"><label class="row small" style="gap:6px"><input type="checkbox" id="bpShuin" style="width:18px;height:18px;accent-color:var(--brand)"> 御朱印にも表示</label><label class="row small" style="gap:6px"><input type="checkbox" id="bpMiko" style="width:18px;height:18px;accent-color:var(--brand)"> 巫女にも表示</label></div></div>
   </div>
   <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="savePost">投稿する</button></div>`);
 }
@@ -2884,7 +2882,7 @@ const ACT = {
   newPost() { newPostModal(); },
   segPick(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); },
   savePost() {
-    const title = val('bpTitle'), body = val('bpBody'), target = [document.getElementById('bpShuin').checked && 'shuin', document.getElementById('bpMiko').checked && 'miko'].filter(Boolean);
+    const title = val('bpTitle'), body = val('bpBody'), target = [];
     if (!title) return toast('タイトルを入れてください');
     const p = { id: 'b' + Date.now(), title, body, by: S.me, at: Date.now(), target, reads: S.me === 'guji' ? {} : { [S.me]: Date.now() } };
     S.board.push(p); postSel = p.id; save(); closeModal(); render(); toast('投稿しました');
@@ -3438,7 +3436,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115135732';
+const BUILD = '20261115142952';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3607,10 +3605,11 @@ if (PROD) Object.assign(ACT, {
     modal(`<div class="modal-h"><h3>${title}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
     <div class="modal-b">
       <div class="field"><label for="auName">名前（画面に出る名前）</label><input class="input" id="auName" maxlength="30" placeholder="例：田中 美咲"></div>
-      <div class="field"><label for="auRole">種別</label><select class="input" id="auRole" data-chg="auRole" ${groupFixed ? 'disabled' : ''}><option value="shuin">御朱印（助勤）</option><option value="miko" ${groupFixed ? 'selected' : ''}>巫女</option><option value="temp">臨時職員</option><option value="staff">職員</option></select></div>
-      <div class="field" id="auGrpBox" ${groupFixed ? '' : 'hidden'}><label for="auGrp">巫女の時期</label><select class="input" id="auGrp" ${groupFixed ? 'disabled' : ''}><option value="reitaisai">例大祭</option><option value="shichigosan" ${group === 'shichigosan' ? 'selected' : ''}>七五三</option></select><div class="small muted">複数の時期に入る人は、時期ごとに同じ名前で登録してください（同じ人として扱われます）</div></div>
-      <div class="field" id="auDaysBox" ${groupFixed ? 'hidden' : ''}><label>出られる曜日</label><div class="row" id="auDays">${WD.map((w, i) => `<label class="chip ${i === 0 || i === 6 ? 'on' : ''}" style="cursor:pointer"><input type="checkbox" value="${i}" ${i === 0 || i === 6 ? 'checked' : ''} style="display:none" data-chg="chipToggle">${w}</label>`).join('')}</div></div>
+      <div class="field"><label for="auRole">種別</label><select class="input" id="auRole" data-chg="auRole" ${groupFixed ? 'disabled' : ''}><option value="temp">臨時職員</option><option value="staff">職員</option></select></div>
+      <div class="field" id="auGrpBox" hidden><label for="auGrp">巫女の時期</label><select class="input" id="auGrp" ${groupFixed ? 'disabled' : ''}><option value="reitaisai">例大祭</option><option value="shichigosan" ${group === 'shichigosan' ? 'selected' : ''}>七五三</option></select><div class="small muted">複数の時期に入る人は、時期ごとに同じ名前で登録してください（同じ人として扱われます）</div></div>
+      <div class="field" id="auDaysBox" hidden><label>出られる曜日</label><div class="row" id="auDays">${WD.map((w, i) => `<label class="chip ${i === 0 || i === 6 ? 'on' : ''}" style="cursor:pointer"><input type="checkbox" value="${i}" ${i === 0 || i === 6 ? 'checked' : ''} style="display:none" data-chg="chipToggle">${w}</label>`).join('')}</div></div>
       <div class="note">${ICON.info}<span>電話番号などの個人情報は、このシステムには入れません。</span></div>
+      <div class="note" style="margin-top:8px">${ICON.info}<span>御朱印・巫女の助勤はログインしません。「助勤」の画面か登録URLで登録します。</span></div>
     </div>
     <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="admAddSave">登録して暗証番号を出す</button></div>`);
   },

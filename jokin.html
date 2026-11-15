@@ -217,7 +217,8 @@ async function pick(id, name) {
   V.busy = false; render(); window.scrollTo(0, 0);
 }
 function setCur() { const t = T(); V.cur = Object.assign({}, t.team === 'shuin' ? ((V.mine.req || {})[V.ym] || {}).days || {} : V.mine.days || {}); }
-function readReg() { const g = id => (document.getElementById(id) || {}).value || ''; Object.assign(V.reg2, { name: g('rName').trim(), kana: g('rKana').trim(), tel: g('rTel').trim(), memo: g('rMemo').trim() }); }
+const half = v => String(v).replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[－ー―‐−]/g, '-').replace(/[（]/g, '(').replace(/[）]/g, ')');   // 全角の数字・ハイフンを半角に
+function readReg() { const g = id => (document.getElementById(id) || {}).value || ''; Object.assign(V.reg2, { name: g('rName').trim(), kana: g('rKana').trim(), tel: half(g('rTel')).trim(), memo: g('rMemo').trim() }); }
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el || V.busy) return;
   const a = el.dataset.act, t = T();
