@@ -304,7 +304,7 @@ table.plan td.pd { font-weight: 700 } .plan-h { font-size: 15px; margin: 6px 0 -
 .yk-h > b { font-size: 20px } .yk-c { font-size: 13px; color: #8e8185 } .yk-p { font-size: 14px; color: #5f5357 }
 .yk-t { margin-left: auto; font-size: 14px; color: #5f5357 } .yk-t b { font-size: 20px; color: #2a2224 }
 .yk-tb { width: 100%; border-collapse: collapse; font-size: 15px; table-layout: fixed }
-.yk-tb th:nth-child(2) { width: 84px } .yk-tb th:nth-child(3) { width: 36px } .yk-tb th:nth-child(6) { width: 116px } .yk-tb th:nth-child(7) { width: 36px } .yk-tb th:nth-child(8) { width: 320px } .yk-tb .bt-none { font-size: 12px }
+.yk-tb th:nth-child(2) { width: 84px } .yk-tb th:nth-child(3) { width: 72px } .yk-tb th:nth-child(6) { width: 116px } .yk-tb th:nth-child(7) { width: 36px } .yk-tb th:nth-child(8) { width: 40px } .yk-tb th:nth-child(9) { width: 260px } .yk-tb .bt-none { font-size: 12px }
 .yk-tb th { text-align: left; font-size: 12px; font-weight: 500; color: #8e8185; padding: 4px 8px; border-bottom: 1.5px solid #d9cfd1 }
 .yk-tb td { padding: 4px 8px; border-bottom: 1px solid #efe9ea; height: var(--rh, 26px); line-height: 20px; overflow-wrap: anywhere }
 .yk-tb .box { width: 16px; height: 16px; vertical-align: middle }
@@ -1631,7 +1631,7 @@ function mealPeople(k) {
   return out;
 }
 const MEAL0 = () => ({ lunchOff: {}, dinner: {}, extraL: 0, extraD: 0, stay: {}, order: {} });
-const HOW = { yoyaku: '予約済み', kaini: '当日買いに行く', nashi: 'なし' };
+const HOW = { yoyaku: '配達', kaini: '当日', nashi: 'なし' };   // 手配は「配達」と「当日」の2つ（2026-11-15 本人。中の値は前のまま：yoyaku＝配達、kaini＝当日）
 const isNo = h => h === 'nashi';   // 夕食を頼まない日（夕食だけ選べる。2026-11-11 本人）
 const howOpts = m => Object.entries(HOW).filter(([v]) => m === 'D' || !isNo(v));
 const MEALS = { L: 'お昼', D: '夕食' };
@@ -1655,7 +1655,7 @@ const isEveK = k => k === 'eve';
 const mDays = () => DAYS;   // 食事の日：12/31＋昼の日
 const mealName = (k, m) => isEveK(k) && m === 'D' ? '年越しそば' : MEALS[m];
 /* 12/31の夜は毎年、松風（蕎麦屋）の年越しそば。14時に取りに行く（2026-11-15 本人）。最初から入れておく（直すこともできる） */
-const EVE_SOBA = { vendor: '松風', tel: '03-3447-1661', menu: '年越しそば', note: '14時に取りに行く' };
+const EVE_SOBA = { vendor: '松風', tel: '03-3447-1661', place: '品川区北品川4-1-1', menu: '年越しそば', note: '14時に取りに行く', how: 'kaini' };   // 手配は「当日」（2026-11-15 本人）
 const mLab = d => d.kind === 'eve' ? `12/31（${WD[new Date(Y - 1, 11, 31).getDay()]}）` : `${d.label}（${d.sub}）`;
 const mDate = d => d.kind === 'eve' ? `${wareki(Y - 1)}12月31日（${WD[new Date(Y - 1, 11, 31).getDay()]}）` : wafuDate(d);
 const mealsOf = k => hasDinner(k) ? ['L', 'D'] : ['L'];
@@ -1668,13 +1668,13 @@ function dinnerDefault(k, p) {
 }
 const dinnerOn = (k, p) => hasDinner(k) && !p.off && (mealOf(k).dinner[p.key] ?? dinnerDefault(k, p));
 function mealCount(k) { const M = mealOf(k); if (isEveK(k)) return { L: Number(M.extraL) || 0, D: Number(M.extraD) || 0 }; const ps = mealPeople(k); return { L: ps.filter(p => lunchOn(k, p)).length + (Number(M.extraL) || 0), D: hasDinner(k) ? ps.filter(p => dinnerOn(k, p)).length + (Number(M.extraD) || 0) : 0 }; }
-/* お弁当の手配表：お弁当担当が1枚で分かる（何を・どこで・何個・予約済みか当日買うか） */
+/* お弁当の手配表：お弁当担当が1枚で分かる（何を・どこで・何個・配達か当日か） */
 function bentoHTML(k) {
   const d = DAYS.find(x => x.k === k), c = mealCount(k), dash = '<span class="bt-none">（未記入）</span>';
   const block = m => { const o = ordOf(k, m), n = m === 'L' ? c.L : c.D, b = mealBreak(k, m);
-    if (!n) return `<section class="bt-b none"><div class="bt-h"><span class="bt-m">${mealName(k, m)}</span><span class="bt-n">なし</span></div></section>`;
+    if (!n && !isEveK(k)) return `<section class="bt-b none"><div class="bt-h"><span class="bt-m">${mealName(k, m)}</span><span class="bt-n">なし</span></div></section>`;
     const no = isNo(o.how), kv = [['お店', o.vendor], ['電話番号', o.tel], ['場所', o.place], ['お弁当', o.menu], ['備考', o.note]];
-    return `<section class="bt-b"><div class="bt-h"><span class="bt-m">${mealName(k, m)}</span><span class="bt-n"><b>${n}</b>${no ? '人' : '個'}</span><span class="bt-how ${o.how || 'mi'}">${HOW[o.how] || '手配 未定'}</span></div>
+    return `<section class="bt-b"><div class="bt-h"><span class="bt-m">${mealName(k, m)}</span><span class="bt-n"><b>${n || '　　'}</b>${no ? '人' : '個'}</span><span class="bt-how ${o.how || 'mi'}">${HOW[o.how] || '手配 未定'}</span></div>
       <table class="bt-kv">${kv.map(([l, v]) => `<tr><th>${l}</th><td>${no ? '—' : esc(v) || dash}</td></tr>`).join('')}</table>
       ${isEveK(k) ? '<div class="bt-sub">人数は手入力</div>' : `<div class="bt-sub"><b>内訳</b>　${b.list.join('・')}</div>`}
       ${m === 'D' && !isEveK(k) ? `<div class="bt-sub"><b>夕食の人</b>　${b.names.map(esc).join('、')}</div>` : ''}</section>`; };
@@ -1693,11 +1693,11 @@ function bentoDlg() {
   document.getElementById('btgo').onclick = e => savePdf([() => { const t = document.createElement('div'); t.innerHTML = bentoHTML(mealK); return t.firstElementChild; }], `お弁当の手配_${wafuDate(d).replace(/（.*$/, '')}.pdf`, e.currentTarget, document.getElementById('btmsg'), true);
 }
 /* 予約のチェックシート：1ページ目はお昼、2ページ目は夕食（12/31の夜と三が日）。どちらも日付順（2026-11-15 本人）。
-   当日買いに行く分と、手配が「なし」の夕食は除く。□に印を付けながら予約する */
+   手配が「なし」の夕食だけ除く（配達も当日も予約するので載せる。2026-11-15 本人）。□に印を付けながら予約する */
 function yoyakuRows(m) {
   const rows = [];
   mDays().forEach(d => { if (!mealsOf(d.k).includes(m)) return; const c = mealCount(d.k), o = ordOf(d.k, m), n = m === 'L' ? c.L : c.D;
-    if (!n || o.how === 'kaini' || isNo(o.how)) return; rows.push({ d, m, o, n }); });
+    if (!isEveK(d.k) && !n) return; if (isNo(o.how)) return; rows.push({ d, m, o, n }); });   // 12/31は個数を手書きするので0でも載せる（2026-11-15 本人）
   return rows;
 }
 function yoyakuPages() {
@@ -1709,16 +1709,16 @@ function yoyakuPages() {
     for (let i = 0; i < rows.length; i += per) out.push({ m, ROW, sum, rows: rows.slice(i, i + per), cont: i > 0 });
   });
   const total = out.length;
-  if (!total) return [`<div class="bt yk"><div class="bt-top"><div><div class="bt-t">お弁当の予約チェックシート</div><div class="bt-d sm">${wareki(Y)} 正月</div></div><div class="bt-s">品川神社</div></div><p class="bt-sub">予約する分はありません（すべて当日買いに行く、または個数が0）。</p><div class="bt-f"><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`];
+  if (!total) return [`<div class="bt yk"><div class="bt-top"><div><div class="bt-t">お弁当の予約チェックシート</div><div class="bt-d sm">${wareki(Y)} 正月</div></div><div class="bt-s">品川神社</div></div><p class="bt-sub">予約する分はありません（個数が0、または夕食なし）。</p><div class="bt-f"><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`];
   return out.map((pg, pi) => { const ds = pg.rows.map(r => r.d);
     return `<div class="bt yk"><div class="bt-top"><div><div class="bt-t">お弁当の予約チェックシート　<span class="yk-m">${MEALS[pg.m]}</span>${pg.cont ? '<span class="yk-c">（つづき）</span>' : ''}</div><div class="bt-d sm">${wareki(Y)} 正月（${ds[0].kind === 'eve' ? '12/31' : ds[0].label}〜${ds[ds.length - 1].label}）</div></div><div class="bt-s">${MEALS[pg.m]}の合計 <b>${pg.sum}</b>個　品川神社${total > 1 ? `　${pi + 1}/${total}` : ''}</div></div>
-    <section class="yk-g"><table class="yk-tb" style="--rh:${pg.ROW - 9}px"><thead><tr><th class="ck">予約</th><th>日付</th><th>食事</th><th>業者</th><th>お弁当</th><th>電話番号</th><th class="r">個数</th><th>備考</th></tr></thead><tbody>${pg.rows.map(r => `<tr><td class="ck"><span class="box ${r.o.how === 'yoyaku' ? 'on' : ''}">${r.o.how === 'yoyaku' ? '✓' : ''}</span></td><td class="dd ${dayCls(r.d)}">${mLab(r.d)}</td><td>${mealName(r.d.k, r.m)}</td><td>${esc(r.o.vendor) || dash}</td><td>${esc(r.o.menu) || dash}</td><td>${esc(r.o.tel)}</td><td class="r"><b>${r.n}</b></td><td class="note">${esc(r.o.note)}</td></tr>`).join('')}</tbody></table></section>
-    <div class="bt-f"><span>✓＝予約済みにしてある分　${pg.m === 'D' ? '夕食は12/31の夜と三が日だけ。' : ''}個数はその日に変わることがあります</span><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`; });
+    <section class="yk-g"><table class="yk-tb" style="--rh:${pg.ROW - 9}px"><thead><tr><th class="ck">予約</th><th>日付</th><th>食事</th><th>業者</th><th>お弁当</th><th>電話番号</th><th class="r">個数</th><th>手配</th><th>備考</th></tr></thead><tbody>${pg.rows.map(r => `<tr><td class="ck"><span class="box"></span></td><td class="dd ${dayCls(r.d)}">${mLab(r.d)}</td><td>${mealName(r.d.k, r.m)}</td><td>${esc(r.o.vendor) || dash}</td><td>${esc(r.o.menu) || dash}</td><td>${esc(r.o.tel)}</td><td class="r"><b>${r.n || ''}</b></td><td>${HOW[r.o.how] || ''}</td><td class="note">${esc(r.o.note)}</td></tr>`).join('')}</tbody></table></section>
+    <div class="bt-f"><span>□＝予約したら印を付ける　${pg.m === 'D' ? '夕食は12/31の夜と三が日だけ。' : ''}個数はその日に変わることがあります</span><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`; });
 }
 function yoyakuDlg() {
   const pages = yoyakuPages();
   document.getElementById('dlg').innerHTML = `<div class="overlay"><div class="dlg btdlg"><h2>予約のチェックシート</h2>
-    <div class="note">1ページ目がお昼、2ページ目が夕食（三が日だけ）です。当日買いに行く分と、手配が「なし」の夕食は除いています。</div>
+    <div class="note">1ページ目がお昼、2ページ目が夕食（12/31の年越しそばと三が日）です。12/31は個数が空でも載せます（手書き用）。手配が「なし」の夕食だけ除いています。</div>
     <div class="ykprevs">${pages.map(h => `<div class="ss-prev bt-prev">${h}</div>`).join('')}</div>
     <div class="row"><span class="note" id="ykmsg"></span><span class="sp"></span><button type="button" class="btn" id="cancel">閉じる</button><button type="button" class="btn pri" id="ykgo">PDFで保存</button></div></div></div>`;
   const pvs = [...document.querySelectorAll('.ykprevs > .ss-prev')], fit = () => pvs.forEach(pv => { const k = pv.clientWidth / 1123; pv.firstElementChild.style.transform = `scale(${k})`; pv.style.height = `${794 * k}px`; });
@@ -1754,7 +1754,7 @@ function vMeal() {
   const step = (f, v) => `<span class="need big"><button data-mx="${f},-1" aria-label="減らす">−</button><b>${v}</b><button data-mx="${f},1" aria-label="増やす">＋</button></span>`;
   return `<div class="card" style="display:grid;gap:14px">
     <div class="row"><h2>食事の準備</h2><span class="sp"></span><button class="btn pri" id="yoyaku-pdf">予約のチェックシート</button></div>
-    <div class="mstats">${stat('お昼の合計', `${totL}個`)}${stat('夕食の合計', `${totD}個`)}${stat('予約済み', `${cnt('yoyaku')}件`, 'ok')}${stat('当日買いに行く', `${cnt('kaini')}件`, 'kaini')}${stat('夕食なし', `${noB}件`, 'nb')}${stat('手配 未定', `${cnt('')}件`, cnt('') ? 'mi' : '')}${stat('お店 未記入', `${noShop}件`, noShop ? 'mi' : '')}</div>
+    <div class="mstats">${stat('お昼の合計', `${totL}個`)}${stat('夕食の合計', `${totD}個`)}${stat('配達', `${cnt('yoyaku')}件`, 'ok')}${stat('当日', `${cnt('kaini')}件`, 'kaini')}${stat('夕食なし', `${noB}件`, 'nb')}${stat('手配 未定', `${cnt('')}件`, cnt('') ? 'mi' : '')}${stat('お店 未記入', `${noShop}件`, noShop ? 'mi' : '')}</div>
     ${planTable('L')}${KD.some(x => hasDinner(x.k)) ? planTable('D') : ''}
     <p class="kind" style="margin:0">業者を入れると、ほかの日に同じ業者の電話番号・場所があれば自動で入ります。</p>
   </div>
@@ -1763,7 +1763,7 @@ function vMeal() {
     <div class="row"><h2>${mDate(d)}</h2><span class="sp"></span><button class="btn pri" id="bento-pdf">お弁当の手配表</button></div>
     <div class="orders">${mealsOf(k).map(m => { const o = ordOf(k, m), n = m === 'L' ? c.L : c.D; return `<section class="order">
       <div class="order-h"><b>${mealName(k, m)}</b><span class="order-n"><b>${n}</b>${isNo(o.how) ? '人' : '個'}</span></div>
-      ${n ? `<dl class="oinfo"><dt>業者</dt><dd data-ov="${m},vendor" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.vendor, isNo(o.how))}</dd><dt>お店の場所</dt><dd data-ov="${m},place" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.place, isNo(o.how))}</dd><dt>電話番号</dt><dd data-ov="${m},tel" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.tel, isNo(o.how))}</dd><dt>お弁当</dt><dd data-ov="${m},menu" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.menu, isNo(o.how))}</dd><dt>手配</dt><dd>${o.how ? `<span class="hw ${o.how}">${HOW[o.how]}</span>` : '<span class="ov-mi">未定</span>'}</dd>${o.note ? `<dt>備考</dt><dd>${esc(o.note)}</dd>` : ''}</dl>` : '<p class="kind">この日はありません</p>'}
+      ${n || isEveK(k) ? `<dl class="oinfo"><dt>業者</dt><dd data-ov="${m},vendor" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.vendor, isNo(o.how))}</dd><dt>お店の場所</dt><dd data-ov="${m},place" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.place, isNo(o.how))}</dd><dt>電話番号</dt><dd data-ov="${m},tel" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.tel, isNo(o.how))}</dd><dt>お弁当</dt><dd data-ov="${m},menu" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.menu, isNo(o.how))}</dd><dt>手配</dt><dd>${o.how ? `<span class="hw ${o.how}">${HOW[o.how]}</span>` : '<span class="ov-mi">未定</span>'}</dd>${o.note ? `<dt>備考</dt><dd>${esc(o.note)}</dd>` : ''}</dl>` : '<p class="kind">この日はありません</p>'}
     </section>`; }).join('')}</div>
     <p class="kind" style="margin:0">業者・電話番号・場所・お弁当・手配・備考は、上の「食事の準備」の表で入力します。</p>
     ${isEveK(k) ? '<p class="kind" style="margin:0">12/31は決まった人がいないので、お昼と年越しそばの個数を上の表で手入力します。</p>' : `<div class="scroll"><table class="t meal"><thead><tr><th>名前</th><th>お昼</th>${hd ? '<th>夕食</th>' : ''}</tr></thead><tbody>${rows}
