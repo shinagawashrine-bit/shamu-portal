@@ -48,6 +48,10 @@ h2 { font-size: 17px; margin: 0 0 10px; }
 .cal .h { text-align: center; font-size: 12px; color: var(--text-2); font-weight: 700; }
 .d { border: 1px solid var(--line); border-radius: 10px; min-height: 54px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; background: #fff; user-select: none; }
 .d.e { border: 0; background: transparent; cursor: default; }
+.d.off { background: #f3f1f1; border-color: #f3f1f1; color: #c9c2c2; cursor: default; }
+.d.off b { color: #c9c2c2 !important; font-weight: 400; }
+.dl { background: #fff6dc; border: 1px solid #f0d48a; border-radius: 10px; padding: 8px 12px; font-size: 14px; margin-bottom: 10px; }
+.dl.over { background: var(--ng-bg); border-color: #f0b4ad; color: var(--ng); }
 .d b { font-size: 15px; }
 .d .m { font-size: 18px; font-weight: 700; line-height: 1.1; min-height: 20px; }
 .d.sun b, .d.hol b, .cal .h.sun { color: var(--sun); }
@@ -86,6 +90,7 @@ const TEAMS = {
   shichigosan: { team: 'shichigosan', label: '七五三', post: '本殿' }
 };
 const WD = ['日', '月', '火', '水', '木', '金', '土'];
+const DEADLINE_DAY = 25;   // 御朱印の希望の締め切り：前の月の25日（2026-11-15 本人）
 const pad = n => String(n).padStart(2, '0');
 const key = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const parse = k => { const [y, m, d] = k.split('-').map(Number); return new Date(y, m - 1, d); };
@@ -171,12 +176,18 @@ function calShuin() {
   let h = WD.map((w, i) => `<div class="h ${i === 0 ? 'sun' : i === 6 ? 'sat' : ''}">${w}</div>`).join('') + Array.from({ length: first.getDay() }, () => '<div class="d e"></div>').join('');
   for (let i = 1; i <= n; i++) {
     const d = new Date(y, m - 1, i), k = key(d), v = V.cur[k];
-    h += `<div class="d ${v || ''} ${isWe(d) ? 'we' : ''} ${d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''} ${HOLIDAYS[k] ? 'hol' : ''}" data-act="tap" data-k="${k}"><b>${i}</b><span class="m">${v === 'ok' ? '○' : v === 'ng' ? '×' : ''}</span></div>`;
+    if (!isWe(d)) { h += `<div class="d off"><b>${i}</b><span class="m"></span></div>`; continue; }   // 平日は入れない（御朱印は土日祝だけ）
+    h += `<div class="d ${v || ''} we ${d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''} ${HOLIDAYS[k] ? 'hol' : ''}" data-act="tap" data-k="${k}"><b>${i}</b><span class="m">${v === 'ok' ? '○' : v === 'ng' ? '×' : ''}</span></div>`;
   }
   return `<div class="cal">${h}</div>`;
 }
 function tilesSeason() {
   return `<div class="tiles">${V.form.days.map(k => { const d = parse(k), v = V.cur[k]; return `<div class="d ${v || ''} ${d.getDay() === 0 ? 'sun' : d.getDay() === 6 ? 'sat' : ''} ${HOLIDAYS[k] ? 'hol' : ''}" data-act="tap" data-k="${k}"><b>${d.getMonth() + 1}/${d.getDate()}</b><span class="w">${WD[d.getDay()]}${HOLIDAYS[k] ? '・祝' : ''}</span><span class="m">${v === 'ok' ? '○' : v === 'ng' ? '×' : ''}</span></div>`; }).join('')}</div>`;
+}
+function deadlineOf(ymk) { const [y, m] = ymk.split('-').map(Number); return new Date(y, m - 2, DEADLINE_DAY); }   // その月の分は前の月の25日まで
+function deadlineNote() {
+  const dl = deadlineOf(V.ym), t = new Date(), today = new Date(t.getFullYear(), t.getMonth(), t.getDate()), over = today > dl, [, m] = V.ym.split('-').map(Number);
+  return `<div class="dl ${over ? 'over' : ''}">${m}月分の締め切り：<b>${dl.getMonth() + 1}月${dl.getDate()}日（${WD[dl.getDay()]}）</b>${over ? '<br>締め切りを過ぎています。変えたいときは神社に連絡してください。' : ''}</div>`;
 }
 function sentAtNow() { const t = T(); return t.team === 'shuin' ? ((V.mine && V.mine.req && V.mine.req[V.ym]) || {}).at : V.mine && V.mine.at; }
 function vInput() {
@@ -190,7 +201,8 @@ function vInput() {
   ${mineShifts.length ? `<div class="card"><h2>決まったシフト</h2><ul class="mine">${mineShifts.map(k => `<li>${md(k)}　${t.post}</li>`).join('')}</ul></div>` : ''}
   <div class="card"><h2>${t.label}の希望${t.team === 'shuin' ? '' : `（${f.days.length}日）`}</h2>
     ${head}
-    <div class="muted" style="margin-bottom:10px">日付を押すと ○（出られる）→ ×（出られない）→ 空欄 と変わります。${sent ? `<br>送信済み（${at2s(sent)}）。直して送り直せます。` : ''}</div>
+    ${t.team === 'shuin' ? deadlineNote() : ''}
+    <div class="muted" style="margin-bottom:10px">${t.team === 'shuin' ? '土日・祝日だけ入れられます。' : ''}日付を押すと ○（出られる）→ ×（出られない）→ 空欄 と変わります。${sent ? `<br>送信済み（${at2s(sent)}）。直して送り直せます。` : ''}</div>
     ${body}
     ${V.err ? `<div class="err" style="margin-top:12px">${esc(V.err)}</div>` : ''}
     <div class="row" style="margin-top:14px"><button class="btn" data-act="all">${t.team === 'shuin' ? '土日祝をすべて○' : 'すべて○'}</button><span class="sp"></span><button class="btn pri" data-act="send" ${V.busy || (t.team !== 'shuin' && !f.days.length) ? 'disabled' : ''}>${V.busy ? '送っています…' : sent ? '送り直す' : '送信する'}</button></div>
@@ -245,6 +257,7 @@ document.addEventListener('click', async e => {
     return render();
   }
   if (a === 'send') {
+    if (t.team === 'shuin') Object.keys(V.cur).forEach(k => { if (!isWe(parse(k))) delete V.cur[k]; });   // 平日の分は送らない
     if (!Object.keys(V.cur).length) { V.err = '○か×を1日以上入れてください'; return render(); }
     V.err = ''; V.busy = true; render();
     try {
