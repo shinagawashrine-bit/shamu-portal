@@ -107,6 +107,8 @@ table.t td.n { text-align: right; white-space: nowrap }
 .f label { font-size: 12px; color: var(--text-3) }
 .in { font: inherit; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 8px; padding: 6px 9px; width: 100%; min-width: 0; box-sizing: border-box }
 .in.s { width: 72px }
+/* 選ぶ欄もほかの入力欄と同じ形に（Safariの標準の形だと高さ・文字の位置が微妙にずれる。2026-11-15 本人） */
+select.in { -webkit-appearance: none; appearance: none; padding-right: 26px; line-height: 1.3; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8185' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 9px center }
 .fields { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(150px, 100%), 1fr)); gap: 10px }
 .fields > .f, .dlg > .f { min-width: 0 }
 .fields .in { height: 34px }
@@ -1714,7 +1716,7 @@ function yoyakuPages() {
   return out.map((pg, pi) => { const ds = pg.rows.map(r => r.d);
     return `<div class="bt yk"><div class="bt-top"><div><div class="bt-t">お弁当の予約チェックシート　<span class="yk-m">${MEALS[pg.m]}</span>${pg.cont ? '<span class="yk-c">（つづき）</span>' : ''}</div><div class="bt-d sm">${wareki(Y)} 正月（${ds[0].kind === 'eve' ? '12/31' : ds[0].label}〜${ds[ds.length - 1].label}）</div></div><div class="bt-s">${MEALS[pg.m]}の合計 <b>${pg.sum}</b>個　品川神社${total > 1 ? `　${pi + 1}/${total}` : ''}</div></div>
     <section class="yk-g"><table class="yk-tb" style="--rh:${pg.ROW - 9}px"><thead><tr><th class="ck">予約</th><th>日付</th><th>食事</th><th>業者</th><th>お弁当</th><th>電話番号</th><th class="r">個数</th><th>手配</th><th>備考</th></tr></thead><tbody>${pg.rows.map(r => `<tr><td class="ck"><span class="box"></span></td><td class="dd ${dayCls(r.d)}">${mLab(r.d)}</td><td>${mealName(r.d.k, r.m)}</td><td>${esc(r.o.vendor) || dash}</td><td>${esc(r.o.menu) || dash}</td><td>${esc(r.o.tel)}</td><td class="r"><b>${r.n || ''}</b></td><td>${HOW[r.o.how] || ''}</td><td class="note">${esc(r.o.note)}</td></tr>`).join('')}</tbody></table></section>
-    <div class="bt-f"><span>□＝予約したら印を付ける　${pg.m === 'D' ? '夕食は12/31の夜と三が日だけ。' : ''}個数はその日に変わることがあります</span><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`; });
+    <div class="bt-f"><span class="sp"></span><span>${wafuToday()} 作成</span></div></div>`; });
 }
 function yoyakuDlg() {
   const pages = yoyakuPages();
