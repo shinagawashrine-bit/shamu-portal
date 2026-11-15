@@ -2182,7 +2182,7 @@ function baitoRegular() {
     <div class="card card-p"><div class="card-h"><h3>出勤数</h3><span class="sp"></span><span class="small muted">確定したシフトから集計</span></div>
       <table class="tbl"><thead><tr><th>名前</th><th class="r">先月</th><th class="r">今月</th><th class="r">今年の合計</th></tr></thead><tbody>${S.regulars.map(p => `<tr><td>${esc(p.name)}</td><td class="r num">${countIn(p.id, prevM)}日</td><td class="r num">${countIn(p.id, thisM)}日</td><td class="r num"><b>${countIn(p.id, thisY)}</b>日</td></tr>`).join('')}</tbody></table></div>
     <div class="card card-p"><div class="card-h"><h3>登録している助勤</h3><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="">＋ 登録</button></div>
-      <ul class="mini-list">${S.regulars.map(p => `<li style="cursor:pointer" data-act="editRegular" data-id="${p.id}">${avatar(p.name, p.color, true)}<b>${esc(p.name)}</b><span class="small muted">${p.days.length === 7 ? '毎日可' : p.days.map(x => WD[x]).join('・') + 'のみ'}${p.note ? '・' + esc(p.note) : ''}</span></li>`).join('')}</ul>
+      <ul class="mini-list">${S.regulars.map(p => `<li style="cursor:pointer" data-act="editRegular" data-id="${p.id}">${avatar(p.name, p.color, true)}<b>${esc(p.name)}</b><span class="small muted">${p.days.length === 7 ? '毎日可' : p.days.map(x => WD[x]).join('・') + 'のみ'}${p.note ? '・' + esc(p.note) : ''}</span><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="${p.id}">編集</button></li>`).join('')}</ul>
       <div class="small muted" style="margin-top:6px">登録URLから本人が登録するか、ここで職員が登録します。電話・メモは職員だけが見られます。</div></div>
   </div>
   ${jkUrlCard('shuin', '御朱印')}`;
@@ -2224,7 +2224,7 @@ function seasonPage(type) {
   <div class="legend" style="margin-top:8px"><span><span class="mk ok">○</span>出られる</span><span><span class="mk ng">×</span>出られない</span><span><span class="mk as honden">本</span>本殿に割り当て（マスを押して切り替え。すぐカレンダーに反映）</span></div>
   <div class="grid2" style="margin-top:16px;align-items:start">
     <div class="card card-p"><div class="card-h"><h3>${label}の巫女</h3><span class="sp"></span><button class="btn sm" data-act="bulkMember" data-t="${type}">まとめて登録</button><button class="btn sm" data-act="editMember" data-t="${type}" data-id="">＋ 登録</button></div>
-      <ul class="mini-list">${members.map(m => `<li style="cursor:pointer" data-act="editMember" data-t="${type}" data-id="${m.id}">${avatar(m.name, m.color, true)}<b>${esc(m.name)}</b><span class="small muted">${esc(m.tel || '')}${m.note ? '・' + esc(m.note) : ''}</span><span class="sp"></span><span class="small muted">出勤 ${days.filter(k => (S.shifts[k]?.honden || []).includes(m.id)).length}日</span></li>`).join('') || '<li class="muted">未登録</li>'}</ul>
+      <ul class="mini-list">${members.map(m => `<li style="cursor:pointer" data-act="editMember" data-t="${type}" data-id="${m.id}">${avatar(m.name, m.color, true)}<b>${esc(m.name)}</b><span class="small muted">${esc(m.tel || '')}${m.note ? '・' + esc(m.note) : ''}</span><span class="sp"></span><span class="small muted">出勤 ${days.filter(k => (S.shifts[k]?.honden || []).includes(m.id)).length}日</span><button class="btn sm" data-act="editMember" data-t="${type}" data-id="${m.id}">編集</button></li>`).join('') || '<li class="muted">未登録</li>'}</ul>
       <div class="small muted" style="margin-top:6px">御朱印Boysとは別のメンバーです。登録URLから本人が登録するか、ここで職員が登録します。シフト入力URLから${label}の希望を出します。</div></div>
     <div class="card card-p"><div class="card-h"><h3>提出状況</h3></div>
       <ul class="mini-list">${members.map(m => `<li>${avatar(m.name, m.color, true)}${esc(m.name)}<span class="sp"></span>${S.seasonReq[m.id] ? `<span class="tag green">提出済み ${md(new Date(S.seasonReq[m.id].at))}</span>` : '<span class="tag warn">未提出</span>'}</li>`).join('')}</ul></div>
@@ -3436,7 +3436,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115142952';
+const BUILD = '20261115144531';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
