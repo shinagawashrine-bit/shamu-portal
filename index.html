@@ -2256,7 +2256,7 @@ function editRegularModal(id) {
     <div class="field"><label>出られる曜日</label><div class="row" id="rgDays">${WD.map((w, i) => `<label class="chip ${p.days.includes(i) ? 'on' : ''}" style="cursor:pointer"><input type="checkbox" value="${i}" ${p.days.includes(i) ? 'checked' : ''} style="display:none" data-chg="chipToggle">${w}</label>`).join('')}</div></div>
     <div class="field"><label>メモ（シフトの条件など・職員のみ）</label><input class="input" id="rgNote" value="${esc(p.note)}"></div>
   </div>
-  <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveRegular" data-id="${p.id}">保存</button></div>`);
+  <div class="modal-f">${p.id ? `<button class="btn" style="color:var(--red)" data-act="delRegular" data-id="${p.id}">削除</button><span class="sp"></span>` : ''}<button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveRegular" data-id="${p.id}">保存</button></div>`);
 }
 function baitoRules() {
   const R = S.rules, inp = (t, f) => `<input class="input num" type="number" min="0" style="width:56px;text-align:right" value="${R.posts[t][f]}" data-chg="postRule" data-t="${t}" data-f="${f}">`;
@@ -2968,6 +2968,7 @@ const ACT = {
     save(); render();
   },
   editRegular(el) { editRegularModal(el.dataset.id); },
+  delRegular(el) { const id = el.dataset.id; askConfirm('この人を名簿から削除しますか？', () => { S.regulars = S.regulars.filter(r => r.id !== id); save(); closeModal(); render(); toast('削除しました'); }); },   // 御朱印の助勤を名簿から外す（2026-11-15 本人。決まったシフトの記録は残る）
   saveRegular(el) {
     const id = el.dataset.id, days = [...document.querySelectorAll('#rgDays input:checked')].map(i => +i.value);
     const d = { name: val('rgName'), kana: val('rgKana'), tel: val('rgTel'), note: val('rgNote'), days };
@@ -3436,7 +3437,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115153822';
+const BUILD = '20261115154658';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
