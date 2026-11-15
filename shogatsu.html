@@ -263,7 +263,7 @@ table.tl td.slot { cursor: pointer; padding: 3px 0 }
 .mstat span { font-size: 12px; color: var(--text-3); font-weight: 700 } .mstat b { font-family: var(--f-disp); font-size: 22px; font-variant-numeric: tabular-nums }
 .mstat.ok b { color: var(--ok) } .mstat.kaini b { color: var(--warn) } .mstat.mi b { color: var(--ng) }
 table.plan th.mh { text-align: center; border-bottom: 1px solid var(--line) } table.plan td, table.plan th { vertical-align: middle; white-space: nowrap }
-table.plan td.pd { font-weight: 700; vertical-align: top; padding-top: 12px } table.plan tr.dtop td { border-top: 1.5px solid var(--line) } table.plan .in { padding: 4px 7px; height: 30px }
+table.plan td.pd { font-weight: 700 } .plan-h { font-size: 15px; margin: 6px 0 -6px; padding-left: 8px; border-left: 4px solid var(--brand) } .plan-h .kind { font-size: 12px; font-weight: 500; margin-left: 6px } table.plan .in { padding: 4px 7px; height: 30px }
 .hsel { width: 138px } .hsel.nashi, .hw.nashi, .mstat.nb b { color: var(--text-2) } .nodash { display: inline-block; text-align: center; color: var(--text-3) } .hsel.mi { color: var(--ng) } .hsel.yoyaku { color: var(--ok) } .hsel.kaini { color: var(--warn) }
 .orders { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr)); gap: 12px }
 .order { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg) }
@@ -1730,7 +1730,9 @@ function vMeal() {
   const howSel = (x, m) => { const h = ordOf(x.k, m).how; return `<select class="in hsel ${h || 'mi'}" data-of="${m},how" data-k="${x.k}"><option value="">未定</option>${howOpts(m).map(([v, l]) => `<option value="${v}" ${h === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`; };
   // 日ごとに並べる（2026-11-15 本人）：1日1〜2行（お昼、三が日は夕食も）。電話番号と備考も入れられる
   const planCells = (x, m, n) => n ? `<td class="n"><b>${n}</b></td><td>${inp(x, m, 'vendor', '業者', 120)}</td><td>${inp(x, m, 'tel', '電話番号', 120)}</td><td>${inp(x, m, 'place', '場所', 120)}</td><td>${inp(x, m, 'menu', 'お弁当', 120)}</td><td>${howSel(x, m)}</td><td><input class="in" data-of="${m},note" data-k="${x.k}" value="${esc(ordOf(x.k, m).note)}" placeholder="備考" style="width:160px"></td>` : '<td class="n kind">0</td><td colspan="6" class="kind">なし</td>';
-  const plan = KD.map(x => { const n = mealCount(x.k), ms = mealsOf(x.k); return ms.map((m, i) => `<tr class="${x.k === k ? 'cur' : ''} ${i ? '' : 'dtop'}">${i ? '' : `<td class="pd" rowspan="${ms.length}"><button class="linkish ${dayCls(x)}" data-mday="${x.k}" data-mgo="1">${x.label}（${x.sub}）</button></td>`}<td>${MEALS[m]}</td>${planCells(x, m, m === 'L' ? n.L : n.D)}</tr>`).join(''); }).join('');
+  // お昼と夕食で表を分ける（2026-11-15 本人：チェックシートと同じ分け方）
+  const planOf = m => KD.filter(x => mealsOf(x.k).includes(m)).map(x => { const n = mealCount(x.k); return `<tr class="${x.k === k ? 'cur' : ''}"><td class="pd"><button class="linkish ${dayCls(x)}" data-mday="${x.k}" data-mgo="1">${x.label}（${x.sub}）</button></td>${planCells(x, m, m === 'L' ? n.L : n.D)}</tr>`; }).join('');
+  const planTable = m => `<h3 class="plan-h">${MEALS[m]}${m === 'D' ? '<span class="kind">（三が日だけ）</span>' : ''}</h3><div class="scroll"><table class="t plan"><thead><tr><th>日付</th><th class="n">個数</th><th>業者</th><th>電話番号</th><th>お店の場所</th><th>お弁当</th><th>手配</th><th>備考</th></tr></thead><tbody>${planOf(m)}</tbody></table></div>`;
   const chips = KD.map(x => { const n = mealCount(x.k); return `<button class="dchip ${dayCls(x)} ${x.k === k ? 'on' : ''}" data-mday="${x.k}">${x.label}<small>（${x.sub}）昼${n.L}${hasDinner(x.k) ? `・夕${n.D}` : ''}</small></button>`; }).join('');
   const grps = ['神職', '臨時神職', '巫女', '御朱印', '台所'];
   const hd = hasDinner(k), cs = hd ? 3 : 2;
@@ -1742,8 +1744,8 @@ function vMeal() {
   return `<div class="card" style="display:grid;gap:14px">
     <div class="row"><h2>食事の準備</h2><span class="sp"></span><button class="btn pri" id="yoyaku-pdf">予約のチェックシート</button></div>
     <div class="mstats">${stat('お昼の合計', `${totL}個`)}${stat('夕食の合計', `${totD}個`)}${stat('予約済み', `${cnt('yoyaku')}件`, 'ok')}${stat('当日買いに行く', `${cnt('kaini')}件`, 'kaini')}${stat('夕食なし', `${noB}件`, 'nb')}${stat('手配 未定', `${cnt('')}件`, cnt('') ? 'mi' : '')}${stat('お店 未記入', `${noShop}件`, noShop ? 'mi' : '')}</div>
-    <div class="scroll"><table class="t plan"><thead><tr><th>日付</th><th>食事</th><th class="n">個数</th><th>業者</th><th>電話番号</th><th>お店の場所</th><th>お弁当</th><th>手配</th><th>備考</th></tr></thead><tbody>${plan}</tbody></table></div>
-    <p class="kind" style="margin:0">夕食は三が日だけです。業者を入れると、ほかの日に同じ業者の電話番号・場所があれば自動で入ります。</p>
+    ${planTable('L')}${KD.some(x => hasDinner(x.k)) ? planTable('D') : ''}
+    <p class="kind" style="margin:0">業者を入れると、ほかの日に同じ業者の電話番号・場所があれば自動で入ります。</p>
   </div>
   <div class="card" style="display:grid;gap:12px" id="mealday">
     <div class="dchips">${chips}</div>
