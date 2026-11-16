@@ -120,6 +120,14 @@ a{color:var(--brand)}
 .reji-items{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .reji-item{position:relative;display:flex;flex-direction:column;text-align:left;padding:0;border:0;overflow:hidden;border-radius:var(--r-md);background:var(--card);box-shadow:var(--shadow);color:inherit;cursor:pointer;transition:transform .08s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .reji-item:active{transform:scale(.96)}
+.reji-item{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+/* 並べ替え（iPhoneのアプリのように、長押しで揺れて指で動かせる） */
+.reji.editing .reji-items{touch-action:none}
+.reji.editing .reji-item{animation:rjJiggle .28s ease-in-out infinite alternate;cursor:grab}
+.reji.editing .reji-item:nth-child(2n){animation-delay:-.14s}
+.reji.editing .reji-item.dragging{animation:none;transform:scale(1.08);box-shadow:0 0 0 3px var(--brand),0 10px 24px rgba(0,0,0,.25);z-index:2;opacity:.92}
+.reji-editbar{display:flex;align-items:center;gap:10px;margin:10px 16px 0;padding:10px 14px;border-radius:12px;background:var(--brand-soft);font-size:14px}
+@keyframes rjJiggle{from{transform:rotate(-1.2deg)}to{transform:rotate(1.2deg)}}
 .reji-item.in{box-shadow:0 0 0 2px var(--brand),var(--shadow)}
 .reji-item .ph{display:block;width:100%;aspect-ratio:3/2;background:#fff center/cover no-repeat;border-bottom:3px solid var(--brand)}
 .reji-item .ph.none{display:grid;place-items:center;background:var(--fill);color:var(--text-3);font-size:34px;font-weight:600}
@@ -3502,7 +3510,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116160939';
+const BUILD = '20261116164703';
 const REJI_PAGE = false;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -3738,7 +3746,7 @@ if (PROD) Object.assign(CHG, {
    ========================================================= */
 const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items', REG_IMG_KEY = 'shamu-reg-imgs', REG_NOTES_KEY = 'shamu-reg-notes';
 const lsJson = (k, d) => { try { return JSON.parse(lsGet(k) || 'null') ?? d; } catch (e) { return d; } };
-let REGI = { cat: 'top', notes: [], on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
+let REGI = { cat: 'top', edit: false, view: null, drag: null, dirty: false, notes: [], on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
 
 const regDay = () => key(new Date());
 function regToday() { const t = lsJson(REG_TODAY_KEY, null), d = regDay(); return t && t.date === d ? t : { date: d, sales: [] }; }
@@ -3763,6 +3771,55 @@ async function regLoadItems() {
     else REGI.err = '受け口につながりません。前回の品目で動いています';
   }
   render();
+}
+/* 並べ替え：長押しで揺れる → 指で動かす → 「完了」で保存（2026-11-16 本人：iPhoneのアプリのように） */
+async function regEditDone() {
+  const ids = REGI.view || [], dirty = REGI.dirty;
+  REGI.edit = false; REGI.drag = null; REGI.view = null; REGI.dirty = false;
+  if (!dirty || !ids.length) return render();
+  // 先に画面の並びを変えておき、受け口から返った番号で合わせる
+  const ords = ids.map(id => (REGI.items.find(i => i.id === id) || {}).ord).filter(n => n != null).sort((a, b) => a - b);
+  ids.forEach((id, k) => { const it = REGI.items.find(i => i.id === id); if (it && ords[k] != null) it.ord = ords[k]; });
+  REGI.items.sort((a, b) => (a.ord ?? 999) - (b.ord ?? 999)); render();
+  try {
+    const r = await api('regOrder', { ids });
+    REGI.items.forEach(i => { if (r.ords && r.ords[i.id] != null) i.ord = r.ords[i.id]; });
+    REGI.items.sort((a, b) => (a.ord ?? 999) - (b.ord ?? 999)); lsSet(REG_ITEMS_KEY, JSON.stringify(REGI.items)); render(); toast('並びを保存しました');
+  } catch (e) { toast('並びを保存できませんでした。電波を確かめて、もう一度並べ替えてください'); regLoadItems(); }
+}
+function regDragMove(x, y) {
+  const d = REGI.drag; if (!d) return;
+  const el = document.elementFromPoint(x, y), t = el && el.closest('.reji-item');
+  if (!t || !t.dataset.id || t.dataset.id === d.id) return;
+  const v = REGI.view, from = v.indexOf(d.id), to = v.indexOf(t.dataset.id); if (from < 0 || to < 0) return;
+  v.splice(from, 1); v.splice(to, 0, d.id); REGI.dirty = true; render();
+  const nb = document.querySelector(`.reji-item[data-id="${d.id}"]`); if (nb) nb.classList.add('dragging');
+}
+document.addEventListener('pointerdown', e => {
+  if (!REGI.on) return;
+  const t = e.target.closest('.reji-item'); if (!t || !t.dataset.id) return;
+  if (REGI.edit) { e.preventDefault(); REGI.drag = { id: t.dataset.id }; t.classList.add('dragging'); return; }
+  // 長押し（0.6秒）で並べ替えを始める。動かしたら取りやめ
+  const x0 = e.clientX, y0 = e.clientY, id = t.dataset.id;
+  clearTimeout(REGI.lpT); REGI.lp = false;
+  REGI.lpT = setTimeout(() => { if (Object.keys(REGI.cart).length) return; REGI.lp = true; REGI.edit = true; REGI.view = null; REGI.dirty = false; render(); REGI.drag = { id }; const nb = document.querySelector(`.reji-item[data-id="${id}"]`); if (nb) nb.classList.add('dragging'); }, 600);
+  REGI.lpXY = [x0, y0];
+});
+document.addEventListener('pointermove', e => {
+  if (!REGI.on) return;
+  if (REGI.lpT && REGI.lpXY && Math.hypot(e.clientX - REGI.lpXY[0], e.clientY - REGI.lpXY[1]) > 10) { clearTimeout(REGI.lpT); REGI.lpT = null; }
+  if (REGI.drag) { e.preventDefault(); regDragMove(e.clientX, e.clientY); }
+}, { passive: false });
+const regDragEnd = () => { clearTimeout(REGI.lpT); REGI.lpT = null; if (REGI.drag) { REGI.drag = null; document.querySelectorAll('.reji-item.dragging').forEach(x => x.classList.remove('dragging')); } setTimeout(() => { REGI.lp = false; }, 50); };
+document.addEventListener('pointerup', regDragEnd);
+document.addEventListener('pointercancel', regDragEnd);
+/* 新しい版が公開されていたら読み直す（2026-11-16 本人：レジ画面が変わらない。開きっぱなしのiPadは古い画面のままになるため） */
+async function regCheckNew() {
+  if (!BUILD) return;
+  try {
+    const t = await (await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' })).text(), m = t.match(/const BUILD = '(\d+)'/);
+    if (m && m[1] !== BUILD && !REGI.edit && !Object.keys(REGI.cart).length && !document.getElementById('modalBg') && !regQueue().length) location.reload();
+  } catch (e) { }
 }
 /* 送れていない会計をまとめて送る（同じ会計は受け口で二重にならない） */
 async function regFlush() {
@@ -3789,23 +3846,24 @@ function vReji() {
   const tSum = live.reduce((a, s) => a + s.total, 0), tCnt = live.reduce((a, s) => a + s.lines.reduce((b, l) => b + l.qty, 0), 0);
   // 「よく出る」（TOP）：「レジのTOPに出す」にした品だけを大きく並べる。御朱印はTOPでさらに大きく（2026-11-16 本人）
   const hasTop = items.some(i => i.big), cats = [...new Set(items.map(i => i.cat || 'その他'))];
-  const cat = REGI.cat === 'top' && hasTop ? 'top' : cats.includes(REGI.cat) ? REGI.cat : hasTop ? 'top' : 'all';
-  const shown = items.filter(i => cat === 'top' ? i.big : cat === 'all' || (i.cat || 'その他') === cat);
+  const cat = REGI.cat === 'top' && hasTop ? 'top' : REGI.cat === 'all' ? 'all' : cats.includes(REGI.cat) ? REGI.cat : hasTop ? 'top' : 'all';   // 「すべて」を押したときも反応するように（2026-11-16）
+  let shown = items.filter(i => cat === 'top' ? i.big : cat === 'all' || (i.cat || 'その他') === cat);
+  if (REGI.edit) { if (!REGI.view) REGI.view = shown.map(i => i.id); shown = REGI.view.map(byId).filter(i => i.id); }   // 並べ替え中は動かした順に出す
   const wide = i => cat === 'top' && i.cat === '御朱印';
-  const tile = i => { const im = REGI.imgs[i.id], n = REGI.cart[i.id]; return `<button class="reji-item ${wide(i) ? 'big' : ''} ${n ? 'in' : ''}" data-act="regAdd" data-id="${i.id}">${n ? `<span class="q num">${n}</span>` : ''}${im ? `<span class="ph" style="background-image:url('${im}')"></span>` : `<span class="ph none">${esc([...i.name][0] || '')}</span>`}<span class="tx"><span class="nm">${esc(i.name)}</span><span class="pr num">${yen(i.price)}円</span></span></button>`; };
+  const tile = i => { const im = REGI.imgs[i.id], n = REGI.cart[i.id]; return `<button class="reji-item ${wide(i) ? 'big' : ''} ${n ? 'in' : ''}" data-act="regAdd" data-id="${i.id}">${n ? `<span class="q num">${n > 1 ? n : '✓'}</span>` : ''}${im ? `<span class="ph" style="background-image:url('${im}')"></span>` : `<span class="ph none">${esc([...i.name][0] || '')}</span>`}<span class="tx"><span class="nm">${esc(i.name)}</span><span class="pr num">${yen(i.price)}円</span></span></button>`; };
   const recv = REGI.recv === 'exact' ? total : REGI.recv, change = recv == null ? null : recv - total;
-  return `<div class="reji">
+  return `<div class="reji ${REGI.edit ? 'editing' : ''}" data-cat="${esc(cat)}">
     <header class="reji-h"><img class="mark" src="${ICON_MARK}" alt=""><b>授与所レジ</b><span class="small muted">${esc(REGI.label)}</span><span class="sp"></span>
       <span class="small">${mdw(new Date())}　本日 <b>${tCnt}</b>体・<b>${yen(tSum)}</b>円</span>
-      ${q ? `<span class="tag warn">未送信 ${q}件</span>` : ''}<button class="btn sm" data-act="regHistory">今日の記録</button></header>
+      ${q ? `<span class="tag warn">未送信 ${q}件</span>` : ''}<button class="btn sm ${REGI.edit ? 'pri' : ''}" data-act="regEdit">${REGI.edit ? '完了' : '並べ替え'}</button><button class="btn sm" data-act="regHistory">履歴・直す</button></header>
     ${REGI.err ? `<div class="note" style="margin:10px 16px 0">${ICON.info}<span>${esc(REGI.err)}</span></div>` : ''}
-    ${regNotesStrip()}
+    ${REGI.edit ? '<div class="reji-editbar"><b>並べ替え中</b><span>品を指で押さえたまま、置きたい場所へ動かしてください。終わったら右上の「完了」</span></div>' : regNotesStrip()}
     <div class="reji-b">
-      <div>${cats.length > 1 || hasTop ? `<div class="reji-chips">${[...(hasTop ? [['top', 'よく出る']] : []), ['all', 'すべて'], ...cats.map(c => [c, c])].map(([v, l]) => `<button class="reji-chip ${cat === v ? 'on' : ''}" data-act="regCat" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</div>` : ''}
+      <div>${cats.length > 1 || hasTop ? `<div class="reji-chips">${[...(hasTop ? [['top', 'TOP']] : []), ...cats.map(c => [c, c]), ['all', 'すべて']].map(([v, l]) => `<button class="reji-chip ${cat === v ? 'on' : ''}" data-act="regCat" data-v="${esc(v)}" ${REGI.edit && cat !== v ? 'disabled style="opacity:.4"' : ''}>${esc(l)}</button>`).join('')}</div>` : ''}
       <div class="reji-items">${shown.length ? shown.map(tile).join('')
         : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>神社くんの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div></div>
       <aside class="reji-cart card">
-        <div class="reji-lines">${cart.length ? cart.map(([id, n]) => { const it = byId(id); return `<div class="reji-line"><div style="flex:1;min-width:0"><b>${esc(it.name || '')}</b><div class="small muted">${yen(it.price || 0)}円</div></div><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="-1" aria-label="減らす">−</button><b class="num" style="min-width:24px;text-align:center">${n}</b><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="1" aria-label="増やす">＋</button></div>`; }).join('') : '<div class="empty small">品目を押すと、ここに入ります</div>'}</div>
+        <div class="reji-lines">${cart.length ? cart.map(([id, n]) => { const it = byId(id); return `<div class="reji-line"><div style="flex:1;min-width:0"><b>${esc(it.name || '')}</b><div class="small muted">${yen(it.price || 0)}円</div></div><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="-1" aria-label="減らす">−</button><b class="num" style="min-width:24px;text-align:center">${n}</b><button class="reji-qb" data-act="regQty" data-id="${id}" data-n="1" aria-label="増やす">＋</button></div>`; }).join('') : regLastHint()}</div>
         <div class="reji-total"><span>${count}体</span><b>${yen(total)}<small>円</small></b></div>
         <div class="reji-cash"><div class="small muted">お預かり（押さなくても記録できます）</div>
           <div class="reji-cash-b">${[['exact', 'ちょうど'], [1000, '1,000円'], [5000, '5,000円'], [10000, '10,000円']].map(([v, l]) => `<button class="${String(REGI.recv) === String(v) ? 'on' : ''}" data-act="regRecv" data-v="${v}" ${cart.length ? '' : 'disabled'}>${l}</button>`).join('')}</div>
@@ -3827,8 +3885,9 @@ function fitReji() {
   const gap = 8, W = box.clientWidth, H = Math.max(200, innerHeight - box.getBoundingClientRect().top - 14);
   const big = box.querySelectorAll('.reji-item.big').length, cells = tiles.length + big * 3;
   let best = null;
-  for (let c = 2; c <= 14; c++) {
-    const r = Math.max(Math.ceil(cells / c), big ? 2 : 1), w = (W - gap * (c - 1)) / c, h = (H - gap * (r - 1)) / r;
+  const top = rj.dataset.cat === 'top', minC = top ? 2 : 5;   // 種類ごとの画面は、品が少なくてもボタンを大きくしすぎない（2026-11-16 本人）
+  for (let c = minC; c <= 14; c++) {
+    const r = Math.max(Math.ceil(cells / c), big ? 2 : 1), w = (W - gap * (c - 1)) / c, h = top ? (H - gap * (r - 1)) / r : Math.min((H - gap * (r - 1)) / r, w * 1.15);
     if (w < 60 || (big && c < 2)) continue;
     const score = Math.min(w, h / 1.15);   // 縦が横の1.15倍くらいのボタンがいちばん押しやすい
     if (!best || score > best.score) best = { c, h, w, score };
@@ -3851,15 +3910,34 @@ function regNotesModal() {
   <div class="modal-b">${ns.length ? ns.map(n => `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="row" style="gap:8px;margin-bottom:4px"><span class="tag ${n.team === 'all' ? 'gray' : 'green'}">${REG_NOTE_TEAM[n.team] || ''}</span><span class="small muted">${n.at ? mdw(new Date(n.at)) : ''}${n.until ? '・' + md(parse(n.until)) + 'まで' : ''}</span></div><div style="white-space:pre-wrap;font-size:16px;line-height:1.7">${esc(n.body)}</div></div>`).join('') : '<div class="muted">いまはありません</div>'}</div>
   <div class="modal-f"><span class="sp"></span><button class="btn pri" data-act="closeModal">閉じる</button></div>`);
 }
+/* 会計を取り消す（まだ送っていなければ送る前に消し、送ったものは取り消しを送る） */
+function regUndoSale(id) {
+  const t = regToday(), s = t.sales.find(x => x.id === id); if (!s || s.undone) return false;
+  s.undone = true; lsSet(REG_TODAY_KEY, JSON.stringify(t));
+  const q = regQueue(), pending = q.some(x => x.id === id && !x.undo) && REGI.inflight !== id;
+  lsSet(REG_QUEUE_KEY, JSON.stringify(pending ? q.filter(x => x.id !== id) : q.concat([{ id, undo: true }])));
+  return true;
+}
+/* 直前の会計（お会計が空のときに出す。押すとその会計を直せる） */
+function regLastHint() {
+  const s = [...regToday().sales].reverse().find(x => !x.undone && Date.now() - x.ts < 86400000);
+  const base = '<div class="empty small">品目を押すと、ここに入ります</div>';
+  if (!s) return base;
+  return base + `<div class="small" style="margin-top:10px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;display:flex;align-items:center;gap:8px"><span class="muted" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">直前の会計：${esc(s.lines[0].name)}${s.lines.length > 1 ? 'ほか' : ''} ${yen(s.total)}円</span><button class="btn sm" data-act="regFix" data-id="${s.id}">直す</button></div>`;
+}
 function regHistoryModal() {
   const t = regToday();
-  modal(`<div class="modal-h"><h3>今日の記録（この端末）</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
-  <div class="modal-b">${t.sales.length ? `<ul class="mini-list">${[...t.sales].reverse().map(s => `<li style="${s.undone ? 'opacity:.45;text-decoration:line-through' : ''}"><span class="num small">${new Date(s.ts).toTimeString().slice(0, 5)}</span><span style="flex:1;min-width:0">${s.lines.map(l => esc(l.name) + (l.qty > 1 ? '×' + l.qty : '')).join('、')}</span><b class="num">${yen(s.total)}円</b>${s.undone ? '<span class="small muted">取り消し済み</span>' : `<button class="btn sm ghost" style="color:var(--red)" data-act="regUndo" data-id="${s.id}">取り消す</button>`}</li>`).join('')}</ul>` : '<div class="empty">今日はまだ記録がありません</div>'}
-  <div class="small muted" style="margin-top:10px">押し間違えたときは「取り消す」。取り消せるのは、この端末で記録した24時間以内の会計です。</div></div>`);
+  modal(`<div class="modal-h"><h3>履歴（この端末・今日）</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">${t.sales.length ? `<ul class="mini-list">${[...t.sales].reverse().map(s => `<li style="${s.undone ? 'opacity:.45;text-decoration:line-through' : ''}"><span class="num small">${new Date(s.ts).toTimeString().slice(0, 5)}</span><span style="flex:1;min-width:0">${s.lines.map(l => esc(l.name) + (l.qty > 1 ? '×' + l.qty : '')).join('、')}</span><b class="num">${yen(s.total)}円</b>${s.undone ? '<span class="small muted">取り消し済み</span>' : `<button class="btn sm" data-act="regFix" data-id="${s.id}">直す</button><button class="btn sm ghost" style="color:var(--red)" data-act="regUndo" data-id="${s.id}">取り消す</button>`}</li>`).join('')}</ul>` : '<div class="empty">今日はまだ記録がありません</div>'}
+  <div class="small muted" style="margin-top:10px">「直す」：その会計を取り消して、品をお会計に戻します。直して「記録する」を押し直してください。「取り消す」：会計をなかったことにします。どちらも、この端末で記録した24時間以内の会計だけです。</div></div>`);
 }
 if (PROD) Object.assign(ACT, {
-  regAdd(el) { const id = el.dataset.id; REGI.cart[id] = (REGI.cart[id] || 0) + 1; render(); const nb = document.querySelector(`.reji-item[data-id="${id}"]`); if (nb) nb.classList.add('flash'); },
-  regCat(el) { REGI.cat = el.dataset.v; render(); },
+  regAdd(el) {   // 押すと1体入る。もう一度押すと外す（2026-11-16 本人：同じ品を何体も受けるのは珍しい。2体以上は右の＋で増やす）
+    if (REGI.edit || REGI.lp) return; const id = el.dataset.id;
+    if (REGI.cart[id]) { delete REGI.cart[id]; if (!Object.keys(REGI.cart).length) REGI.recv = null; return render(); }
+    REGI.cart[id] = 1; render(); const nb = document.querySelector(`.reji-item[data-id="${id}"]`); if (nb) nb.classList.add('flash'); },
+  regCat(el) { if (REGI.edit) return; REGI.cat = el.dataset.v; render(); },
+  regEdit() { if (REGI.edit) regEditDone(); else { REGI.edit = true; REGI.view = null; REGI.dirty = false; render(); } },
   regQty(el) { const id = el.dataset.id; REGI.cart[id] = Math.max(0, (REGI.cart[id] || 0) + +el.dataset.n); if (!REGI.cart[id]) delete REGI.cart[id]; if (!Object.keys(REGI.cart).length) REGI.recv = null; render(); },
   regClear() { REGI.cart = {}; REGI.recv = null; render(); },
   regRecv(el) { const v = el.dataset.v === 'exact' ? 'exact' : +el.dataset.v; REGI.recv = String(REGI.recv) === String(v) ? null : v; render(); },
@@ -3881,14 +3959,18 @@ if (PROD) Object.assign(ACT, {
   regNotes() { regNotesModal(); },
   regUndo(el) {
     const id = el.dataset.id;
-    askConfirm('この会計を取り消しますか？', () => {
-      const t = regToday(), s = t.sales.find(x => x.id === id); if (!s) return;
-      s.undone = true; lsSet(REG_TODAY_KEY, JSON.stringify(t));
-      const q = regQueue(), pending = q.some(x => x.id === id && !x.undo) && REGI.inflight !== id;
-      // まだ送っていない会計なら、送る前に消すだけ。送っている最中や送り終えた会計は、あとから取り消しを送る
-      lsSet(REG_QUEUE_KEY, JSON.stringify(pending ? q.filter(x => x.id !== id) : q.concat([{ id, undo: true }])));
-      regHistoryModal(); render(); toast('取り消しました'); regFlush();
-    }, '取り消す');
+    askConfirm('この会計を取り消しますか？', () => { if (!regUndoSale(id)) return; regHistoryModal(); render(); toast('取り消しました'); regFlush(); }, '取り消す');
+  },
+  regFix(el) {   // 会計のあとで直す：取り消して、品をお会計に戻す（2026-11-16 本人）
+    const id = el.dataset.id;
+    if (Object.keys(REGI.cart).length) return toast('いまのお会計を「記録する」か「はじめから」にしてから直してください');
+    askConfirm('この会計を取り消して、品をお会計に戻しますか？', () => {
+      const s = regToday().sales.find(x => x.id === id); if (!s || !regUndoSale(id)) return;
+      REGI.cart = {}; REGI.recv = null; let miss = 0;
+      s.lines.forEach(l => { if (REGI.items.some(i => i.id === l.item)) REGI.cart[l.item] = (REGI.cart[l.item] || 0) + l.qty; else miss++; });
+      closeModal(); render(); regFlush();
+      toast(miss ? '品を戻しました（レジに出ていない品は戻せませんでした）。直して「記録する」を押してください' : '品を戻しました。直して「記録する」を押してください');
+    }, '直す');
   }
 });
 // レジ端末のときは、ほかの画面を出さずにレジだけを出す
@@ -3897,7 +3979,7 @@ if (PROD) {
   render = function () { if (REGI.on) { document.getElementById('root').innerHTML = vReji(); fitReji(); return; } renderApp(); };
   addEventListener('resize', () => { if (REGI.on) fitReji(); });
   setInterval(() => { if (REGI.on) regFlush(); if (REGI.on && key(new Date()) !== TK && !Object.keys(REGI.cart).length && !document.getElementById('modalBg')) location.reload(); }, 30000);
-  setInterval(() => { if (REGI.on && document.visibilityState === 'visible') regLoadItems(); }, 10 * 60000);
+  setInterval(() => { if (REGI.on && document.visibilityState === 'visible') { regLoadItems(); regCheckNew(); } }, 10 * 60000);
   document.addEventListener('visibilitychange', () => { if (REGI.on && document.visibilityState === 'visible') { regFlush(); render(); } });
 }
 
@@ -4130,7 +4212,7 @@ function editItemModalProd(id) {
   ITEM_SAVED = cur;   // 登録済みの写真（選び直さなくても「向きを回す」で回せる。2026-11-16 本人：荒神様の写真が上下逆）
   modal(`<div class="modal-h"><h3>${it.id ? '授与品の編集' : '授与品の登録'}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="grid2"><div class="field"><label for="itName">品名</label><input class="input" id="itName" value="${esc(it.name)}" maxlength="30"></div><div class="field"><label for="itCat">分類</label><input class="input" id="itCat" value="${esc(it.cat)}" list="itCatList" placeholder="例：御守"><datalist id="itCatList">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div></div>
+    <div class="grid2"><div class="field"><label for="itName">品名</label><input class="input" id="itName" value="${esc(it.name)}" maxlength="30"></div><div class="field"><label for="itCat">分類</label><select class="input" id="itCat">${[...new Set(['御朱印', '御守', '御札', '絵馬', ...cats, 'その他', ...(it.cat ? [it.cat] : [])])].map(c => `<option value="${esc(c)}" ${(it.cat || '御守') === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select></div></div>
     <div class="grid2"><div class="field"><label for="itPrice">初穂料（円）</label><input class="input num" type="number" min="0" inputmode="numeric" id="itPrice" value="${it.price}"></div><div class="field"><label for="itOrd">レジでの並び順（小さいほど前）</label><input class="input num" type="number" inputmode="numeric" id="itOrd" value="${it.ord ?? ''}"></div></div>
     <div class="grid2"><div class="field"><label for="itCase">段ボール1つに何箱</label><input class="input num" type="number" min="1" inputmode="numeric" id="itCase" value="${it.perCase || ''}" placeholder="分からなければ空欄"></div><div class="field"><label for="itBox">1箱に何体</label><input class="input num" type="number" min="1" inputmode="numeric" id="itBox" value="${it.perBox || ''}" placeholder="分からなければ空欄"></div></div>
     <div class="field"><label>写真（レジのボタンに出ます）</label>
@@ -4140,7 +4222,7 @@ function editItemModalProd(id) {
         <button class="btn sm ghost" data-act="itemPhotoWhole" style="display:none" id="itPhotoWhole">切り抜かない</button>
         <button class="btn sm ghost" data-act="itemPhotoClear" ${cur ? '' : 'style="display:none"'} id="itPhotoClr">外す</button></div>
       <div class="small muted" style="margin-top:6px">白い紙の上で真上から撮ってください。向き・大きさ・明るさは自動で整えます。うまくいかないときは「向きを回す」「切り抜かない」を押してください</div></div>
-    <label class="row small" style="gap:6px;margin:4px 0 8px"><input type="checkbox" id="itBig" ${it.big ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジのTOP（よく出る）に出す</label>
+    <label class="row small" style="gap:6px;margin:4px 0 8px"><input type="checkbox" id="itBig" ${it.big ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジのTOPに出す</label>
     <label class="row small" style="gap:6px"><input type="checkbox" id="itActive" ${it.active !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジに出す（外すとレジに出ません。記録は残ります）</label>
   </div>
   <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveItem" data-id="${it.id}">保存</button></div>`);
