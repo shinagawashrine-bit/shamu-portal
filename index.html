@@ -361,6 +361,7 @@ img.mark{object-fit:cover;border-radius:50% !important;background:none !importan
 .note.brand{background:var(--brand-soft);color:var(--text)}
 .note svg{width:16px;height:16px;flex:none;margin-top:2px}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field[hidden]{display:none}
 .field label{font-size:12px;font-weight:600;color:var(--text-2)}
 .input,select.input,textarea.input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 11px;font-size:14px;outline:none}
 .input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -3123,7 +3124,13 @@ const ACT = {
     save(); closeModal(); render(); toast('保存しました。レジのiPadには10分ほどで出ます');
   },
   delJkNote(el) { const id = el.dataset.id; askConfirm('この伝達事項を削除しますか？', () => { S.jkNotes = (S.jkNotes || []).filter(n => n.id !== id); save(); closeModal(); render(); }); },
-  jkCopy(el) { const u = el.dataset.u, lb = el.textContent, done = t => { el.textContent = t; setTimeout(() => el.textContent = lb, 1600); }; try { navigator.clipboard.writeText(u).then(() => done('コピーしました'), () => done('コピーできません')); } catch (e) { done('コピーできません'); } },
+  jkCopy(el) {   // コピー：まず普通の方法、だめなら古い方法（iPad・Safariで断られたとき。2026-11-16）
+    const u = el.dataset.u;
+    const old = () => { const ta = document.createElement('textarea'); ta.value = u; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, u.length); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { } ta.remove(); return ok; };
+    const fin = ok => toast(ok ? 'コピーしました' : 'コピーできませんでした。文を長押しして選んでコピーしてください');
+    try { if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(u).then(() => fin(true), () => fin(old())); } catch (e) { }
+    fin(old());
+  },
   saveBulkMember(el) {
     const t = el.dataset.t, lines = document.getElementById('bulkText').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
     S.seasonMembers[t] = S.seasonMembers[t] || [];
@@ -3477,7 +3484,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116151203';
+const BUILD = '20261116154505';
 const REJI_PAGE = false;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
