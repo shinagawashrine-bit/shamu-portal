@@ -2127,7 +2127,31 @@ function jkUrlCard(team, label) {
     <div class="row" style="gap:6px;flex-wrap:nowrap"><a class="small" href="${esc(u)}" target="_blank" rel="noopener" style="word-break:break-all;flex:1;min-width:0">${esc(u)}</a><button class="btn sm" data-act="jkCopy" data-u="${esc(u)}">コピー</button></div></div>`; };
   return `<div class="card card-p" style="margin-top:16px"><div class="card-h"><h3>${label}のURL</h3><span class="sp"></span><span class="small muted">ログインなし・名前を選ぶだけ</span></div>
     ${row('登録URL', true, '初めての人に送ります。名前・ふりがなを入れて登録します。')}
-    ${row('シフト入力URL', false, '登録した人に送ります。名前を選んで○×を入れて送信します（あとから直せます）。初めての人もここから登録できます。' + (team === 'shuin' ? '御朱印は土日・祝日だけ入れられ、締め切りは毎月25日（翌月分）です。' : ''))}</div>`;
+    ${row('シフト入力URL', false, '登録した人に送ります。名前を選んで○×を入れて送信します（あとから直せます）。初めての人もここから登録できます。' + (team === 'shuin' ? '御朱印は土日・祝日だけ入れられ、締め切りは毎月25日（翌月分）です。' : '') + '2回目からは名前を選ばずに、決まった出勤日が出ます。')}
+    <div style="margin-top:12px"><div class="small" style="font-weight:700">シフトが決まったときの連絡文</div><div class="small muted" style="margin-bottom:4px">確定したらコピーして、LINEなどに貼ってください。開くと自分の出勤日が出て、スマホのカレンダーにも入れられます。</div>
+      <div class="row" style="gap:6px;flex-wrap:nowrap"><div class="small" style="flex:1;min-width:0;white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:8px 10px">${esc(jkMsg(team, label))}</div><button class="btn sm" data-act="jkCopy" data-u="${esc(jkMsg(team, label))}">コピー</button></div></div></div>`;
+}
+/* シフトが決まったときの連絡文（2026-11-16 本人：確定したら助勤に知らせる） */
+function jkMsg(team, label) {
+  const m = team === 'shuin' ? `${shiftMonth.getMonth() + 1}月の` : '';
+  return `${m}${label}のシフトが決まりました。\n下のページで自分の出勤日を確認できます（スマホのカレンダーにも入れられます）。\n${jkUrl(team, false)}`;
+}
+/* 助勤への伝達事項（2026-11-16 本人：神社に来たときに授与所のレジのiPadで見る） */
+const JK_NOTE_TEAM = { all: '助勤みんな', shuin: '御朱印', reitaisai: '例大祭', shichigosan: '七五三' };
+function jkNotesCard() {
+  const tk = key(TODAY), ns = [...(S.jkNotes || [])].sort((a, b) => b.at - a.at), live = n => !n.until || n.until >= tk;
+  return `<div class="card card-p" style="margin-top:16px"><div class="card-h"><h3>助勤への伝達事項</h3><span class="small muted">授与所のレジのiPadに出ます</span><span class="sp"></span><button class="btn sm" data-act="jkNote" data-id="">＋ 書く</button></div>
+    <ul class="mini-list">${ns.map(n => `<li style="cursor:pointer;${live(n) ? '' : 'opacity:.5'}" data-act="jkNote" data-id="${n.id}"><span class="tag ${n.team === 'all' ? 'gray' : 'green'}">${JK_NOTE_TEAM[n.team] || ''}</span><span style="flex:1;min-width:0;white-space:pre-wrap">${esc(n.body)}</span><span class="small muted">${live(n) ? (n.until ? md(parse(n.until)) + 'まで' : '消すまで') : '終了'}</span><button class="btn sm" data-act="jkNote" data-id="${n.id}">編集</button></li>`).join('') || '<li class="muted">まだありません。持ち物・集合時間・気をつけることなどを書くと、レジのiPadの上に出ます。</li>'}</ul></div>`;
+}
+function jkNoteModal(id) {
+  const n = (S.jkNotes || []).find(x => x.id === id) || { id: '', team: 'all', body: '', until: '' };
+  modal(`<div class="modal-h"><h3>助勤への伝達事項</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">
+    <div class="field"><label for="jnTeam">だれに</label><select class="input" id="jnTeam">${Object.entries(JK_NOTE_TEAM).map(([v, l]) => `<option value="${v}" ${n.team === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="field"><label for="jnBody">内容</label><textarea class="input" id="jnBody" rows="5" placeholder="例）12月から御朱印帳の見本を新しくしました。授与所の右の棚にあります。">${esc(n.body)}</textarea></div>
+    <div class="field"><label for="jnUntil">いつまで出すか（空欄なら消すまで）</label><input class="input" type="date" id="jnUntil" value="${esc(n.until || '')}"></div>
+  </div>
+  <div class="modal-f">${n.id ? `<button class="btn" style="color:var(--red)" data-act="delJkNote" data-id="${n.id}">削除</button><span class="sp"></span>` : ''}<button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveJkNote" data-id="${n.id}">保存</button></div>`);
 }
 function vBaito() {
   const tabs = [['regular', '御朱印'], ['temporary', '巫女（臨時）'], ['rules', '🔒 シフトのルール']];   // 正月の巫女は左メニューの「正月」へ（2026-11-12 本人：タブは削除）
@@ -2148,7 +2172,8 @@ function vBaito() {
   return `
   <div class="page-h"><h1>助勤</h1></div>
   <div class="tabs">${tabs.map(t => `<button class="${tab === t[0] ? 'on' : ''}" data-act="baitoTab" data-v="${t[0]}">${t[1]}</button>`).join('')}</div>
-  ${content}`;
+  ${content}
+  ${tab === 'rules' ? '' : jkNotesCard()}`;
 }
 function baitoRegular() {
   const ymk = ym(shiftMonth), days = daysOfMonth(shiftMonth), A = assignOf(ymk), isDraft = !!S.draft[ymk];
@@ -3089,7 +3114,16 @@ const ACT = {
   },
   delMember(el) { const t = el.dataset.t, id = el.dataset.id; askConfirm('このメンバーを削除しますか？', () => { S.seasonMembers[t] = S.seasonMembers[t].filter(m => m.id !== id); save(); closeModal(); render(); }); },
   bulkMember(el) { bulkMemberModal(el.dataset.t); },
-  jkCopy(el) { const u = el.dataset.u, done = t => { el.textContent = t; setTimeout(() => el.textContent = 'コピー', 1600); }; try { navigator.clipboard.writeText(u).then(() => done('コピーしました'), () => done('コピーできません')); } catch (e) { done('コピーできません'); } },
+  jkNote(el) { jkNoteModal(el.dataset.id); },
+  saveJkNote(el) {
+    const id = el.dataset.id, body = document.getElementById('jnBody').value.trim(), d = { team: val('jnTeam') || 'all', body, until: val('jnUntil') };
+    if (!body) return toast('内容を入れてください');
+    S.jkNotes = S.jkNotes || [];
+    if (id) Object.assign(S.jkNotes.find(n => n.id === id), d); else S.jkNotes.push({ id: 'jn' + Date.now(), by: S.me, at: Date.now(), ...d });
+    save(); closeModal(); render(); toast('保存しました。レジのiPadには10分ほどで出ます');
+  },
+  delJkNote(el) { const id = el.dataset.id; askConfirm('この伝達事項を削除しますか？', () => { S.jkNotes = (S.jkNotes || []).filter(n => n.id !== id); save(); closeModal(); render(); }); },
+  jkCopy(el) { const u = el.dataset.u, lb = el.textContent, done = t => { el.textContent = t; setTimeout(() => el.textContent = lb, 1600); }; try { navigator.clipboard.writeText(u).then(() => done('コピーしました'), () => done('コピーできません')); } catch (e) { done('コピーできません'); } },
   saveBulkMember(el) {
     const t = el.dataset.t, lines = document.getElementById('bulkText').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
     S.seasonMembers[t] = S.seasonMembers[t] || [];
@@ -3241,6 +3275,7 @@ function fromServer(d, me) {
   st.regulars = members.filter(u => u.team === 'shuin').map(u => ({ id: u.id, name: u.name, kana: u.kana || '', tel: u.tel || '', color: u.color || '#9c545b', note: u.note || '', days: wdOf(u.days), at: num(u.at), legacy: !!u.legacy }));
   st.seasonMembers = { reitaisai: [], shichigosan: [], shogatsu: [] };
   members.filter(u => st.seasonMembers[u.team] && u.team !== 'shogatsu').forEach(u => st.seasonMembers[u.team].push({ id: u.id, name: u.name, kana: u.kana || '', tel: u.tel || '', note: u.note || '', color: u.color || '#9c545b', at: num(u.at), legacy: !!u.legacy }));
+  st.jkNotes = (d.jkNotes || []).map(r => ({ id: r.id, team: r.team || 'all', body: r.body || '', by: r.by || '', at: num(r.at) || 0, until: r.until || '' }));   // 助勤への伝達事項（レジのiPadに出る）
   st.leaves = (d.leaves || []).map(r => ({ id: r.id, staff: r.staff, date: r.date, memo: r.memo || '' }));
   st.tempWork = (d.tempWork || []).map(r => ({ id: r.id, staff: r.staff, date: r.date }));
   // 時刻は「11:00」の形だけ受け取る（形が違う値は画面に組み込まない。2026-11-12 Codex指摘）
@@ -3312,6 +3347,7 @@ function toRows(st) {
   R.items = st.items.map(i => ({ id: i.id, name: i.name, cat: i.cat || '', price: i.price || 0, perBox: i.perBox ?? '', perCase: i.perCase ?? '', big: !!i.big, ord: i.ord ?? 999, active: i.active !== false }));
   R.stockLog = st.stockLog.map(l => ({ id: l.id, item: l.item, date: l.date, type: l.type, boxes: l.boxes, note: l.note || '' }));
   R.shogatsu = Object.entries(st.shogatsu || {}).map(([id, data]) => ({ id, data }));
+  R.jkNotes = (st.jkNotes || []).map(n => ({ id: n.id, team: n.team, body: n.body, by: n.by, at: n.at, until: n.until || '' }));
   R.jokin = [...st.regulars.map(p => ({ id: p.id, name: p.name, kana: p.kana || '', tel: p.tel || '', team: 'shuin', days: (p.days || []).join(','), note: p.note || '', color: p.color || '', at: p.at || '' })),
     ...['reitaisai', 'shichigosan'].flatMap(t => (st.seasonMembers[t] || []).map(m => ({ id: m.id, name: m.name, kana: m.kana || '', tel: m.tel || '', team: t, days: '', note: m.note || '', color: m.color || '', at: m.at || '' })))];
   return R;
@@ -3389,14 +3425,20 @@ function expired(msg) { if (typeof anReset === 'function') anReset(); P.token = 
 /* ── ログイン画面（端末登録・名前・暗証番号・暗証番号の変更） ── */
 const ROLE_LABEL = { guji: '宮司', staff: '職員', temp: '臨時職員', shuin: '御朱印', miko: '巫女' };
 function prodLogin() {
-  const card = inner => `<div class="login"><div class="login-card card"><div class="brand" style="justify-content:center;padding:0 0 14px"><img class="mark" src="${ICON_MARK}" alt=""><div><b>神社くん</b><span>品川神社</span></div></div>${inner}</div></div>`;
+  const card = inner => `<div class="login"><div class="login-card card"><div class="brand" style="justify-content:center;padding:0 0 14px"><img class="mark" src="${ICON_MARK}" alt=""><div><b>${REJI_PAGE ? '授与所レジ' : '神社くん'}</b><span>品川神社</span></div></div>${inner}</div></div>`;
   const err = P.msg ? `<div class="login-err">${esc(P.msg)}</div>` : '<div class="login-err"></div>';
   if (P.screen === 'loading') return card('<div class="empty">読み込み中…</div>');
-  if (P.screen === 'register' || !P.device) return card(`
+  if (P.screen === 'notreji') return card(`
+    <h3 style="text-align:center;font-size:16px;margin-bottom:6px">ここは授与所レジの入口です</h3>
+    <p class="small muted" style="text-align:center;margin-bottom:14px">この端末は職員用として登録されているので、レジは開きません。レジは「レジ端末」として登録した授与所のiPadで開いてください。</p>
+    <a class="btn pri" style="display:flex;width:100%;justify-content:center;box-sizing:border-box" href="./">神社くんを開く</a>`);
+  if (P.screen === 'register' || !P.device) return card((REJI_PAGE ? `
+    <h3 style="text-align:center;font-size:16px;margin-bottom:6px">このiPadをレジにする</h3>
+    <p class="small muted" style="text-align:center;margin-bottom:14px">管理者が「レジ端末」で出した6桁の招待コードを入れてください。登録は最初の1回だけで、次からは開くだけでレジになります。</p>` : `
     <h3 style="text-align:center;font-size:16px;margin-bottom:6px">この端末を登録する</h3>
-    <p class="small muted" style="text-align:center;margin-bottom:14px">管理者からもらった6桁の招待コードを入れてください。登録は最初の1回だけです。</p>
+    <p class="small muted" style="text-align:center;margin-bottom:14px">管理者からもらった6桁の招待コードを入れてください。登録は最初の1回だけです。</p>`) + `
     <div class="field"><label for="regCode">招待コード</label><input class="input num" id="regCode" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="例：123456" data-enter="regDevice"></div>
-    <div class="field"><label for="regLabel">この端末の名前</label><input class="input" id="regLabel" maxlength="30" placeholder="例：鈴木のスマホ、社務所のPC"></div>
+    <div class="field"><label for="regLabel">この端末の名前</label><input class="input" id="regLabel" maxlength="30" placeholder="${REJI_PAGE ? '例：授与所のiPad' : '例：鈴木のスマホ、社務所のPC'}"></div>
     ${err}<button class="btn pri" style="width:100%" data-act="regDevice">登録する</button>`);
   if (P.screen === 'newpin') {
     const step = P.newPinStep;
@@ -3421,7 +3463,7 @@ function prodLogin() {
       <div class="keypad">${keys.map(k => k ? `<button data-act="pinKey" data-v="${k}">${k}</button>` : '<span></span>').join('')}</div>`);
 }
 async function loadPeople() {
-  try { const r = await api('people'); P.people = r.people; P.deviceType = r.device.type; P.screen = 'login'; if (P.deviceType === 'register') return startReji(r.device.label); }
+  try { const r = await api('people'); P.people = r.people; P.deviceType = r.device.type; P.screen = 'login'; if (P.deviceType === 'register') return startReji(r.device.label); if (REJI_PAGE) P.screen = 'notreji'; }
   catch (e) { if (e.code === 'device') { P.device = null; lsSet(DEVICE_KEY, null); P.screen = 'register'; P.msg = ''; } else { P.screen = 'login'; P.people = []; P.msg = '受け口につながりません。通信を確かめてください'; } }
   render();
 }
@@ -3435,7 +3477,8 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115165215';
+const BUILD = '20261116151203';
+const REJI_PAGE = false;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;
@@ -3557,7 +3600,7 @@ function goAdmin() { closeModal(); if (P.me && P.me.isAdmin) location.hash = '#/
    ========================================================= */
 let ADM = null, admTab = 'people';
 async function loadAdmin() { try { ADM = await api('adminState'); } catch (e) { ADM = { error: e.message }; } render(); }
-const ROLE_ORDER = ['guji', 'staff', 'temp', 'shuin', 'miko'];
+const ROLE_ORDER = ['guji', 'staff', 'temp'];   // 助勤（御朱印・巫女）はログインしないので管理には出さない（2026-11-16 本人。名簿は助勤の画面）
 const GRP_LABEL = { reitaisai: '例大祭', shichigosan: '七五三', shogatsu: '正月' };
 function vAdmin() {
   if (!P.me || !P.me.isAdmin) return '<div class="empty">管理者だけが使えます</div>';
@@ -3639,7 +3682,7 @@ if (PROD) Object.assign(ACT, {
     else go();
   },
   admInvite() {
-    const people = ADM.users.filter(u => u.active);
+    const people = ADM.users.filter(u => u.active && ROLE_ORDER.includes(u.role));
     modal(`<div class="modal-h"><h3>招待コードを出す</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
     <div class="modal-b">
       <div class="field"><label for="aiType">端末の種類</label><select class="input" id="aiType" data-chg="aiType"><option value="personal">個人の端末（その人だけが使う）</option><option value="shared">共有の端末（社務所のPC・iPad。宮司・職員・臨時職員が使う）</option><option value="register">レジ端末（授与所のiPad。暗証番号なしでレジだけ使える）</option></select></div>
@@ -3668,16 +3711,16 @@ if (PROD) Object.assign(CHG, {
    - 会計はまず端末に保存してから送る。電波が悪くても、あとで自動で送り直す
    - 出数（レジ）と在庫（箱）は分けて扱い、数を合わせない（宮司が接客した分はレジに入らないため）
    ========================================================= */
-const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items', REG_IMG_KEY = 'shamu-reg-imgs';
+const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items', REG_IMG_KEY = 'shamu-reg-imgs', REG_NOTES_KEY = 'shamu-reg-notes';
 const lsJson = (k, d) => { try { return JSON.parse(lsGet(k) || 'null') ?? d; } catch (e) { return d; } };
-let REGI = { cat: 'all', on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
+let REGI = { cat: 'all', notes: [], on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
 
 const regDay = () => key(new Date());
 function regToday() { const t = lsJson(REG_TODAY_KEY, null), d = regDay(); return t && t.date === d ? t : { date: d, sales: [] }; }
 function regQueue() { return lsJson(REG_QUEUE_KEY, []); }
 
 async function startReji(label) {
-  REGI.on = true; REGI.label = label || REGI.label; REGI.items = lsJson(REG_ITEMS_KEY, []);
+  REGI.on = true; REGI.label = label || REGI.label; REGI.items = lsJson(REG_ITEMS_KEY, []); REGI.notes = lsJson(REG_NOTES_KEY, []);
   const im = lsJson(REG_IMG_KEY, null); if (im) { REGI.imgs = im.imgs || {}; REGI.imgVer = im.imgVer || ''; }
   S = S || { ui: loadUi() }; S.session = null;
   render();
@@ -3687,6 +3730,7 @@ async function startReji(label) {
 async function regLoadItems() {
   try {
     const r = await api('regItems', { imgVer: REGI.imgVer }); REGI.items = r.items; REGI.label = r.label || REGI.label; REGI.err = ''; lsSet(REG_ITEMS_KEY, JSON.stringify(r.items));
+    REGI.notes = r.notes || []; lsSet(REG_NOTES_KEY, JSON.stringify(REGI.notes));
     if (r.imgs) { REGI.imgs = r.imgs; REGI.imgVer = r.imgVer || ''; lsSet(REG_IMG_KEY, JSON.stringify({ imgs: r.imgs, imgVer: REGI.imgVer })); }
   }
   catch (e) {
@@ -3727,6 +3771,7 @@ function vReji() {
       <span class="small">${mdw(new Date())}　本日 <b>${tCnt}</b>体・<b>${yen(tSum)}</b>円</span>
       ${q ? `<span class="tag warn">未送信 ${q}件</span>` : ''}<button class="btn sm" data-act="regHistory">今日の記録</button></header>
     ${REGI.err ? `<div class="note" style="margin:10px 16px 0">${ICON.info}<span>${esc(REGI.err)}</span></div>` : ''}
+    ${regNotesStrip()}
     <div class="reji-b">
       <div>${cats.length > 1 ? `<div class="reji-chips">${[['all', 'すべて'], ...cats.map(c => [c, c])].map(([v, l]) => `<button class="reji-chip ${cat === v ? 'on' : ''}" data-act="regCat" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</div>` : ''}
       <div class="reji-items">${shown.length ? shown.map(tile).join('')
@@ -3742,6 +3787,20 @@ function vReji() {
         <button class="btn ghost" style="width:100%;margin-top:6px" data-act="regClear" ${cart.length ? '' : 'disabled'}>はじめから</button>
       </aside>
     </div></div>`;
+}
+/* 助勤への伝達事項（2026-11-16 本人：神社に来たときにレジのiPadで見る）。職員が「助勤」の画面で書く */
+const REG_NOTE_TEAM = { all: '助勤みんな', shuin: '御朱印', reitaisai: '例大祭', shichigosan: '七五三' };
+function regNotesLive() { const tk = regDay(); return (REGI.notes || []).filter(n => !n.until || n.until >= tk); }
+function regNotesStrip() {
+  const ns = regNotesLive(); if (!ns.length) return '';
+  const first = String(ns[0].body || '').split('\n')[0];
+  return `<button class="note" data-act="regNotes" style="margin:10px 16px 0;display:flex;align-items:center;gap:8px;width:calc(100% - 32px);text-align:left;border:1px solid var(--brand);cursor:pointer;font:inherit">${ICON.info}<b style="white-space:nowrap">助勤さんへの伝達事項（${ns.length}件）</b><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(first)}</span><span class="btn sm">見る</span></button>`;
+}
+function regNotesModal() {
+  const ns = regNotesLive();
+  modal(`<div class="modal-h"><h3>助勤さんへの伝達事項</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">${ns.length ? ns.map(n => `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div class="row" style="gap:8px;margin-bottom:4px"><span class="tag ${n.team === 'all' ? 'gray' : 'green'}">${REG_NOTE_TEAM[n.team] || ''}</span><span class="small muted">${n.at ? mdw(new Date(n.at)) : ''}${n.until ? '・' + md(parse(n.until)) + 'まで' : ''}</span></div><div style="white-space:pre-wrap;font-size:16px;line-height:1.7">${esc(n.body)}</div></div>`).join('') : '<div class="muted">いまはありません</div>'}</div>
+  <div class="modal-f"><span class="sp"></span><button class="btn pri" data-act="closeModal">閉じる</button></div>`);
 }
 function regHistoryModal() {
   const t = regToday();
@@ -3770,6 +3829,7 @@ if (PROD) Object.assign(ACT, {
     regFlush();
   },
   regHistory() { regHistoryModal(); },
+  regNotes() { regNotesModal(); },
   regUndo(el) {
     const id = el.dataset.id;
     askConfirm('この会計を取り消しますか？', () => {
