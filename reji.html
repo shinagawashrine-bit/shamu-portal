@@ -3142,7 +3142,13 @@ const ACT = {
     save(); closeModal(); render(); toast('保存しました。レジのiPadには10分ほどで出ます');
   },
   delJkNote(el) { const id = el.dataset.id; askConfirm('この伝達事項を削除しますか？', () => { S.jkNotes = (S.jkNotes || []).filter(n => n.id !== id); save(); closeModal(); render(); }); },
-  jkCopy(el) { const u = el.dataset.u, lb = el.textContent, done = t => { el.textContent = t; setTimeout(() => el.textContent = lb, 1600); }; try { navigator.clipboard.writeText(u).then(() => done('コピーしました'), () => done('コピーできません')); } catch (e) { done('コピーできません'); } },
+  jkCopy(el) {   // コピー：まず普通の方法、だめなら古い方法（iPad・Safariで断られたとき。2026-11-16）
+    const u = el.dataset.u;
+    const old = () => { const ta = document.createElement('textarea'); ta.value = u; ta.setAttribute('readonly', ''); ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'; document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, u.length); let ok = false; try { ok = document.execCommand('copy'); } catch (e) { } ta.remove(); return ok; };
+    const fin = ok => toast(ok ? 'コピーしました' : 'コピーできませんでした。文を長押しして選んでコピーしてください');
+    try { if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(u).then(() => fin(true), () => fin(old())); } catch (e) { }
+    fin(old());
+  },
   saveBulkMember(el) {
     const t = el.dataset.t, lines = document.getElementById('bulkText').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
     S.seasonMembers[t] = S.seasonMembers[t] || [];
@@ -3496,7 +3502,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116154448';
+const BUILD = '20261116160320';
 const REJI_PAGE = true;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -3732,7 +3738,7 @@ if (PROD) Object.assign(CHG, {
    ========================================================= */
 const REG_QUEUE_KEY = 'shamu-reg-queue', REG_TODAY_KEY = 'shamu-reg-today', REG_ITEMS_KEY = 'shamu-reg-items', REG_IMG_KEY = 'shamu-reg-imgs', REG_NOTES_KEY = 'shamu-reg-notes';
 const lsJson = (k, d) => { try { return JSON.parse(lsGet(k) || 'null') ?? d; } catch (e) { return d; } };
-let REGI = { cat: 'all', notes: [], on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
+let REGI = { cat: 'top', notes: [], on: false, label: '', items: [], cart: {}, recv: null, sending: false, err: '', imgs: {}, imgVer: '' };   // recv＝お預かり（null／'exact'／金額）
 
 const regDay = () => key(new Date());
 function regToday() { const t = lsJson(REG_TODAY_KEY, null), d = regDay(); return t && t.date === d ? t : { date: d, sales: [] }; }
@@ -3781,9 +3787,12 @@ function vReji() {
   const total = cart.reduce((a, [id, q]) => a + (byId(id).price || 0) * q, 0), count = cart.reduce((a, [, q]) => a + q, 0);
   const today = regToday(), live = today.sales.filter(s => !s.undone), q = regQueue().length;
   const tSum = live.reduce((a, s) => a + s.total, 0), tCnt = live.reduce((a, s) => a + s.lines.reduce((b, l) => b + l.qty, 0), 0);
-  const cats = [...new Set(items.map(i => i.cat || 'その他'))], cat = cats.includes(REGI.cat) ? REGI.cat : 'all';
-  const shown = items.filter(i => cat === 'all' || (i.cat || 'その他') === cat).sort((x, y) => (y.big ? 1 : 0) - (x.big ? 1 : 0));   // よく出る品を先頭に大きく
-  const tile = i => { const im = REGI.imgs[i.id], n = REGI.cart[i.id]; return `<button class="reji-item ${i.big ? 'big' : ''} ${n ? 'in' : ''}" data-act="regAdd" data-id="${i.id}">${n ? `<span class="q num">${n}</span>` : ''}${im ? `<span class="ph" style="background-image:url('${im}')"></span>` : `<span class="ph none">${esc([...i.name][0] || '')}</span>`}<span class="tx"><span class="nm">${esc(i.name)}</span><span class="pr num">${yen(i.price)}円</span></span></button>`; };
+  // 「よく出る」（TOP）：「レジのTOPに出す」にした品だけを大きく並べる。御朱印はTOPでさらに大きく（2026-11-16 本人）
+  const hasTop = items.some(i => i.big), cats = [...new Set(items.map(i => i.cat || 'その他'))];
+  const cat = REGI.cat === 'top' && hasTop ? 'top' : cats.includes(REGI.cat) ? REGI.cat : hasTop ? 'top' : 'all';
+  const shown = items.filter(i => cat === 'top' ? i.big : cat === 'all' || (i.cat || 'その他') === cat);
+  const wide = i => cat === 'top' && i.cat === '御朱印';
+  const tile = i => { const im = REGI.imgs[i.id], n = REGI.cart[i.id]; return `<button class="reji-item ${wide(i) ? 'big' : ''} ${n ? 'in' : ''}" data-act="regAdd" data-id="${i.id}">${n ? `<span class="q num">${n}</span>` : ''}${im ? `<span class="ph" style="background-image:url('${im}')"></span>` : `<span class="ph none">${esc([...i.name][0] || '')}</span>`}<span class="tx"><span class="nm">${esc(i.name)}</span><span class="pr num">${yen(i.price)}円</span></span></button>`; };
   const recv = REGI.recv === 'exact' ? total : REGI.recv, change = recv == null ? null : recv - total;
   return `<div class="reji">
     <header class="reji-h"><img class="mark" src="${ICON_MARK}" alt=""><b>授与所レジ</b><span class="small muted">${esc(REGI.label)}</span><span class="sp"></span>
@@ -3792,7 +3801,7 @@ function vReji() {
     ${REGI.err ? `<div class="note" style="margin:10px 16px 0">${ICON.info}<span>${esc(REGI.err)}</span></div>` : ''}
     ${regNotesStrip()}
     <div class="reji-b">
-      <div>${cats.length > 1 ? `<div class="reji-chips">${[['all', 'すべて'], ...cats.map(c => [c, c])].map(([v, l]) => `<button class="reji-chip ${cat === v ? 'on' : ''}" data-act="regCat" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</div>` : ''}
+      <div>${cats.length > 1 || hasTop ? `<div class="reji-chips">${[...(hasTop ? [['top', 'よく出る']] : []), ['all', 'すべて'], ...cats.map(c => [c, c])].map(([v, l]) => `<button class="reji-chip ${cat === v ? 'on' : ''}" data-act="regCat" data-v="${esc(v)}">${esc(l)}</button>`).join('')}</div>` : ''}
       <div class="reji-items">${shown.length ? shown.map(tile).join('')
         : '<div class="empty" style="grid-column:1/-1">授与品がまだ登録されていません。<br>神社くんの「授与品 → 授与品の登録」で登録すると、ここに出ます。</div>'}</div></div>
       <aside class="reji-cart card">
@@ -4108,7 +4117,7 @@ function juyoItemsProd() {
   return `
   <div class="card"><div class="card-h card-p" style="margin:0;padding-bottom:6px"><h3>授与品（${all.filter(i => i.active !== false).length}品）</h3><span class="sp"></span>${can ? '<button class="btn pri sm" data-act="editItem" data-id="">＋ 登録</button>' : ''}</div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="r">順</th><th>写真</th><th>品名</th><th class="r">初穂料</th><th class="r">段ボール</th><th class="r">1箱</th><th>レジ</th><th></th></tr></thead>
-    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td>${im[it.id] ? `<img class="it-thumb" src="${im[it.id]}" alt="">` : '<span class="it-thumb none"></span>'}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? '大きく' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
+    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td>${im[it.id] ? `<img class="it-thumb" src="${im[it.id]}" alt="">` : '<span class="it-thumb none"></span>'}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? 'TOP' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
   <div class="small muted" style="margin-top:8px">写真は「編集」から入れられます（白い紙の上で真上から撮れば、向き・大きさ・明るさは自動で整えます。紐は切れてもかまいません）。レジ端末には「出す」品が、順の小さい順に並びます。使わなくなった品は消さずに「レジに出さない」にすると、過去の集計が残ります。</div>`;
 }
 let ITEM_PHOTO, ITEM_FILE = null, ITEM_ROT = 0, ITEM_WHOLE = false;   // 選んだ写真の元ファイルと、手で回した角度
@@ -4130,7 +4139,7 @@ function editItemModalProd(id) {
         <button class="btn sm ghost" data-act="itemPhotoWhole" style="display:none" id="itPhotoWhole">切り抜かない</button>
         <button class="btn sm ghost" data-act="itemPhotoClear" ${cur ? '' : 'style="display:none"'} id="itPhotoClr">外す</button></div>
       <div class="small muted" style="margin-top:6px">白い紙の上で真上から撮ってください。向き・大きさ・明るさは自動で整えます。うまくいかないときは「向きを回す」「切り抜かない」を押してください</div></div>
-    <label class="row small" style="gap:6px;margin:4px 0 8px"><input type="checkbox" id="itBig" ${it.big ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジで大きく表示する（よく出る品）</label>
+    <label class="row small" style="gap:6px;margin:4px 0 8px"><input type="checkbox" id="itBig" ${it.big ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジのTOP（よく出る）に出す</label>
     <label class="row small" style="gap:6px"><input type="checkbox" id="itActive" ${it.active !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--brand)"> レジに出す（外すとレジに出ません。記録は残ります）</label>
   </div>
   <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveItem" data-id="${it.id}">保存</button></div>`);
