@@ -74,6 +74,14 @@ h2 { font-size: 17px; margin: 0 0 10px; }
 .mine { list-style: none; margin: 0; padding: 0; }
 .mine li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
 .mine li:last-child { border-bottom: 0; }
+.mycard { border: 2px solid var(--brand); }
+.mycard .next { font-size: 22px; font-weight: 700; color: var(--brand); margin: 2px 0 10px; }
+.mycard .days { list-style: none; margin: 0 0 12px; padding: 0; }
+.mycard .days li { display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-bottom: 1px dashed var(--line); font-size: 17px; }
+.mycard .days li:last-child { border-bottom: 0; }
+.mycard .days li span { color: var(--text-2); font-size: 14px; }
+a.btn { display: block; text-align: center; text-decoration: none; box-sizing: border-box; }
+.small { font-size: 13px; }
 .foot { text-align: center; font-size: 12px; color: var(--text-2); margin-top: 18px; }
 </style>
 <div class="wrap" id="app"></div>
@@ -136,6 +144,10 @@ async function api(action, body) {
 /* ── 画面 ── */
 const V = { hash: '', reg: false, form: null, err: '', busy: false, step: 'list', who: null, mine: null, cur: {}, ym: '', reg2: { name: '', kana: '', wdays: [0, 6], memo: '' }, sentAt: null, justReg: false };
 const T = () => TEAMS[V.hash];
+/* この端末で選んだ名前を覚える（2026-11-16 本人：2回目からは名前を選ばずに出勤日を出す） */
+const meKey = () => 'jokin-me-' + V.hash;
+function meGet() { try { return localStorage.getItem(meKey()) || ''; } catch (e) { return ''; } }
+function meSet(id) { try { if (id) localStorage.setItem(meKey(), id); else localStorage.removeItem(meKey()); } catch (e) { } }
 function readHash() {
   const h = (location.hash || '').replace(/^#\/?/, ''), reg = /-touroku$/.test(h), base = h.replace(/-touroku$/, '');
   V.hash = TEAMS[base] ? base : ''; V.reg = reg;
@@ -144,7 +156,10 @@ async function load() {
   V.err = ''; V.form = null; render();
   try { V.form = await api('jkForm', { team: T().team }); V.ym = (V.form.months || [])[0] || ''; }
   catch (e) { V.err = '読み込めませんでした。電波のよいところで開き直してください。（' + e.message + '）'; }
-  V.step = V.reg ? 'reg' : 'list'; render();
+  V.step = V.reg ? 'reg' : 'list';
+  const sv = !V.reg && V.form && meGet(), p = sv && V.form.people.find(x => x.id === sv);
+  if (p) return pick(p.id, p.name);
+  render();
 }
 function header() {
   const t = T();
@@ -197,7 +212,7 @@ function vInput() {
     : '';
   const body = t.team === 'shuin' ? calShuin() : (f.days.length ? tilesSeason() : '<div class="muted">まだ日程が決まっていません。決まったら神社から連絡します。</div>');
   return `<div class="card"><div class="row"><b style="font-size:17px">${esc(V.who.name)}</b><span class="muted">さん</span><span class="sp"></span><button class="btn" style="padding:6px 12px;font-size:14px" data-act="back">名前を選び直す</button></div></div>
-  ${mineShifts.length ? `<div class="card"><h2>決まったシフト</h2><ul class="mine">${mineShifts.map(k => `<li>${md(k)}　${t.post}</li>`).join('')}</ul></div>` : ''}
+  ${vMine(mineShifts)}
   <div class="card"><h2>${t.label}の希望${t.team === 'shuin' ? '' : `（${f.days.length}日）`}</h2>
     ${head}
     ${t.team === 'shuin' ? deadlineNote() : ''}
@@ -205,6 +220,21 @@ function vInput() {
     ${body}
     ${V.err ? `<div class="err" style="margin-top:12px">${esc(V.err)}</div>` : ''}
     <div class="row" style="margin-top:14px"><button class="btn" data-act="all">${t.team === 'shuin' ? '土日祝をすべて○' : 'すべて○'}</button><span class="sp"></span><button class="btn pri" data-act="send" ${V.busy || (t.team !== 'shuin' && !f.days.length) ? 'disabled' : ''}>${V.busy ? '送っています…' : sent ? '送り直す' : '送信する'}</button></div>
+  </div>
+  <div class="note small">このページをホーム画面に置くと、次からすぐ開けます（この端末では名前を選ばずに出勤日が出ます）。<br>iPhone：下の共有ボタン →「ホーム画面に追加」　Android：右上の︙ →「ホーム画面に追加」</div>`;
+}
+/* あなたの出勤日（決まったシフト・今日から先）。スマホのカレンダーに入れられる */
+function icsUrl() { return API_URL + '?ics=1&team=' + encodeURIComponent(T().team) + '&id=' + encodeURIComponent(V.who.id); }
+function vMine(days) {
+  const t = T(), tk = key(new Date());
+  if (!V.mine) return '';
+  if (!days.length) return `<div class="card mycard"><h2>あなたの出勤日</h2><div class="muted">まだ決まった出勤日はありません。決まったら神社から連絡します。</div></div>`;
+  const nx = days[0], d0 = parse(nx), diff = Math.round((d0 - parse(tk)) / 86400000);
+  return `<div class="card mycard"><h2>あなたの出勤日</h2>
+    <div class="next">次は ${md(nx)}${diff === 0 ? '　今日' : diff === 1 ? '　明日' : ''}</div>
+    <ul class="days">${days.map(k => `<li><b>${md(k)}</b><span>${t.post}</span></li>`).join('')}</ul>
+    ${DEMO ? '<button class="btn pri wide" data-act="icsDemo">スマホのカレンダーに入れる</button>' : `<a class="btn pri wide" href="${esc(icsUrl())}">スマホのカレンダーに入れる</a>`}
+    <div class="muted small" style="margin-top:8px">上の出勤日がまとめて入り、前の日の夜7時に通知が出ます。シフトが変わったときは神社から連絡します。</div>
   </div>`;
 }
 function vDone() {
@@ -222,9 +252,9 @@ function render() {
   el.innerHTML = header() + body + '<div class="foot">品川神社</div>';
 }
 async function pick(id, name) {
-  V.who = { id, name }; V.err = ''; V.mine = null; V.cur = {}; V.step = 'input'; V.busy = true; render();
+  meSet(id); V.who = { id, name }; V.err = ''; V.mine = null; V.cur = {}; V.step = 'input'; V.busy = true; render();
   try { V.mine = await api('jkMine', { team: T().team, id }); setCur(); }
-  catch (e) { V.err = e.message; }
+  catch (e) { V.err = e.message; meSet(''); }
   V.busy = false; render(); window.scrollTo(0, 0);
 }
 function setCur() { const t = T(); V.cur = Object.assign({}, t.team === 'shuin' ? ((V.mine.req || {})[V.ym] || {}).days || {} : V.mine.days || {}); }
@@ -234,9 +264,17 @@ document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el || V.busy) return;
   const a = el.dataset.act, t = T();
   if (a === 'reload') return load();
+  if (a === 'icsDemo') {
+    const ds = (V.mine && V.mine.shifts) || [], ymd = k => k.replace(/-/g, ''), nx = k => { const d = parse(k); d.setDate(d.getDate() + 1); return ymd(key(d)); };
+    const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//shinagawa-jinja//demo//JA'];
+    ds.forEach(k => L.push('BEGIN:VEVENT', 'UID:' + k + '-' + V.who.id + '@demo', 'DTSTAMP:20260101T000000Z', 'DTSTART;VALUE=DATE:' + ymd(k), 'DTEND;VALUE=DATE:' + nx(k), 'SUMMARY:品川神社 ' + t.label + '（見本）', 'LOCATION:品川神社', 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:明日は品川神社です', 'TRIGGER:-PT5H', 'END:VALARM', 'END:VEVENT'));
+    L.push('END:VCALENDAR');
+    const u = URL.createObjectURL(new Blob([L.join('\r\n')], { type: 'text/calendar' })), aa = document.createElement('a'); aa.href = u; aa.download = 'shinagawa.ics'; document.body.appendChild(aa); aa.click(); setTimeout(() => { URL.revokeObjectURL(u); aa.remove(); }, 500);
+    return;
+  }
   if (a === 'pick') { const p = V.form.people.find(x => x.id === el.dataset.id); return pick(p.id, p.name); }
   if (a === 'toReg') { V.step = 'reg'; V.err = ''; render(); return window.scrollTo(0, 0); }
-  if (a === 'back') { V.step = 'list'; V.who = null; V.err = ''; V.sentAt = null; V.justReg = false; if (V.reg) { V.reg = false; history.replaceState(null, '', '#' + V.hash); } await load(); return window.scrollTo(0, 0); }
+  if (a === 'back') { meSet(''); V.step = 'list'; V.who = null; V.err = ''; V.sentAt = null; V.justReg = false; if (V.reg) { V.reg = false; history.replaceState(null, '', '#' + V.hash); } await load(); return window.scrollTo(0, 0); }
   if (a === 'wd') { readReg(); const i = +el.dataset.i, w = V.reg2.wdays; V.reg2.wdays = w.includes(i) ? w.filter(x => x !== i) : [...w, i].sort(); return render(); }
   if (a === 'doReg') {
     readReg(); const r = V.reg2;
