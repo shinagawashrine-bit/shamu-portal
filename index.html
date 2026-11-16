@@ -2126,7 +2126,7 @@ function jkUrlCard(team, label) {
   const row = (t, reg, note) => { const u = jkUrl(team, reg); return `<div style="margin-top:10px"><div class="small" style="font-weight:700">${t}</div><div class="small muted" style="margin-bottom:4px">${note}</div>
     <div class="row" style="gap:6px;flex-wrap:nowrap"><a class="small" href="${esc(u)}" target="_blank" rel="noopener" style="word-break:break-all;flex:1;min-width:0">${esc(u)}</a><button class="btn sm" data-act="jkCopy" data-u="${esc(u)}">コピー</button></div></div>`; };
   return `<div class="card card-p" style="margin-top:16px"><div class="card-h"><h3>${label}のURL</h3><span class="sp"></span><span class="small muted">ログインなし・名前を選ぶだけ</span></div>
-    ${row('登録URL', true, '初めての人に送ります。名前・ふりがな・電話を入れて登録します。')}
+    ${row('登録URL', true, '初めての人に送ります。名前・ふりがなを入れて登録します。')}
     ${row('シフト入力URL', false, '登録した人に送ります。名前を選んで○×を入れて送信します（あとから直せます）。初めての人もここから登録できます。' + (team === 'shuin' ? '御朱印は土日・祝日だけ入れられ、締め切りは毎月25日（翌月分）です。' : ''))}</div>`;
 }
 function vBaito() {
@@ -2183,7 +2183,7 @@ function baitoRegular() {
       <table class="tbl"><thead><tr><th>名前</th><th class="r">先月</th><th class="r">今月</th><th class="r">今年の合計</th></tr></thead><tbody>${S.regulars.map(p => `<tr><td>${esc(p.name)}</td><td class="r num">${countIn(p.id, prevM)}日</td><td class="r num">${countIn(p.id, thisM)}日</td><td class="r num"><b>${countIn(p.id, thisY)}</b>日</td></tr>`).join('')}</tbody></table></div>
     <div class="card card-p"><div class="card-h"><h3>登録している助勤</h3><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="">＋ 登録</button></div>
       <ul class="mini-list">${S.regulars.map(p => `<li style="cursor:pointer" data-act="editRegular" data-id="${p.id}">${avatar(p.name, p.color, true)}<b>${esc(p.name)}</b><span class="small muted">${p.days.length === 7 ? '毎日可' : p.days.map(x => WD[x]).join('・') + 'のみ'}${p.note ? '・' + esc(p.note) : ''}</span><span class="sp"></span><button class="btn sm" data-act="editRegular" data-id="${p.id}">編集</button></li>`).join('')}</ul>
-      <div class="small muted" style="margin-top:6px">登録URLから本人が登録するか、ここで職員が登録します。電話・メモは職員だけが見られます。</div></div>
+      <div class="small muted" style="margin-top:6px">登録URLから本人が登録するか、ここで職員が登録します。メモは職員だけが見られます。</div></div>
   </div>
   ${jkUrlCard('shuin', '御朱印')}`;
 }
@@ -2224,7 +2224,7 @@ function seasonPage(type) {
   <div class="legend" style="margin-top:8px"><span><span class="mk ok">○</span>出られる</span><span><span class="mk ng">×</span>出られない</span><span><span class="mk as honden">本</span>本殿に割り当て（マスを押して切り替え。すぐカレンダーに反映）</span></div>
   <div class="grid2" style="margin-top:16px;align-items:start">
     <div class="card card-p"><div class="card-h"><h3>${label}の巫女</h3><span class="sp"></span><button class="btn sm" data-act="bulkMember" data-t="${type}">まとめて登録</button><button class="btn sm" data-act="editMember" data-t="${type}" data-id="">＋ 登録</button></div>
-      <ul class="mini-list">${members.map(m => `<li style="cursor:pointer" data-act="editMember" data-t="${type}" data-id="${m.id}">${avatar(m.name, m.color, true)}<b>${esc(m.name)}</b><span class="small muted">${esc(m.tel || '')}${m.note ? '・' + esc(m.note) : ''}</span><span class="sp"></span><span class="small muted">出勤 ${days.filter(k => (S.shifts[k]?.honden || []).includes(m.id)).length}日</span><button class="btn sm" data-act="editMember" data-t="${type}" data-id="${m.id}">編集</button></li>`).join('') || '<li class="muted">未登録</li>'}</ul>
+      <ul class="mini-list">${members.map(m => `<li style="cursor:pointer" data-act="editMember" data-t="${type}" data-id="${m.id}">${avatar(m.name, m.color, true)}<b>${esc(m.name)}</b><span class="small muted">${esc(m.note || '')}</span><span class="sp"></span><span class="small muted">出勤 ${days.filter(k => (S.shifts[k]?.honden || []).includes(m.id)).length}日</span><button class="btn sm" data-act="editMember" data-t="${type}" data-id="${m.id}">編集</button></li>`).join('') || '<li class="muted">未登録</li>'}</ul>
       <div class="small muted" style="margin-top:6px">御朱印Boysとは別のメンバーです。登録URLから本人が登録するか、ここで職員が登録します。シフト入力URLから${label}の希望を出します。</div></div>
     <div class="card card-p"><div class="card-h"><h3>提出状況</h3></div>
       <ul class="mini-list">${members.map(m => `<li>${avatar(m.name, m.color, true)}${esc(m.name)}<span class="sp"></span>${S.seasonReq[m.id] ? `<span class="tag green">提出済み ${md(new Date(S.seasonReq[m.id].at))}</span>` : '<span class="tag warn">未提出</span>'}</li>`).join('')}</ul></div>
@@ -2236,15 +2236,14 @@ function editMemberModal(type, id) {
   modal(`<div class="modal-h"><h3>${seasonLabel(type)}のメンバー</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="grid2"><div class="field"><label>氏名</label><input class="input" id="mbName" value="${esc(m.name)}"></div><div class="field"><label>ふりがな</label><input class="input" id="mbKana" value="${esc(m.kana || '')}"></div></div>
-    <div class="field"><label>電話</label><input class="input" id="mbTel" value="${esc(m.tel)}"></div>
     <div class="field"><label>メモ（職員のみ）</label><input class="input" id="mbNote" value="${esc(m.note)}"></div>
   </div>
   <div class="modal-f">${m.id ? `<button class="btn" style="color:var(--red)" data-act="delMember" data-t="${type}" data-id="${m.id}">削除</button><span class="sp"></span>` : ''}<button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveMember" data-t="${type}" data-id="${m.id}">保存</button></div>`);
 }
 function bulkMemberModal(type) {
   modal(`<div class="modal-h"><h3>${seasonLabel(type)}のメンバーをまとめて登録</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
-  <div class="modal-b"><div class="note" style="margin-bottom:10px">${ICON.info}<span>1行に1人、「名前, 電話」の形で貼り付けてください（Excelからのコピーでも可）。</span></div>
-  <textarea class="input" id="bulkText" style="min-height:180px" placeholder="例）&#10;山田 太郎, 090-0000-0000"></textarea></div>
+  <div class="modal-b"><div class="note" style="margin-bottom:10px">${ICON.info}<span>1行に1人、名前を貼り付けてください（Excelからのコピーでも可）。</span></div>
+  <textarea class="input" id="bulkText" style="min-height:180px" placeholder="例）&#10;山田 太郎&#10;佐藤 花子"></textarea></div>
   <div class="modal-f"><button class="btn" data-act="closeModal">やめる</button><button class="btn pri" data-act="saveBulkMember" data-t="${type}">登録する</button></div>`);
 }
 function editRegularModal(id) {
@@ -2252,7 +2251,6 @@ function editRegularModal(id) {
   modal(`<div class="modal-h"><h3>御朱印の助勤の登録</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="grid2"><div class="field"><label>氏名</label><input class="input" id="rgName" value="${esc(p.name)}"></div><div class="field"><label>ふりがな</label><input class="input" id="rgKana" value="${esc(p.kana)}"></div></div>
-    <div class="field"><label>電話</label><input class="input" id="rgTel" value="${esc(p.tel)}"></div>
     <div class="field"><label>出られる曜日</label><div class="row" id="rgDays">${WD.map((w, i) => `<label class="chip ${p.days.includes(i) ? 'on' : ''}" style="cursor:pointer"><input type="checkbox" value="${i}" ${p.days.includes(i) ? 'checked' : ''} style="display:none" data-chg="chipToggle">${w}</label>`).join('')}</div></div>
     <div class="field"><label>メモ（シフトの条件など・職員のみ）</label><input class="input" id="rgNote" value="${esc(p.note)}"></div>
   </div>
@@ -2971,7 +2969,7 @@ const ACT = {
   delRegular(el) { const id = el.dataset.id; askConfirm('この人を名簿から削除しますか？', () => { S.regulars = S.regulars.filter(r => r.id !== id); save(); closeModal(); render(); toast('削除しました'); }); },   // 御朱印の助勤を名簿から外す（2026-11-15 本人。決まったシフトの記録は残る）
   saveRegular(el) {
     const id = el.dataset.id, days = [...document.querySelectorAll('#rgDays input:checked')].map(i => +i.value);
-    const d = { name: val('rgName'), kana: val('rgKana'), tel: val('rgTel'), note: val('rgNote'), days };
+    const d = { name: val('rgName'), kana: val('rgKana'), note: val('rgNote'), days };   // 電話番号は聞かない（2026-11-15 本人）
     if (!d.name) return toast('氏名を入れてください');
     if (id) Object.assign(S.regulars.find(r => r.id === id), d); else S.regulars.push({ id: 'r' + Date.now(), color: AV_COLORS[S.regulars.length % 6], ...d });
     save(); closeModal(); render(); toast('保存しました');
@@ -3083,7 +3081,7 @@ const ACT = {
   },
   editMember(el) { editMemberModal(el.dataset.t, el.dataset.id); },
   saveMember(el) {
-    const t = el.dataset.t, id = el.dataset.id, d = { name: val('mbName'), kana: val('mbKana'), tel: val('mbTel'), note: val('mbNote') };
+    const t = el.dataset.t, id = el.dataset.id, d = { name: val('mbName'), kana: val('mbKana'), note: val('mbNote') };
     if (!d.name) return toast('氏名を入れてください');
     S.seasonMembers[t] = S.seasonMembers[t] || [];
     if (id) Object.assign(S.seasonMembers[t].find(m => m.id === id), d); else S.seasonMembers[t].push({ id: 'm' + t.slice(0, 2) + Date.now(), color: AV_COLORS[S.seasonMembers[t].length % 6], ...d });
@@ -3095,7 +3093,7 @@ const ACT = {
   saveBulkMember(el) {
     const t = el.dataset.t, lines = document.getElementById('bulkText').value.split('\n').map(l => l.trim()).filter(Boolean); let n = 0;
     S.seasonMembers[t] = S.seasonMembers[t] || [];
-    lines.forEach(l => { const [name, tel] = l.split(/[,\t、]/).map(x => (x || '').trim()); if (!name) return; S.seasonMembers[t].push({ id: 'm' + t.slice(0, 2) + Date.now() + n, name, tel: tel || '', note: '', color: AV_COLORS[(S.seasonMembers[t].length) % 6] }); n++; });
+    lines.forEach(l => { const name = (l.split(/[,\t、]/)[0] || '').trim(); if (!name) return; S.seasonMembers[t].push({ id: 'm' + t.slice(0, 2) + Date.now() + n, name, tel: '', note: '', color: AV_COLORS[(S.seasonMembers[t].length) % 6] }); n++; });
     save(); closeModal(); render(); toast(`${n}名を登録しました`);
   },
   bvTap(el) { const k = el.dataset.k, c = S.ui.baitoDraft.days, cur = c[k] === 'maybe' ? 'ok' : c[k], O = [undefined, 'ok', 'ng']; const nx = O[(O.indexOf(cur) + 1) % 3]; if (nx) c[k] = nx; else delete c[k]; render(); },
@@ -3437,7 +3435,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261115154658';
+const BUILD = '20261115165215';
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
   if (!PROD || !BUILD) return;

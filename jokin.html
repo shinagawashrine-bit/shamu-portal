@@ -134,7 +134,7 @@ async function api(action, body) {
 }
 
 /* ── 画面 ── */
-const V = { hash: '', reg: false, form: null, err: '', busy: false, step: 'list', who: null, mine: null, cur: {}, ym: '', reg2: { name: '', kana: '', tel: '', wdays: [0, 6], memo: '' }, sentAt: null, justReg: false };
+const V = { hash: '', reg: false, form: null, err: '', busy: false, step: 'list', who: null, mine: null, cur: {}, ym: '', reg2: { name: '', kana: '', wdays: [0, 6], memo: '' }, sentAt: null, justReg: false };
 const T = () => TEAMS[V.hash];
 function readHash() {
   const h = (location.hash || '').replace(/^#\/?/, ''), reg = /-touroku$/.test(h), base = h.replace(/-touroku$/, '');
@@ -161,10 +161,9 @@ function vList() {
 function vReg() {
   const r = V.reg2, t = T();
   return `<div class="card"><h2>${t.label}の助勤の登録</h2>
-    <div class="muted" style="margin-bottom:12px">はじめての方だけ登録してください。電話番号は神社の職員だけが見ます。</div>
+    <div class="muted" style="margin-bottom:12px">はじめての方だけ登録してください。</div>
     <div class="field"><label>お名前<span class="req">必須</span></label><input class="in" id="rName" value="${esc(r.name)}" placeholder="例：品川 花子" autocomplete="name"></div>
     <div class="field"><label>ふりがな</label><input class="in" id="rKana" value="${esc(r.kana)}" placeholder="例：しながわ はなこ"></div>
-    <div class="field"><label>電話番号<span class="req">必須</span></label><input class="in" id="rTel" value="${esc(r.tel)}" inputmode="tel" placeholder="例：090-0000-0000" autocomplete="tel"></div>
     ${t.team === 'shuin' ? `<div class="field"><label>ふだん出られる曜日</label><div class="chips" id="rWd">${WD.map((w, i) => `<span class="chip ${r.wdays.includes(i) ? 'on' : ''}" data-act="wd" data-i="${i}">${w}</span>`).join('')}</div></div>` : ''}
     <div class="field"><label>神社への連絡（任意）</label><input class="in" id="rMemo" value="${esc(r.memo)}" placeholder="例：午前だけ出られます"></div>
     ${V.err ? `<div class="err">${esc(V.err)}</div>` : ''}
@@ -230,7 +229,7 @@ async function pick(id, name) {
 }
 function setCur() { const t = T(); V.cur = Object.assign({}, t.team === 'shuin' ? ((V.mine.req || {})[V.ym] || {}).days || {} : V.mine.days || {}); }
 const half = v => String(v).replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0)).replace(/[－ー―‐−]/g, '-').replace(/[（]/g, '(').replace(/[）]/g, ')');   // 全角の数字・ハイフンを半角に
-function readReg() { const g = id => (document.getElementById(id) || {}).value || ''; Object.assign(V.reg2, { name: g('rName').trim(), kana: g('rKana').trim(), tel: half(g('rTel')).trim(), memo: g('rMemo').trim() }); }
+function readReg() { const g = id => (document.getElementById(id) || {}).value || ''; Object.assign(V.reg2, { name: g('rName').trim(), kana: g('rKana').trim(), memo: g('rMemo').trim() }); }
 document.addEventListener('click', async e => {
   const el = e.target.closest('[data-act]'); if (!el || V.busy) return;
   const a = el.dataset.act, t = T();
@@ -242,9 +241,8 @@ document.addEventListener('click', async e => {
   if (a === 'doReg') {
     readReg(); const r = V.reg2;
     if (!r.name) { V.err = 'お名前を入れてください'; return render(); }
-    if (!/\d{2,}/.test(r.tel.replace(/[^\d]/g, '')) || r.tel.replace(/[^\d]/g, '').length < 10) { V.err = '電話番号を入れてください（数字10けた以上）'; return render(); }
     V.err = ''; V.busy = true; render();
-    try { const j = await api('jkSubmit', { team: t.team, name: r.name, kana: r.kana, tel: r.tel, wdays: r.wdays, memo: r.memo }); V.who = { id: j.id, name: j.name }; V.justReg = true; V.sentAt = null; V.step = 'done'; V.reg2 = { name: '', kana: '', tel: '', wdays: [0, 6], memo: '' }; }
+    try { const j = await api('jkSubmit', { team: t.team, name: r.name, kana: r.kana, wdays: r.wdays, memo: r.memo }); V.who = { id: j.id, name: j.name }; V.justReg = true; V.sentAt = null; V.step = 'done'; V.reg2 = { name: '', kana: '', wdays: [0, 6], memo: '' }; }
     catch (er) { V.err = er.message; }
     V.busy = false; render(); return window.scrollTo(0, 0);
   }
