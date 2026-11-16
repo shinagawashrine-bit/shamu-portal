@@ -143,6 +143,24 @@ a{color:var(--brand)}
 .reji-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 2px;border-top:2px solid var(--text);margin-top:4px}
 .reji-total b{font-size:30px}.reji-total small{font-size:15px;margin-left:2px}
 .reji-go{width:100%;min-height:56px;font-size:18px;border-radius:14px}
+/* 1画面に収める形（fitReji が列の数と高さを決める） */
+.reji.fit{height:100vh;height:100dvh;overflow:hidden}
+.reji.fit .reji-b{min-height:0}
+.reji.fit .reji-chips{margin-bottom:10px}
+.reji.fit .reji-chip{padding:6px 16px;font-size:14px}
+.reji.fit .reji-items{grid-auto-flow:row dense;overflow:auto}
+.reji.fit .reji-item .ph{aspect-ratio:auto;flex:1;min-height:0;border-bottom-width:2px}
+.reji.fit .reji-item .ph.none{font-size:calc(var(--rj-fs) * 2)}
+.reji.fit .reji-item .tx{padding:4px 8px 6px}
+.reji.fit .reji-item .nm{font-size:var(--rj-fs);line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.reji.fit .reji-item .pr{font-size:calc(var(--rj-fs) * .8);margin-top:1px}
+.reji.fit .reji-item .q{top:5px;right:5px;min-width:26px;height:26px;font-size:14px}
+.reji.fit .reji-item.big .tx{padding:8px 14px 10px}
+.reji.fit .reji-item.big .nm{font-size:calc(var(--rj-fs) * 2.2)}
+.reji.fit .reji-item.big .pr{font-size:calc(var(--rj-fs) * 1.2)}
+.reji.fit .reji-item.big .q{top:10px;right:10px;min-width:38px;height:38px;font-size:20px}
+.reji.fit .reji-cart{max-height:calc(100dvh - 90px);overflow:auto}
+@media (max-width:1050px){.reji-b{grid-template-columns:minmax(0,1fr) 300px}}
 @media (max-width:760px){.reji-b{grid-template-columns:1fr}.reji-cart{position:static}.reji-items{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}.reji-item.big .nm{font-size:30px}}
 /* レジの写真（2026-11-15）：写真が1枚でもあれば、ボタンを上に写真・下に品名の形にする */
 .reji-cash{margin:2px 0 10px}
@@ -361,6 +379,7 @@ img.mark{object-fit:cover;border-radius:50% !important;background:none !importan
 .note.brand{background:var(--brand-soft);color:var(--text)}
 .note svg{width:16px;height:16px;flex:none;margin-top:2px}
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field[hidden]{display:none}
 .field label{font-size:12px;font-weight:600;color:var(--text-2)}
 .input,select.input,textarea.input{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 11px;font-size:14px;outline:none}
 .input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -3477,7 +3496,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116151203';
+const BUILD = '20261116154448';
 const REJI_PAGE = true;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -3788,6 +3807,27 @@ function vReji() {
       </aside>
     </div></div>`;
 }
+/* 全部の品を1画面に収める（2026-11-16 本人：スライドせずに全部選べるように）
+   画面の空いている広さと品の数から、ボタンがいちばん大きくなる列の数を選ぶ。大きい品（御朱印など）は2×2マス */
+function fitReji() {
+  const box = document.querySelector('.reji-items'), rj = document.querySelector('.reji');
+  if (!box || !rj) return;
+  const tiles = box.querySelectorAll('.reji-item');
+  if (innerWidth < 760 || !tiles.length) { rj.classList.remove('fit'); box.style.cssText = ''; return; }
+  rj.classList.add('fit');
+  const gap = 8, W = box.clientWidth, H = Math.max(200, innerHeight - box.getBoundingClientRect().top - 14);
+  const big = box.querySelectorAll('.reji-item.big').length, cells = tiles.length + big * 3;
+  let best = null;
+  for (let c = 2; c <= 14; c++) {
+    const r = Math.max(Math.ceil(cells / c), big ? 2 : 1), w = (W - gap * (c - 1)) / c, h = (H - gap * (r - 1)) / r;
+    if (w < 60 || (big && c < 2)) continue;
+    const score = Math.min(w, h / 1.15);   // 縦が横の1.15倍くらいのボタンがいちばん押しやすい
+    if (!best || score > best.score) best = { c, h, w, score };
+  }
+  if (!best) return;
+  const hh = Math.max(64, Math.floor(best.h)), fs = Math.max(11, Math.min(18, Math.round(Math.min(best.w / 7.5, hh / 7))));
+  box.style.cssText = `grid-template-columns:repeat(${best.c},minmax(0,1fr));grid-auto-rows:${hh}px;gap:${gap}px;--rj-fs:${fs}px;max-height:${Math.floor(H)}px`;
+}
 /* 助勤への伝達事項（2026-11-16 本人：神社に来たときにレジのiPadで見る）。職員が「助勤」の画面で書く */
 const REG_NOTE_TEAM = { all: '助勤みんな', shuin: '御朱印', reitaisai: '例大祭', shichigosan: '七五三' };
 function regNotesLive() { const tk = regDay(); return (REGI.notes || []).filter(n => !n.until || n.until >= tk); }
@@ -3845,7 +3885,8 @@ if (PROD) Object.assign(ACT, {
 // レジ端末のときは、ほかの画面を出さずにレジだけを出す
 if (PROD) {
   const renderApp = render;
-  render = function () { if (REGI.on) { document.getElementById('root').innerHTML = vReji(); return; } renderApp(); };
+  render = function () { if (REGI.on) { document.getElementById('root').innerHTML = vReji(); fitReji(); return; } renderApp(); };
+  addEventListener('resize', () => { if (REGI.on) fitReji(); });
   setInterval(() => { if (REGI.on) regFlush(); if (REGI.on && key(new Date()) !== TK && !Object.keys(REGI.cart).length && !document.getElementById('modalBg')) location.reload(); }, 30000);
   setInterval(() => { if (REGI.on && document.visibilityState === 'visible') regLoadItems(); }, 10 * 60000);
   document.addEventListener('visibilitychange', () => { if (REGI.on && document.visibilityState === 'visible') { regFlush(); render(); } });
