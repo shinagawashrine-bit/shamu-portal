@@ -3502,7 +3502,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116160320';
+const BUILD = '20261116160939';
 const REJI_PAGE = false;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -4120,13 +4120,14 @@ function juyoItemsProd() {
     <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td>${im[it.id] ? `<img class="it-thumb" src="${im[it.id]}" alt="">` : '<span class="it-thumb none"></span>'}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? 'TOP' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
   <div class="small muted" style="margin-top:8px">写真は「編集」から入れられます（白い紙の上で真上から撮れば、向き・大きさ・明るさは自動で整えます。紐は切れてもかまいません）。レジ端末には「出す」品が、順の小さい順に並びます。使わなくなった品は消さずに「レジに出さない」にすると、過去の集計が残ります。</div>`;
 }
-let ITEM_PHOTO, ITEM_FILE = null, ITEM_ROT = 0, ITEM_WHOLE = false;   // 選んだ写真の元ファイルと、手で回した角度
+let ITEM_PHOTO, ITEM_FILE = null, ITEM_ROT = 0, ITEM_WHOLE = false, ITEM_SAVED = '';   // 選んだ写真の元ファイルと、手で回した角度
 function editItemModalProd(id) {
   const it = S.items.find(x => x.id === id) || { id: '', name: '', price: 1000, cat: '', perCase: '', perBox: '', big: false, ord: (Math.max(0, ...S.items.map(i => i.ord || 0)) + 10), active: true };
   const cats = [...new Set(S.items.map(i => i.cat).filter(Boolean))];
   ITEM_FILE = null; ITEM_ROT = 0; ITEM_WHOLE = false;
   ITEM_PHOTO = undefined;   // 選び直した写真（undefined＝変えない／''＝外す）
   const cur = (JIMG.imgs || {})[it.id] || '';
+  ITEM_SAVED = cur;   // 登録済みの写真（選び直さなくても「向きを回す」で回せる。2026-11-16 本人：荒神様の写真が上下逆）
   modal(`<div class="modal-h"><h3>${it.id ? '授与品の編集' : '授与品の登録'}</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     <div class="grid2"><div class="field"><label for="itName">品名</label><input class="input" id="itName" value="${esc(it.name)}" maxlength="30"></div><div class="field"><label for="itCat">分類</label><input class="input" id="itCat" value="${esc(it.cat)}" list="itCatList" placeholder="例：御守"><datalist id="itCatList">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div></div>
@@ -4135,7 +4136,7 @@ function editItemModalProd(id) {
     <div class="field"><label>写真（レジのボタンに出ます）</label>
       <div class="row" style="gap:10px;align-items:center"><span id="itPhotoPrev">${cur ? `<img class="it-thumb lg" src="${cur}" alt="">` : '<span class="it-thumb lg none"></span>'}</span>
         <label class="btn sm">写真を選ぶ<input type="file" id="itPhoto" accept="image/*" style="display:none"></label>
-        <button class="btn sm ghost" data-act="itemPhotoRot" style="display:none" id="itPhotoRot">向きを回す</button>
+        <button class="btn sm ghost" data-act="itemPhotoRot" ${cur ? '' : 'style="display:none"'} id="itPhotoRot">向きを回す</button>
         <button class="btn sm ghost" data-act="itemPhotoWhole" style="display:none" id="itPhotoWhole">切り抜かない</button>
         <button class="btn sm ghost" data-act="itemPhotoClear" ${cur ? '' : 'style="display:none"'} id="itPhotoClr">外す</button></div>
       <div class="small muted" style="margin-top:6px">白い紙の上で真上から撮ってください。向き・大きさ・明るさは自動で整えます。うまくいかないときは「向きを回す」「切り抜かない」を押してください</div></div>
@@ -4173,13 +4174,26 @@ if (PROD) {
     sumItem(el) { sumItem = el.dataset.id; render(); },
     sumSpan(el) { sumSpan = el.dataset.v; render(); },
     itemPhotoWhole() { if (ITEM_FILE) { ITEM_WHOLE = !ITEM_WHOLE; document.getElementById('itPhotoWhole').textContent = ITEM_WHOLE ? '自動で切り抜く' : '切り抜かない'; usePhoto(); } },
-    itemPhotoRot() { if (ITEM_FILE) { ITEM_ROT = (ITEM_ROT + 90) % 360; usePhoto(); } },
-    itemPhotoClear() { ITEM_PHOTO = ''; ITEM_FILE = null; document.getElementById('itPhotoRot').style.display = 'none'; document.getElementById('itPhotoWhole').style.display = 'none'; document.getElementById('itPhotoPrev').innerHTML = '<span class="it-thumb lg none"></span>'; document.getElementById('itPhotoClr').style.display = 'none'; },
+    itemPhotoRot() { if (ITEM_FILE) { ITEM_ROT = (ITEM_ROT + 90) % 360; usePhoto(); } else if (ITEM_SAVED) { ITEM_ROT = (ITEM_ROT + 90) % 360; rotSaved(); } },
+    itemPhotoClear() { ITEM_PHOTO = ''; ITEM_FILE = null; ITEM_SAVED = ''; document.getElementById('itPhotoRot').style.display = 'none'; document.getElementById('itPhotoWhole').style.display = 'none'; document.getElementById('itPhotoPrev').innerHTML = '<span class="it-thumb lg none"></span>'; document.getElementById('itPhotoClr').style.display = 'none'; },
     sumReload() { loadSalesSummary(true); },
     sumCsv() { sumCsv(); }
   });
 }
 
+/* 登録済みの写真を回す（元の写真から ITEM_ROT 度回して、レジのボタンの枠 480×320 に収め直す） */
+async function rotSaved() {
+  try {
+    const img = await new Promise((ok, ng) => { const im = new Image(); im.onload = () => ok(im); im.onerror = ng; im.src = ITEM_SAVED; });
+    const c0 = document.createElement('canvas'); c0.width = img.naturalWidth; c0.height = img.naturalHeight; c0.getContext('2d').drawImage(img, 0, 0);
+    const c = photoRotate(c0, ITEM_ROT), W = 480, H = 320, o = document.createElement('canvas'); o.width = W; o.height = H;
+    const g = o.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, W, H);
+    const r = Math.min(W / c.width, H / c.height); g.drawImage(c, (W - c.width * r) / 2, (H - c.height * r) / 2, c.width * r, c.height * r);
+    let d = null; for (const q of [0.85, 0.8, 0.7, 0.6, 0.5, 0.4]) { d = o.toDataURL('image/jpeg', q); if (d.length <= 45000) break; }
+    ITEM_PHOTO = ITEM_ROT ? d : undefined;   // 一周して元に戻ったら、写真は変えない
+    document.getElementById('itPhotoPrev').innerHTML = `<img class="it-thumb lg" src="${ITEM_ROT ? d : ITEM_SAVED}" alt="">`;
+  } catch (err) { toast('この写真は回せませんでした。「写真を選ぶ」で撮り直してください'); }
+}
 /* 写真を選んだとき（ファイル選択は change で届くので、ここで受ける） */
 async function usePhoto() {
   try {
