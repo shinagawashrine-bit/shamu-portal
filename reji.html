@@ -468,6 +468,62 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .ln{display:flex;align-items:center;gap:4px;font-size:11px;line-height:1.35;border-radius:2px;padding:1px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .ln i{font-style:normal;font-weight:800;font-size:10px;flex:none}
 .ln.kigan{background:var(--brand-soft);color:var(--brand)}
+.ln.kigan.full{background:var(--bg-2);color:var(--text-3);font-weight:700}
+/* 祈願の予約（その日の欄の時間表と入力画面。共用iPadで押しやすい大きさ） */
+.kg-sec h4{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.kg-row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);min-height:52px}
+.kg-row:last-child{border-bottom:0}
+.kg-t{font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
+.kg-row.full .kg-t{color:var(--text-3)}
+.kg-ents{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.kg-ent{border:0;background:var(--brand-soft);color:var(--text);border-radius:8px;padding:5px 9px;font:inherit;font-size:14px;cursor:pointer;text-align:left}
+.kg-ent b{color:var(--brand)}
+.kg-ent.noname{outline:2px dashed var(--brand);outline-offset:-2px}
+.kg-add{min-height:46px;min-width:104px;border-radius:12px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;font-weight:800;font-size:15px;line-height:1.2;cursor:pointer;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;touch-action:manipulation}
+.kg-add small{font-size:11.5px;font-weight:700}
+.kg-add.full{border-color:var(--line);background:var(--bg-2);color:var(--text-3);cursor:default}
+.kg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.kg-cell{display:flex;flex-direction:column;gap:5px;min-width:0}
+.kg-slot{min-height:66px;border-radius:14px;border:2px solid var(--brand);background:var(--card);color:var(--brand);font:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;touch-action:manipulation;width:100%}
+.kg-slot b{font-size:22px;font-variant-numeric:tabular-nums;color:var(--text)}
+.kg-slot span{font-size:13px;font-weight:700}
+.kg-slot.off{border-color:var(--line);background:var(--bg-2);color:var(--text-3);cursor:default}
+.kg-slot.off b{color:var(--text-3)}
+.kg-cell .kg-ents{flex-direction:column}
+.kg-cell .kg-ent{font-size:13px;padding:4px 8px}
+.kg-more-btn{display:block;width:100%;margin-top:8px;min-height:46px;border-radius:12px;border:1px dashed var(--line);background:var(--bg-2);color:var(--text-2);font:inherit;font-size:15px;font-weight:700;cursor:pointer;touch-action:manipulation}
+#kgMore{margin-top:8px}
+.kg-kindrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.kg-kindrow b{font-size:14px;color:var(--text-2)}
+.kg-kinds{margin-left:auto}
+.kg-kinds button{min-height:40px;padding:0 16px;font-size:15px}
+.kg-when-t{font-size:22px;font-weight:800;color:var(--brand);margin:-6px 0 12px}
+.kg-ext{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.kg-ent.gaisai{background:var(--shu-soft)}.kg-ent.gaisai b{color:var(--shu)}
+.kg-ent.wedding{background:var(--pink-soft)}.kg-ent.wedding b{color:var(--pink)}
+.kg-cell.wed .kg-slot:not(.off){border-style:dashed}
+.kg-cell.stop .kg-slot span{color:#b23b3b;font-weight:700}
+.btn.kg-stop{background:#b23b3b;border-color:#b23b3b;color:#fff}
+.kg-cell.wed .kg-slot span{color:var(--pink)}
+.ln.wedding{background:var(--pink-soft);color:var(--pink)}
+.ev.wedding{background:var(--pink-soft);border-color:var(--pink);color:var(--text)}
+.kg-back{min-height:44px;font-weight:700}
+.ev-pair{display:flex;gap:6px;flex-wrap:nowrap}   /* 「祈願の予約」と「予定を追加」は横に並べる（2026-11-16 本人） */
+@media (max-width:900px){.day-acts > .ev-pair{grid-column:1/-1}.ev-pair > .btn{flex:1 1 0;min-width:0}}
+.tl .ev.kigan > span,.week .ev.kigan .ev-tx > span{font-size:11px}
+.kg-glist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.kg-gitem{display:flex;align-items:baseline;gap:10px;width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:inherit;font:inherit;text-align:left}
+button.kg-gitem{cursor:pointer}
+.kg-gitem b{font-size:17px}
+.kg-gitem span{color:var(--brand);font-weight:700}
+.kg-open{border-color:var(--brand);color:var(--brand);font-weight:800}
+.kg-when{font-size:22px;font-weight:800;color:var(--brand);margin-bottom:14px}
+.kg-wishes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:560px){.kg-wishes{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kg-wish{min-height:54px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--text);font:inherit;font-size:17px;font-weight:700;cursor:pointer;touch-action:manipulation}
+.kg-wish.on{border-color:var(--brand);background:var(--brand);color:#fff}
+.input.kg-big{min-height:54px;font-size:20px}
+.kg-btn{min-height:52px;min-width:110px;font-size:17px}
 .ln.visit{background:var(--violet-soft);color:var(--violet)}
 .ln.out{background:var(--pink-soft);color:var(--pink)}
 .ln.sai{background:var(--shu);color:#fff}
@@ -1472,20 +1528,23 @@ function cellLines(k) {
     outingsOn(k).filter(o => outStaff(o).includes(S.me)).forEach(o => { const t = outTimes(o); out.push(`<div class="ln out"><i>出</i><span>${tstr(t.depart)}発 ${esc(o.place)}</span></div>`); });
     return out.join('');
   }
-  const rs = resOn(k), kg = rs.filter(r => r.type !== '外祭'), gs = rs.filter(r => r.type === '外祭');
-  if (L.leave) { const tw = tempOn(k); if (tw.length) out.push(`<div class="ln temp"><i>臨</i><span>${tw.map(t => t.name).join('・')}</span></div>`); }
+  const rs = resOn(k), kg = rs.filter(r => r.type !== '外祭' && r.type !== '結婚式'), gs = rs.filter(r => r.type === '外祭'), ws = rs.filter(r => r.type === '結婚式');
+  // 並びは 祭典 → 臨時職員 → 御朱印・本殿の助勤 → 祈願（外祭・結婚式）→ 来訪者 → 外出（2026-11-16 本人）
   if (L.sai) ritualsOn(k).forEach(r => out.push(`<div class="ln sai"><i>祭</i><span>${esc(r.name)}</span></div>`));
-  if (L.kigan) {
-    if (kg.length) out.push(`<div class="ln kigan"><i>祈</i><span>祈願 ${kg.length}件</span></div>`);
-    gs.forEach(g => out.push(`<div class="ln kigan" data-act="evDetail" data-kind="gaisai" data-id="${g.id}" title="申込用紙を開く"><i>外</i><span>外祭 ${g.start}</span></div>`));
-  }
-  if (L.visit) visitsOn(k).forEach(v => out.push(`<div class="ln visit"><i>来</i><span>${esc(v.who)}</span></div>`));
-  if (L.out) outingsOn(k).forEach(o => { const t = outTimes(o); out.push(`<div class="ln out"><i>出</i><span>${tstr(t.depart)}発 ${outNames(o)} ${esc(o.place)}</span></div>`); });
+  if (L.leave) { const tw = tempOn(k); if (tw.length) out.push(`<div class="ln temp"><i>臨</i><span>${tw.map(t => t.name).join('・')}</span></div>`); }
   if (L.baito) {
     const sh = regularsOn(k, 'shuin'), hd = regularsOn(k, 'honden');
     if (sh.length) out.push(`<div class="ln shuin"><i>朱印</i><span>${sh.map(r => shortName(r.name)).join('・')}</span></div>`);
     if (hd.length) out.push(`<div class="ln honden"><i>本殿</i><span>${hd.map(r => shortName(r.name)).join('・')}</span></div>`);
   }
+  if (L.kigan) {
+    if (kgStopText(k) && !kgClosed(k)) out.push(`<div class="ln kigan full"><i>祈</i><span>祈願停止 ${kgStopText(k)}</span></div>`);
+    if (kg.length) out.push(!kgClosed(k) && kgFull(k) ? '<div class="ln kigan full"><i>祈</i><span>祈願 満員</span></div>' : `<div class="ln kigan"><i>祈</i><span>祈願 ${kg.length}件</span></div>`);
+    gs.forEach(g => out.push(`<div class="ln kigan" data-act="evDetail" data-kind="gaisai" data-id="${g.id}" title="${g.manual ? '' : '申込用紙を開く'}"><i>外</i><span>外祭 ${g.start}${g.manual && g.sub ? ' ' + esc(g.sub) : ''}</span></div>`));
+    ws.forEach(w => out.push(`<div class="ln wedding" data-act="evDetail" data-kind="wedding" data-id="${w.id}"><i>婚</i><span>結婚式 ${w.start}</span></div>`));
+  }
+  if (L.visit) visitsOn(k).forEach(v => out.push(`<div class="ln visit"><i>来</i><span>${esc(v.who)}</span></div>`));
+  if (L.out) outingsOn(k).forEach(o => { const t = outTimes(o); out.push(`<div class="ln out"><i>出</i><span>${tstr(t.depart)}発 ${outNames(o)} ${esc(o.place)}</span></div>`); });
   const max = 4;
   return out.length > max ? out.slice(0, max - 1).join('') + `<div class="ln" style="color:var(--text-3)"><span>ほか${out.length - max + 1}件</span></div>` : out.join('');
 }
@@ -1511,12 +1570,28 @@ function monthView() {
 }
 function weekStart() { const d = parse(selDay); return addDays(d, -d.getDay()); }
 /* 1日の予定（タイムラインに並べるもの） */
+/* 個人祈願は同じ時間をまとめて「個人祈願 2件」、下に小さく「山田様（安産）佐藤様（厄祓）」。押すとその時間の一覧（2026-11-16 本人） */
+const kgWho = r => String(r.name || '名前まだ').replace(/\s*様.*$/, '') + '様（' + (r.sub || (r.type === '七五三' ? '七五三' : '内容なし')) + '）';
+function kgGroups(k) {
+  const by = {}; resOn(k).filter(kgInd).forEach(r => (by[r.start] = by[r.start] || []).push(r));
+  return Object.entries(by).map(([t, rs]) => ({ kind: 'kigan', grp: true, id: 'grp|' + k + '|' + t, start: t, dur: Math.max(...rs.map(r => r.dur || 30)), title: `個人祈願 ${rs.length}件`, short: `祈願${rs.length}`, sub: rs.map(kgWho).join(' ') }));
+}
+function kgGroupModal(k, t) {
+  const rs = kgOn(k, t), L = kgLeft(k, t);
+  modal(`<div class="modal-h"><h3>${mdw(parse(k))}　${t}　個人祈願 ${rs.length}件</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b"><ul class="kg-glist">${rs.map(r => `<li>${r.manual ? `<button class="kg-gitem" data-act="evDetail" data-kind="kigan" data-id="${r.id}">` : '<div class="kg-gitem">'}<b>${esc(String(r.name || '名前まだ').replace(/\s*様.*$/, ''))} 様</b><span>${esc(r.sub || (r.manual ? '内容なし' : r.type))}</span>${r.people ? `<span class="small muted">${r.people}名</span>` : ''}${r.manual ? '<span class="small muted" style="margin-left:auto">編集 ›</span></button>' : '</div>'}</li>`).join('')}</ul>
+    <div class="small muted" style="margin-top:10px">1つの時間に${kgCap(k)}組まで（残${L}組）</div></div>
+  <div class="modal-f">${k >= TK && canKigan() && L && !kgClosed(k) ? `<button class="btn kg-btn" data-act="kgAdd" data-k="${k}" data-t="${t}">＋ この時間に入れる</button>` : ''}<span class="sp"></span><button class="btn kg-btn" data-act="closeModal">閉じる</button></div>`);
+}
 function eventsOn(k) {
   return [
     ...ritualsOn(k).filter(r => !r.allDay).map(r => ({ kind: 'sai', id: r.id, start: r.start, dur: r.dur, title: r.name, sub: '祭典' })),
-    ...resOn(k).map(r => r.type === '外祭'
+    ...kgGroups(k),
+    ...resOn(k).filter(r => !kgInd(r)).map(r => r.manual && r.type !== '個人祈祷'
+      ? { kind: kgKindOf(r), id: r.id, start: r.start, dur: r.dur, title: kgLabel(r), short: r.type === '結婚式' ? '結婚式' : r.sub || '外祭', sub: kgName(r) }
+      : r.type === '外祭'
       ? { kind: 'gaisai', id: r.id, start: r.start, dur: r.dur, title: `外祭（${r.sub}）出発 ${r.depart}`, short: '外祭', sub: `${r.name}・${r.place}` }
-      : { kind: 'kigan', id: r.id, start: r.start, dur: r.dur, title: `${r.type}${r.sub ? '（' + r.sub + '）' : ''}`, short: r.sub || r.type, sub: `${r.name}${r.people ? '・' + r.people + '名' : ''}` }),
+      : { kind: 'kigan', ind: kgInd(r), id: r.id, start: r.start, dur: r.dur, title: `${r.type}${r.sub ? '（' + r.sub + '）' : ''}`, short: r.sub || r.type, sub: `${r.name}${r.people ? '・' + r.people + '名' : ''}` }),
     ...visitsOn(k).map(v => ({ kind: 'visit', who: [v.host], id: v.id, start: v.start, dur: v.dur, title: `${v.who}`, short: v.who, sub: v.purpose + (v.host ? `（対応 ${hostName(v.host)}）` : '') })),
     ...outingsOn(k).map(o => { const t = outTimes(o); return { kind: 'out', who: outStaff(o), place: o.place, names: outNames(o), purpose: o.purpose || '', id: o.id, start: tstr(t.depart), dur: t.shownEnd - t.depart, travel: t, title: `外出：${outNames(o)}→${o.place}`, short: `${tstr(t.depart)}発 ${outNames(o)}`, sub: t.travel ? `出発 ${tstr(t.depart)} → ${o.start}〜${tstr(t.end)} ${o.place}${o.purpose ? '・' + o.purpose : ''}` : (o.purpose || '') }; })
   ].sort((a, b) => tmin(a.start) - tmin(b.start));
@@ -1547,7 +1622,7 @@ function timeRange(keys) {
 }
 const isOffHours = m => m < 540 || m >= 1020;
 /* スマホの週表示で予定を1文字で表すときの字 */
-const EV_CHAR = { visit: '来', out: '出', sai: '祭', kigan: '祈', gaisai: '外' };
+const EV_CHAR = { visit: '来', out: '出', sai: '祭', kigan: '祈', gaisai: '外', wedding: '婚' };
 function weekView() {
   const ws = weekStart(), PX = 52 / 60, [H0, H1] = timeRange(Array.from({ length: 7 }, (_, i) => key(addDays(weekStart(), i))));
   let heads = '<div style="border-bottom:1px solid var(--hair)"></div>', cols = '';
@@ -1612,7 +1687,7 @@ function dayPanel(k) {
     <div class="day-h">
       <div class="row" style="align-items:flex-start;row-gap:6px"><div style="flex:1 0 auto"><div class="small muted">${warekiYear(d)}${k === TK ? '・今日' : ''}</div>
       <div class="dt">${mdw(d)}</div></div>
-      <div class="row day-acts"><button class="btn act-btn add-ev" data-act="addEvent" data-k="${k}">＋ 予定を追加</button>${k >= TK && isTemp() ? `<button class="btn act-btn" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn act-btn" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn act-btn" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn act-btn" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
+      <div class="row day-acts"><span class="ev-pair">${kgShown(k) && k >= TK ? `<button class="btn act-btn kg-open" data-act="kgOpen" data-k="${k}">＋ 祈願の予約</button>` : ''}<button class="btn act-btn add-ev" data-act="addEvent" data-k="${k}">＋ 予定を追加</button></span>${k >= TK && isTemp() ? `<button class="btn act-btn" data-act="tempToggle" data-k="${k}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === k) ? '出勤を取り消す' : '出勤を登録'}</button>` : ''}${k >= TK && !isGuji() && !isTemp() ? (S.leaves.some(l => l.staff === S.me && l.date === k) ? `<button class="btn act-btn" style="color:var(--blue);border-color:var(--blue)" data-act="quickLeave" data-k="${k}">休みを取り消す</button>` : `<button class="btn act-btn" data-act="quickLeave" data-k="${k}">休みを申告</button>`) : ''}<a class="btn act-btn" href="#/diary/${k}" style="text-decoration:none;color:inherit">日報${k <= TK ? (S.diary[k] ? 'を見る' : 'を書く') : ''}</a></div></div>
       <div class="meta">${wxs}${HOLIDAYS[k] ? `<span class="tag red">${HOLIDAYS[k]}</span>` : ''}</div>
       <div class="kfull">${kt.join('')}</div>
     </div>
@@ -1689,10 +1764,13 @@ function addEventModal(k, type = 'visit') {
   const visitors = [...new Set(S.visits.map(v => v.who))];
   modal(`<div class="modal-h"><h3>予定を追加</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
-    <div class="seg" style="margin-bottom:14px" id="evType" data-sai="${type === 'sai' ? '1' : ''}">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事'], ...(canSetTemp() ? [['temp', '臨時職員']] : [])].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
-    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付'})}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>開始（先方での開始）</label>${tsel('evStart', type === 'sai' ? '11:00' : '10:00')}</div><div class="field ev-time" ${type === 'temp' ? 'style="display:none"' : ''}><label>長さ</label>${dsel('evDur', type === 'sai' ? 30 : 60)}</div></div>
+    <div class="seg" style="margin-bottom:14px" id="evType" data-sai="${type === 'sai' ? '1' : ''}">${[['visit', '来訪者'], ['out', '外出'], ['sai', '祭典・行事'], ...(canKigan() ? [['kigan', '祈願']] : []), ...(canSetTemp() ? [['temp', '臨時職員']] : [])].map(([v, l]) => `<button class="${v === type ? 'on' : ''}" data-act="evType" data-v="${v}">${l}</button>`).join('')}</div>
+    <div class="grid3" style="grid-template-columns:1.4fr 1fr 1fr"><div class="field"><label>日付</label>${warekiField(k, {id: 'evDate', label: '日付', change: 'kgDate'})}</div><div class="field ev-time" ${['temp', 'kigan'].includes(type) ? 'style="display:none"' : ''}><label>開始（先方での開始）</label>${tsel('evStart', type === 'sai' ? '11:00' : '10:00')}</div><div class="field ev-time" ${['temp', 'kigan'].includes(type) ? 'style="display:none"' : ''}><label>長さ</label>${dsel('evDur', type === 'sai' ? 30 : 60)}</div></div>
     ${canSetTemp() ? `<div class="evsec" data-sec="temp" ${type !== 'temp' ? 'hidden' : ''}>
       <div class="field"><label>だれが</label><select class="input" id="twStaff">${TEMP_STAFF.map(t => `<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+    </div>` : ''}
+    ${canKigan() ? `<div class="evsec" data-sec="kigan" ${type !== 'kigan' ? 'hidden' : ''}>
+      <div id="kgForm">${(KG_CTX = kgNewCtx({ date: '' }), kgFormHtml(Object.assign(KG_CTX, { date: k })))}</div>
     </div>` : ''}
     <div class="evsec" data-sec="visit" ${type !== 'visit' ? 'hidden' : ''}>
       <div class="field"><label>来訪者（だれが来るか）</label><input class="input" id="vWho" list="vWhoList" placeholder="例：京都奉製、さわやか信用金庫"><datalist id="vWhoList">${visitors.map(v => `<option value="${esc(v)}">`).join('')}</datalist></div>
@@ -1744,12 +1822,223 @@ function noteCard(k, compact) {
     <div style="white-space:pre-wrap;margin-top:4px">${esc(n.text)}</div></div>`;
 }
 /* 祈願の件数：予約台帳の予約から自動で数える（外祭は除く）。本番は予約台帳とつながってから数え始める */
-const kiganOn = k => resOn(k).filter(r => r.type !== '外祭').length;
+const kiganOn = k => resOn(k).filter(r => r.type !== '外祭' && r.type !== '結婚式').length;
 const kiganMonth = k => { let n = 0; for (let d = new Date(parse(k).getFullYear(), parse(k).getMonth(), 1); key(d) <= k; d = addDays(d, 1)) n += kiganOn(key(d)); return n; };
 const kiganReady = () => !PROD || S.res.length > 0;
+/* ── 祈願・外祭・結婚式の予約（電話で受けたものを手で入れる。ネット予約ができるまで。2026-11-16 本人） ──
+   社務所の共用iPadで、だれでも迷わず入れられるように：日付を押す → その場で入力画面（時間ごとの空き・満員） → 空いている時間を押す
+   → 内容の見出しの横の「祈願／外祭／結婚式」を選び、内容をボタンで選んで名前を書き「登録する」。満員の時間は灰色で押せない。
+   祈願の1つの時間の上限は基本4組、日ごとに変えられる。結婚式は前後1時間に祈願・神事が入ると警告する */
+const KG_SLOTS = Array.from({ length: 13 }, (_, i) => tstr(600 + i * 30));   // 祈願は10:00〜16:00・30分ごと
+const KG_FREE = Array.from({ length: 29 }, (_, i) => tstr(360 + i * 30));    // 外祭・結婚式は 6:00〜20:00 から選ぶ
+const KG_TYPES = {   // 内容：よく出るものをボタンで並べ、ほかは「▼ ほか」で出す（2026-11-16 本人）
+  kigan: { label: '祈願', type: '個人祈祷', dur: 30, main: ['祈願成就', '初宮', '七五三', '厄祓', '交通安全', '安産', '社運隆昌', '合格成就'], more: ['開運厄除', '海上安全', '病気平癒', '身体健全', '学業成就', '工事安全', '必勝祈願', '方位除', '良縁祈願', '旅行安全'] },
+  gaisai: { label: '外祭', type: '外祭', dur: 60, main: ['地鎮祭', '家祓', '井戸祓', '神葬祭'], more: ['上棟祭', '竣工祭', '伐木祓'] },
+  wedding: { label: '結婚式', type: '結婚式', dur: 60 }
+};
+const kgKindOf = r => r.type === '外祭' ? 'gaisai' : r.type === '結婚式' ? 'wedding' : 'kigan';
+const kgInd = r => r.type === '個人祈祷' || r.type === '七五三';
+const kgCap = k => +((S.rules.kiganCapDays || {})[k]) || +S.rules.kiganCap || 4;
+const kgOn = (k, t) => resOn(k).filter(r => kgInd(r) && (!t || r.start === t));
+const kgStops = k => (S.rules.kiganStops || {})[k] || [];
+const kgStopped = (k, t) => kgStops(k).includes(t);
+const kgStopText = k => { const st = KG_SLOTS.filter(t => kgStopped(k, t)); if (!st.length) return ''; if (st.length === KG_SLOTS.length) return '終日'; const g = []; st.forEach(t => { const last = g[g.length - 1]; if (last && tmin(last[1]) === tmin(t)) last[1] = tstr(tmin(t) + 30); else g.push([t, tstr(tmin(t) + 30)]); }); return g.map(x => x[0] + '〜' + x[1]).join('、'); };
+const kgLeft = (k, t) => kgStopped(k, t) ? 0 : Math.max(0, kgCap(k) - kgOn(k, t).length);
+const kgFull = k => KG_SLOTS.every(t => !kgLeft(k, t)) && !KG_SLOTS.every(t => kgStopped(k, t));
+const kgClosed = k => { const s = seasonOf(k); if (!s) return ''; return s.mode === 'hou' ? '法人のみの日なので、個人祈願の予約は入れません' : s.mode === 'uke' ? '予約なし・受付順の日なので、予約は入れません' : s.mode === 'nok' ? '祈願はお休みの日です' : s.mode === 'off' ? '休みの日です' : ''; };
+const canKigan = () => typeof P === 'undefined' || !P.me || ['guji', 'staff', 'temp'].includes(P.me.role);
+const canKgCap = () => !isTemp() && (typeof P === 'undefined' || !P.me || ['guji', 'staff'].includes(P.me.role));
+const kgTapOpens = () => !PROD || P.deviceType === 'shared';   // 日付を押してすぐ入力画面を開くのは社務所の共用端末だけ。個人のMac・スマホはこれまでどおり予定が出る（予約はあまり入れないため。2026-11-16 本人）
+const kgShown = k => canKigan() && !kgClosed(k);
+const kgIe = n => /家$/.test(n) ? n : n + '家';
+const kgName = r => kgKindOf(r) === 'wedding' ? [r.name, r.name2].filter(Boolean).map(kgIe).join('・') : r.name ? (/様/.test(r.name) ? r.name : r.name + ' 様') : '名前まだ';
+const kgLabel = r => { const kd = kgKindOf(r); return kd === 'wedding' ? '結婚式' : kd === 'gaisai' ? '外祭 ' + (r.sub || '内容なし') : r.sub || (r.manual ? '内容なし' : r.type); };
+const kgWeddings = k => resOn(k).filter(r => r.type === '結婚式');
+const kgNearWedding = (k, t, dur = 30) => kgWeddings(k).find(w => tmin(t) < tmin(w.start) + (w.dur || 60) + 60 && tmin(t) + dur > tmin(w.start) - 60);
+const kgTimeOpts = (k, cur, self) => KG_SLOTS.map(t => { const L = kgLeft(k, t) + (self && self.date === k && self.start === t && kgInd(self) ? 1 : 0); return `<option value="${t}" ${t === cur ? 'selected' : ''} ${L ? '' : 'disabled'}>${t}${L ? '　残' + L + '組' : kgStopped(k, t) ? '　停止' : '　満員'}${L && kgNearWedding(k, t) ? '（結婚式の前後）' : ''}</option>`; }).join('');
+const kgFreeOpts = cur => KG_FREE.map(t => `<option ${t === cur ? 'selected' : ''}>${t}</option>`).join('');
+const kgDurOpts = cur => [[30, '30分'], [60, '1時間'], [90, '1時間半'], [120, '2時間'], [180, '3時間']].map(([m, l]) => `<option value="${m}" ${m === cur ? 'selected' : ''}>${l}</option>`).join('');
+const kgWishBtn = (w, sel) => `<button type="button" class="kg-wish${sel.includes(w) ? ' on' : ''}" data-act="kgWish" data-w="${w}">${w}</button>`;
+const kgSplit = w => String(w || '').split('・').map(x => x.trim()).filter(Boolean);   // 祈願はいくつでも選べる（「厄祓・交通安全」の形で持つ。2026-11-16 本人）
+
+/* 入力の中身（内容の見出しの横に「祈願／外祭／結婚式」の切り替え）。KG_CTX：いま開いている入力の状態 */
+let KG_CTX = null;
+function kgFormHtml(c) {
+  const T = KG_TYPES[c.kind], tabs = Object.entries(KG_TYPES).map(([v, x]) => `<button type="button" class="${v === c.kind ? 'on' : ''}" data-act="kgKind" data-v="${v}">${x.label}</button>`).join('');
+  const date = c.date || (document.getElementById('evDate') || {}).value || selDay;
+  // 時間表から開いたときは、押した時間を日付の横に出す（選び直させない。2026-11-16 本人）。外祭・結婚式は長さだけ選ぶ
+  const dur = `<div class="field"><label>長さ</label><select class="input kg-big" id="kgDur">${kgDurOpts(c.dur || T.dur)}</select></div>`;
+  const time = c.fixed ? (c.kind === 'kigan' ? '' : `<div class="grid2">${dur}</div>`)
+    : c.kind === 'kigan' ? `<div class="field"><label>時間（灰色は満員で選べません）</label><select class="input kg-big" id="kgTime">${kgTimeOpts(date, c.t, c.self)}</select></div>`
+    : `<div class="grid2"><div class="field"><label>${c.kind === 'wedding' ? '式の始まり' : '始まり'}</label><select class="input kg-big" id="kgTime">${kgFreeOpts(c.t || '10:00')}</select></div>${dur}</div>`;
+  const sel = c.kind === 'kigan' ? kgSplit(c.wish) : (c.wish ? [c.wish] : []), known = T.main ? [...T.main, ...T.more] : [];
+  const more = T.main ? sel.some(x => !T.main.includes(x)) : false, other = sel.filter(x => !known.includes(x)).join('・');
+  const content = c.kind === 'wedding'
+    ? `<div class="small muted" style="margin-bottom:12px">結婚式の前後1時間に祈願や神事が入っていると、登録のときに知らせます。</div>`
+    : `<div class="kg-wishes">${T.main.map(w => kgWishBtn(w, sel)).join('')}</div>
+      <button type="button" class="kg-more-btn" data-act="kgMore" aria-expanded="${more}">${more ? `▲ ほかの${T.label}をしまう` : `▼ ほかの${T.label}`}</button>
+      <div id="kgMore" ${more ? '' : 'hidden'}><div class="kg-wishes">${T.more.map(w => kgWishBtn(w, sel)).join('')}</div>
+      <input class="input" id="kgWishTx" placeholder="その他" value="${esc(other)}" style="margin-top:8px"></div><input type="hidden" id="kgWish" value="${esc(sel.filter(x => known.includes(x)).join('・'))}">`;
+  const names = c.kind === 'wedding'
+    ? `<div class="grid2"><div class="field"><label>新郎側のお家</label><input class="input kg-big" id="kgName" value="${esc(c.name || '')}" placeholder="例：山田" autocomplete="off"></div><div class="field"><label>新婦側のお家</label><input class="input kg-big" id="kgName2" value="${esc(c.name2 || '')}" placeholder="例：佐藤" autocomplete="off"></div></div>`
+    : `<div class="field"><label>お名前</label><input class="input kg-big" id="kgName" value="${esc(c.name || '')}" placeholder="例：やまだ" autocomplete="off"></div>`;
+  return `<div class="kg-kindrow"><b>${c.kind === 'wedding' ? '結婚式' : T.label + 'の内容'}</b><div class="seg kg-kinds">${tabs}</div></div>
+    <div class="field" style="margin-bottom:6px">${content}</div>${time}${names}`;
+}
+/* いま書いてある内容を KG_CTX に写す（切り替え・戻るときに消えないように） */
+function kgGrab() {
+  const c = KG_CTX; if (!c) return;
+  const g = id => { const el = document.getElementById(id); return el ? el.value : undefined; };
+  if (g('kgName') !== undefined) c.name = g('kgName').trim();
+  if (g('kgName2') !== undefined) c.name2 = g('kgName2').trim();
+  if (g('kgTime') !== undefined) c.t = g('kgTime');
+  if (g('kgDur') !== undefined) c.dur = +g('kgDur');
+  if (g('kgWish') !== undefined) c.wish = c.kind === 'kigan' ? [...kgSplit(g('kgWish')), ...kgSplit(g('kgWishTx'))].filter((x, i, a) => a.indexOf(x) === i).join('・') : ((g('kgWishTx') || '').trim() || g('kgWish')).trim();
+  const d = document.getElementById('evDate'); if (d && !c.fixedDate) c.date = d.value;
+}
+function kgSetKind(v) {
+  kgGrab(); const c = KG_CTX; if (!c || c.kind === v) return;
+  c.kind = v; c.wish = ''; c.dur = KG_TYPES[v].dur;
+  if (v === 'kigan' && !c.fixed && !KG_SLOTS.includes(c.t)) c.t = '';
+  const box = document.getElementById('kgForm'); if (box) box.innerHTML = kgFormHtml(c);
+}
+/* 入力の画面 */
+function kgFormModal(c) {
+  KG_CTX = c; c.fixedDate = true;
+  const edit = !!c.id;
+  modal(`<div class="modal-h">${c.fromDay ? `<button class="btn kg-back" data-act="kgOpen" data-k="${c.date}">← 時間を選び直す</button>` : `<h3>${edit ? '予約を編集' : '予約を入れる'}</h3>`}<span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b"><div class="kg-when">${mdw(parse(c.date))}${c.fixed ? '　' + c.t : ''}</div><div id="kgForm">${kgFormHtml(c)}</div>
+    ${edit && c.by ? `<div class="small muted">入れた人：${esc(hostName(c.by) || c.by)}</div>` : ''}</div>
+  <div class="modal-f">${edit ? `<button class="btn" style="color:var(--red)" data-act="kgDel" data-id="${c.id}">取り消す</button><span class="sp"></span>` : ''}<button class="btn kg-btn" data-act="closeModal">やめる</button><button class="btn pri kg-btn" data-act="kgSave">${edit ? '保存する' : '登録する'}</button></div>`);
+}
+const kgNewCtx = (o = {}) => Object.assign({ kind: 'kigan', date: '', t: '', fixed: false, wish: '', name: '', name2: '', dur: 30 }, o);
+function kiganModal(k, t) { kgFormModal(kgNewCtx({ date: k, t, fixed: true, fromDay: true })); }
+function kgDetailModal(r) {
+  if (r.date < TK) {   // 過ぎた予約は見るだけ（取り消しはできる）
+    return modal(`<div class="modal-h"><h3>予約</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+    <div class="modal-b"><div class="kg-when">${mdw(parse(r.date))}　${r.start}</div><p style="font-size:20px"><b>${esc(kgLabel(r))}</b>　${esc(kgName(r))}</p></div>
+    <div class="modal-f"><button class="btn" style="color:var(--red)" data-act="kgDel" data-id="${r.id}">取り消す</button><span class="sp"></span><button class="btn" data-act="closeModal">閉じる</button></div>`);
+  }
+  kgFormModal(kgNewCtx({ id: r.id, kind: kgKindOf(r), date: r.date, t: r.start, dur: r.dur, wish: r.sub || '', name: r.name || '', name2: r.name2 || '', by: r.by, self: r }));
+}
+
+/* 登録：名前 → 満員 → 内容なしの確認 → 結婚式の前後の確認 → 保存 */
+let KG_PENDING = null;
+function kgSaveForm() {
+  kgGrab(); const c = KG_CTX; if (!c) return;
+  const date = c.date, t = c.t, kind = c.kind, dur = kind === 'kigan' ? 30 : (c.dur || KG_TYPES[kind].dur);
+  if (!date) return toast('日付を選んでください');
+  if (!t) return toast('時間を選んでください');
+  if (!c.name || (kind === 'wedding' && !c.name2)) { toast(kind === 'wedding' ? '両家のお名前を入れてください' : 'お名前を入れてください'); document.getElementById(!c.name ? 'kgName' : 'kgName2')?.focus(); return; }   // 名前は必ず入れる（2026-11-16 本人）
+  if (kind === 'kigan') {
+    if (kgClosed(date)) return toast(kgClosed(date));
+    const self = c.id ? S.res.find(r => r.id === c.id) : null;
+    if (!(self && kgInd(self) && self.date === date && self.start === t) && !kgLeft(date, t)) return toast(`${t}は満員です。ほかの時間を選んでください`);
+  }
+  KG_PENDING = { id: c.id || '', kind, date, t, dur, wish: kind === 'wedding' ? '' : c.wish, name: c.name, name2: kind === 'wedding' ? c.name2 : '', okNoWish: false, okNear: false };
+  kgProceed();
+}
+function kgConflicts(p) {
+  const s = tmin(p.t), e = s + p.dur, out = [];
+  const others = resOn(p.date).filter(r => r.id !== p.id);
+  if (p.kind === 'wedding') {   // 結婚式の前後1時間に入っている祈願・外祭・祭典
+    const ws = s - 60, we = e + 60, hit = (a, d) => tmin(a) < we && tmin(a) + (d || 30) > ws;
+    others.filter(r => hit(r.start, r.dur)).forEach(r => out.push(`${r.start}　${kgLabel(r)}　${kgName(r)}`));
+    ritualsOn(p.date).filter(r => !r.allDay && hit(r.start, r.dur)).forEach(r => out.push(`${r.start}　${r.name}`));
+  } else {   // 祈願・外祭が、結婚式の前後1時間に入る
+    others.filter(r => r.type === '結婚式').forEach(w => { const ws = tmin(w.start) - 60, we = tmin(w.start) + (w.dur || 60) + 60; if (s < we && e > ws) out.push(`結婚式 ${w.start}〜（${kgName(w)}）の前後1時間`); });
+  }
+  return out;
+}
+function kgProceed() {
+  const p = KG_PENDING; if (!p) return;
+  const lb = KG_TYPES[p.kind].label, who = `${mdw(parse(p.date))} ${p.t}　${esc(p.kind === 'wedding' ? [p.name, p.name2].map(kgIe).join('・') : p.name + ' 様')}`;
+  if (p.kind !== 'wedding' && !p.wish && !p.okNoWish) {   // 内容がないときは確かめてから、内容なしのまま登録できる（2026-11-16 本人）
+    return modal(`<div class="modal-h"><h3>${lb}の内容が登録されていません</h3></div>
+    <div class="modal-b"><p style="font-size:17px;line-height:1.8">${who}<br>${lb}の内容が登録されていませんが、よろしいですか？</p></div>
+    <div class="modal-f" style="flex-direction:column;align-items:stretch;gap:8px"><button class="btn pri kg-btn" data-act="kgOkNoWish">登録</button><button class="btn kg-btn" data-act="kgBackToForm">戻る</button></div>`);
+  }
+  const cf = p.okNear ? [] : kgConflicts(p);
+  if (cf.length) {   // 結婚式の前後1時間に祈願・神事がある（2026-11-16 本人）
+    return modal(`<div class="modal-h"><h3 style="color:var(--warn)">結婚式の前後1時間に重なっています</h3></div>
+    <div class="modal-b"><p style="font-size:16px;line-height:1.8">${who}　${esc(lb)}</p><ul class="mini-list" style="margin:10px 0">${cf.map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="small muted">結婚式は前後1時間が必要です。このまま登録してよいですか？</p></div>
+    <div class="modal-f" style="flex-direction:column;align-items:stretch;gap:8px"><button class="btn pri kg-btn" data-act="kgOkNear">このまま登録する</button><button class="btn kg-btn" data-act="kgBackToForm">戻って直す</button></div>`);
+  }
+  kgCommit();
+}
+function kgCommit() {
+  const p = KG_PENDING; KG_PENDING = null; if (!p) return;
+  const old = p.id ? S.res.find(r => r.id === p.id) : null;
+  const v = { start: p.t, dur: p.dur, type: KG_TYPES[p.kind].type, kind: p.kind, sub: p.wish, name: p.name, name2: p.name2 };
+  if (old) Object.assign(old, v);
+  else S.res.push(Object.assign({ id: 'kg' + Date.now(), date: p.date, memo: '', people: 0, by: S.me, at: Date.now(), manual: true }, v));
+  selDay = p.date; calCursor = new Date(parse(p.date).getFullYear(), parse(p.date).getMonth(), 1);
+  const r = old || S.res[S.res.length - 1];
+  save(); closeModal(); render(); toast(`${old ? '保存しました' : '登録しました'}：${md(parse(p.date))} ${p.t} ${kgLabel(r)}　${kgName(r)}`);
+}
+function kgBackToForm() {
+  const p = KG_PENDING; KG_PENDING = null;
+  if (!KG_CTX) return closeModal();
+  if (p) Object.assign(KG_CTX, { kind: p.kind, date: p.date, t: p.t, dur: p.dur, wish: p.wish, name: p.name, name2: p.name2 });
+  kgFormModal(KG_CTX);
+}
+
+/* 日付を押すと開く：祈願の時間ごとの空き・満員と、入っている予約。空いている時間を押すと入力の画面へ */
+function kgDayModal(k) {
+  const all = kgOn(k), times = [...new Set([...KG_SLOTS, ...all.map(r => r.start)])].sort((a, b) => tmin(a) - tmin(b));
+  const ext = resOn(k).filter(r => !kgInd(r));   // 外祭・結婚式など
+  const cells = times.map(t => {
+    const es = kgOn(k, t), L = kgLeft(k, t), slot = KG_SLOTS.includes(t), wed = kgNearWedding(k, t);
+    return `<div class="kg-cell${slot && !L ? ' full' : ''}${kgStopped(k, t) ? ' stop' : ''}${wed ? ' wed' : ''}">
+      ${slot && L ? `<button class="kg-slot" data-act="kgAdd" data-k="${k}" data-t="${t}"><b>${t}</b><span>残${L}組${wed ? '・結婚式の前後' : ''}</span></button>` : `<div class="kg-slot off"><b>${t}</b><span>${!slot ? '枠の外' : kgStopped(k, t) ? '停止' : '満員'}</span></div>`}
+      ${es.length ? `<div class="kg-ents">${es.map(r => `<button class="kg-ent" data-act="evDetail" data-kind="kigan" data-id="${r.id}"><b>${esc(kgLabel(r))}</b> ${esc(kgName(r))}</button>`).join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  modal(`<div class="modal-h"><h3>${mdw(parse(k))}　予約</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">
+    ${ext.length ? `<div class="kg-ext">${ext.map(r => `<button class="kg-ent ${kgKindOf(r)}" data-act="evDetail" data-kind="${kgKindOf(r)}" data-id="${r.id}"><b>${r.start} ${esc(kgLabel(r))}</b> ${esc(kgName(r))}</button>`).join('')}</div>` : ''}
+    <div class="row small muted" style="margin-bottom:10px;gap:8px;flex-wrap:wrap"><span class="sp"></span>${canKgCap() ? `<button class="btn sm" style="color:var(--text)" data-act="kgCap" data-k="${k}">祈願の上限と停止</button>` : ''}</div>
+    <div class="kg-grid">${cells}</div></div>
+  <div class="modal-f"><span class="small muted">この日の祈願 ${all.length}件</span><span class="sp"></span><button class="btn kg-btn" data-act="addEvent" data-k="${k}">＋ 予定を追加</button><button class="btn kg-btn" data-act="kgClose">閉じる</button></div>`, 'wide');
+}
+function kgCapModal(k, f, t) {
+  f = f || k; t = t || f;
+  const cur = kgCap(f), base = +S.rules.kiganCap || 4;
+  const big = 'style="min-width:72px;min-height:52px;font-size:18px"';
+  const tOpts = (id, v, end) => `<select class="input kg-big" id="${id}">${KG_SLOTS.map(x => end ? tstr(tmin(x) + 30) : x).map(x => `<option ${x === v ? 'selected' : ''}>${x}</option>`).join('')}</select>`;
+  const st = kgStopText(f);
+  modal(`<div class="modal-h"><h3>祈願の上限と停止</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b">
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">${warekiField(f, {id: 'kgcFrom', label: 'はじめの日', change: 'kgcFrom'})}<span>〜</span>${warekiField(t, {id: 'kgcTo', label: 'おわりの日'})}</div>
+    <h4 style="margin:18px 0 8px">上限（1つの時間に入れる組数）</h4>
+    <div class="row" style="gap:8px;flex-wrap:wrap;align-items:center">
+      <button class="btn${cur === base ? ' pri' : ''}" ${big} data-act="kgCapSet" data-n="${base}">${base}組</button>
+      <button class="btn${cur === 8 && base !== 8 ? ' pri' : ''}" ${big} data-act="kgCapSet" data-n="8">8組</button>
+      <span class="small muted">ほか</span><input class="input kg-big" id="kgcN" type="number" min="1" max="30" inputmode="numeric" style="width:80px" value="${cur !== base && cur !== 8 ? cur : ''}"><span>組</span>
+      <button class="btn" data-act="kgCapSet">決める</button>
+    </div>
+    <div class="small muted" style="margin-top:6px">${f === t ? mdw(parse(f)) : md(parse(f)) + '〜' + md(parse(t))}の上限：${cur}組（${base}組がふだん）</div>
+    <h4 style="margin:22px 0 8px">祈願の停止</h4>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">${tOpts('kgcS', KG_SLOTS[0])}<span>〜</span>${tOpts('kgcE', tstr(tmin(KG_SLOTS[KG_SLOTS.length - 1]) + 30), true)}</div>
+    <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn kg-stop" ${big} data-act="kgStop" data-on="1">祈願停止</button><button class="btn" ${big} data-act="kgStop" data-on="">停止をやめる</button></div>
+    <div class="small muted" style="margin-top:6px">${st ? `${mdw(parse(f))}は ${st} が停止中` : `${mdw(parse(f))}は停止なし`}</div>
+  </div>
+  <div class="modal-f"><span class="sp"></span><button class="btn kg-btn" data-act="kgCapBack" data-k="${k}">戻る</button></div>`);
+  KG_CAP_K = k;
+}
+let KG_CAP_K = '';
+/* 上限・停止の期間（はじめ〜おわり）を読む。おわりがはじめより前なら入れ替える。長すぎる期間は押し間違いとみなす */
+function kgRange() {
+  let f = val('kgcFrom'), t = val('kgcTo') || f;
+  if (!f) { toast('日付を選んでください'); return null; }
+  if (t < f) [f, t] = [t, f];
+  const ds = []; for (let d = parse(f); key(d) <= t; d = addDays(d, 1)) ds.push(key(d));
+  if (ds.length > 120) { toast('期間が長すぎます（120日まで）'); return null; }
+  return { f, t, ds };
+}
 function autoInfo(k) {
   const d = parse(k), ky = KOYOMI.get(d), w = wxOf(k), s = seasonOf(k), e = S.diary[k];
-  const rs = resOn(k).filter(r => r.type !== '外祭');
+  const rs = resOn(k).filter(r => r.type !== '外祭' && r.type !== '結婚式');
   const wx = e && e.wx ? e.wx : w;
   return { d, ky, wx, s, kigan: rs.length || (e ? e.kigan : 0), visits: visitsOn(k).length, juyo: e ? e.juyo : (k === TK ? 64 : null) };
 }
@@ -2810,8 +3099,14 @@ const ACT = {
     const d = parse(selDay);
     if (S.ui.calView === 'month' && (d.getMonth() !== calCursor.getMonth())) { calCursor = new Date(d.getFullYear(), d.getMonth(), 1); render(); }
     else { document.querySelectorAll('.cell.sel,.wk-h.sel').forEach(c => c.classList.remove('sel')); el.classList.add('sel'); rerenderDay(); }
+    // 日付を押すとその場で祈願の予約を入れられる（2026-11-16 本人）。そのときは下のその日の欄へは動かさず、閉じたときに動かす
+    const kgDay = el.classList.contains('cell') && selDay >= TK && canKigan() && kgTapOpens();
+    if (kgDay && !kgClosed(selDay)) return kgDayModal(selDay);
+    if (kgDay) toast(kgClosed(selDay));   // 予約を入れない日は、開かない理由を出す
     if (window.innerWidth <= 1080) document.getElementById('dayPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   },
+  kgClose() { closeModal(); if (window.innerWidth <= 1080) document.getElementById('dayPanel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
+  kgOpen(el) { kgDayModal(el.dataset.k); },
   calMove(el) {
     const n = +el.dataset.n;
     if (S.ui.calView === 'month') calCursor = new Date(calCursor.getFullYear(), calCursor.getMonth() + n, 1);
@@ -2858,10 +3153,45 @@ const ACT = {
   addOutStaff() { const used = [...document.querySelectorAll('.oStaffSel')].map(x => x.value); const next = HOSTS.find(h => !used.includes(h.id)); if (!next) return toast('全員選ばれています'); document.getElementById('oStaffList').insertAdjacentHTML('beforeend', outStaffRow(next.id, true)); },
   delOutStaff(el) { el.closest('.row').remove(); },
   addEvent(el) { addEventModal(el.dataset.k || selDay); },
-  evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); document.querySelectorAll('.ev-time').forEach(x => x.style.display = el.dataset.v === 'temp' ? 'none' : ''); { const ds = document.getElementById('evStart'), dd = document.getElementById('evDur'), sai = el.dataset.v === 'sai', was = el.parentElement.dataset.sai === '1'; el.parentElement.dataset.sai = sai ? '1' : ''; if (ds && dd && sai !== was) { ds.value = sai ? '11:00' : '10:00'; dd.value = sai ? '30' : '60'; } } },   // 日中の祭典は11:00・30分から（2026-11-12 本人）
+  /* 祈願の予約 */
+  kgAdd(el) { kiganModal(el.dataset.k, el.dataset.t); },
+  kgMore(el) { const m = document.getElementById('kgMore'), open = m.hidden, lb = KG_TYPES[(KG_CTX || {}).kind || 'kigan'].label; m.hidden = !open; el.setAttribute('aria-expanded', open); el.textContent = open ? `▲ ほかの${lb}をしまう` : `▼ ほかの${lb}`; },
+  kgWish(el) {   // 祈願はいくつでも（押すたびに付け外し）、外祭は1つだけ
+    if ((KG_CTX || {}).kind === 'kigan') { el.classList.toggle('on'); document.getElementById('kgWish').value = [...document.querySelectorAll('.kg-wish.on')].map(b => b.dataset.w).join('・'); return; }
+    document.querySelectorAll('.kg-wish').forEach(b => b.classList.toggle('on', b === el)); document.getElementById('kgWish').value = el.dataset.w; const tx = document.getElementById('kgWishTx'); if (tx) tx.value = '';
+  },
+  kgKind(el) { kgSetKind(el.dataset.v); },
+  kgSave() { kgSaveForm(); },
+  kgOkNoWish() { if (KG_PENDING) { KG_PENDING.okNoWish = true; kgProceed(); } },
+  kgOkNear() { if (KG_PENDING) { KG_PENDING.okNear = true; kgProceed(); } },
+  kgBackToForm() { kgBackToForm(); },
+  kgDel(el) { const id = el.dataset.id; askConfirm('この予約を取り消しますか？', () => { S.res = S.res.filter(r => r.id !== id); save(); closeModal(); render(); toast('取り消しました'); }, '取り消す'); },
+  kgCap(el) { kgCapModal(el.dataset.k); },
+  kgCapSet(el) {
+    const R = kgRange(); if (!R) return;
+    const n = el.dataset.n ? +el.dataset.n : Math.round(+val('kgcN'));
+    if (!(n >= 1 && n <= 30)) return toast('組数を入れてください（1〜30）');
+    const base = +S.rules.kiganCap || 4, days = S.rules.kiganCapDays = Object.assign({}, S.rules.kiganCapDays);
+    R.ds.forEach(d => { if (n === base) delete days[d]; else days[d] = n; });
+    save(); render(); kgCapModal(KG_CAP_K, R.f, R.t);
+    toast(`${R.f === R.t ? md(parse(R.f)) : md(parse(R.f)) + '〜' + md(parse(R.t))}は1つの時間に${n}組までにしました`);
+  },
+  kgStop(el) {
+    const R = kgRange(); if (!R) return;
+    const a = tmin(val('kgcS')), b = tmin(val('kgcE')), on = !!el.dataset.on;
+    if (b <= a) return toast('おわりの時間をはじめより後にしてください');
+    const ts = KG_SLOTS.filter(x => tmin(x) >= a && tmin(x) < b);
+    const stops = S.rules.kiganStops = Object.assign({}, S.rules.kiganStops);
+    R.ds.forEach(d => { const cur = new Set(stops[d] || []); ts.forEach(x => on ? cur.add(x) : cur.delete(x)); if (cur.size) stops[d] = KG_SLOTS.filter(x => cur.has(x)); else delete stops[d]; });
+    save(); render(); kgCapModal(KG_CAP_K, R.f, R.t);
+    toast(`${val('kgcS')}〜${val('kgcE')}の祈願を${on ? '停止しました' : '再開しました'}`);
+  },
+  kgCapBack(el) { kgDayModal(el.dataset.k); },
+  evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); document.querySelectorAll('.ev-time').forEach(x => x.style.display = ['temp', 'kigan'].includes(el.dataset.v) ? 'none' : ''); { const ds = document.getElementById('evStart'), dd = document.getElementById('evDur'), sai = el.dataset.v === 'sai', was = el.parentElement.dataset.sai === '1'; el.parentElement.dataset.sai = sai ? '1' : ''; if (ds && dd && sai !== was) { ds.value = sai ? '11:00' : '10:00'; dd.value = sai ? '30' : '60'; } } },   // 日中の祭典は11:00・30分から（2026-11-12 本人）
   saveEvent() {
     const type = document.querySelector('#evType .on').dataset.v, date = val('evDate'), start = val('evStart'), dur = +val('evDur');
     if (!date) return toast('日付を選んでください');
+    if (type === 'kigan') return ACT.kgSave();
     if (type === 'visit') { const who = val('vWho'); if (!who) return toast('来訪者を入れてください'); S.visits.push({ id: 'v' + Date.now(), date, start, dur, who, purpose: val('vPurpose'), host: val('vHost') }); }
     if (type === 'out') { const place = val('oPlace'); if (!place) return toast('行き先を入れてください'); const staffs = [...new Set([...document.querySelectorAll('.oStaffSel')].map(x => x.value))]; const travel = Math.max(0, +val('oTravel') || 0), buffer = Math.max(0, val('oBuffer') === '' ? 15 : +val('oBuffer')); if (travel) S.places[place] = travel; S.outings.push({ id: 'o' + Date.now(), date, start, dur, staff: staffs[0], staffs, place, purpose: val('oPurpose'), travel, buffer }); }
     if (type === 'temp') {
@@ -2883,6 +3213,8 @@ const ACT = {
     if (kind === 'visit') { const v = S.visits.find(x => x.id === id); html = `<p><b style="font-size:18px">${esc(v.who)}</b></p><p class="muted">${mdw(parse(v.date))} ${v.start}〜${tstr(tmin(v.start) + v.dur)}</p><p>用件：${esc(v.purpose || '—')}</p><p>対応：${v.host ? hostName(v.host) : '未定'}</p>`; del = true; }
     else if (kind === 'out') { const o = S.outings.find(x => x.id === id), t = outTimes(o); html = `<p><b style="font-size:18px">${outStaff(o).map(id => hostName(id) + 'さん').join('・')} → ${esc(o.place)}</b></p><p class="muted">${mdw(parse(o.date))}</p>${t.travel ? `<p>出発 <b>${tstr(t.depart)}</b>（移動${t.travel}分＋余裕${t.buffer}分）</p>` : ''}<p>先方 ${o.start}〜${tstr(t.end)}${t.direct ? '（17:00を過ぎるので直帰）' : ''}</p>${t.travel ? '' : '<p class="small muted">移動時間が入っていないので、出発時刻は出していません。</p>'}<p>用件：${esc(o.purpose || '—')}</p>`; del = true; }
     else if (kind === 'sai') { const r = S.rituals.find(x => x.id === id); html = `<p><b style="font-size:18px">${esc(r.name)}</b></p><p class="muted">${ritualWhen(r)} ${r.allDay ? '終日' : r.start + '〜' + tstr(tmin(r.start) + r.dur)}</p>${r.repeat !== 'once' ? '<p class="small muted">繰り返しの祭典は「時期・祭典の設定」で変更します。</p>' : ''}`; del = r.repeat === 'once'; }
+    else if (id.startsWith('grp|')) { const [, gk, gt] = id.split('|'); return kgGroupModal(gk, gt); }   // まとめた個人祈願
+    else if ((S.res.find(x => x.id === id) || {}).manual) return kgDetailModal(S.res.find(x => x.id === id));   // 手で入れた祈願・外祭・結婚式
     else { const r = S.res.find(x => x.id === id); if (r.type === '外祭' || r.type === '企業・団体') return applicationForm(r); html = `<p><b style="font-size:18px">${esc(r.type)}${r.sub ? '（' + esc(r.sub) + '）' : ''}</b></p><p class="muted">${mdw(parse(r.date))} ${r.start}〜${tstr(tmin(r.start) + r.dur)}</p><p>${esc(r.name)}${r.people ? '・' + r.people + '名' : ''}${r.place ? '・' + esc(r.place) : ''}</p><p class="small muted">予約の変更は予約台帳（次の段階で作成）で行います。</p>`; }
     modal(`<div class="modal-h"><h3>予定の詳細</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div><div class="modal-b" style="line-height:1.9">${html}</div><div class="modal-f">${del ? `<button class="btn" style="color:var(--red)" data-act="delEvent" data-kind="${kind}" data-id="${id}">削除</button><span class="sp"></span>` : ''}<button class="btn pri" data-act="closeModal">閉じる</button></div>`);
   },
@@ -3176,6 +3508,8 @@ const ACT = {
   reset() { askConfirm('入力した内容を消して、仮データに戻しますか？', () => { try { localStorage.removeItem(STORE_KEY); } catch (e) { } const ses = S.session; S = seed(); S.session = ses; save(); closeModal(); render(); toast('仮データに戻しました'); }); }
 };
 const CHG = {
+  kgcFrom(el) { const f = el.value; let t = val('kgcTo'); if (!t || t < f) t = f; kgCapModal(KG_CAP_K, f, t); },   // はじめの日を変えたら、その日の上限・停止中を出し直す
+  kgDate(el) { const s = document.getElementById('kgTime'); if (KG_CTX) KG_CTX.date = el.value; if (s && (!KG_CTX || KG_CTX.kind === 'kigan')) s.innerHTML = kgTimeOpts(el.value, s.value); },   // 予定を追加で日付を変えたら、満員の時間を出し直す
   diaryDate(el) { if (el.value) location.hash = '#/diary/' + el.value; },
   orderQty(el) { S.order = S.order || {}; S.order[el.dataset.id] = Math.max(0, parseInt(el.value, 10) || 0); save(); render(); },
   rule(el) { S.rules[el.dataset.t][el.dataset.f] = Math.max(0, parseInt(el.value, 10) || 0); save(); },
@@ -3315,6 +3649,9 @@ function fromServer(d, me) {
   const tm = v => { const t = String(v ?? ''); return /^\d{2}:\d{2}$/.test(t) ? t : /^\d:\d{2}$/.test(t) ? '0' + t : '00:00'; };
   st.visits = (d.visits || []).map(r => ({ id: r.id, date: r.date, start: tm(r.start), dur: num(r.dur) || 60, who: r.who, purpose: r.purpose || '', host: r.host || '' }));
   st.outings = (d.outings || []).map(r => ({ id: r.id, date: r.date, start: tm(r.start), dur: num(r.dur) || 60, staff: r.staff, staffs: r.staffs || [r.staff], place: r.place, purpose: r.purpose || '', travel: num(r.travel) || 0, buffer: num(r.buffer) ?? 15 }));
+  // 個人祈願の予約（手で入れたもの）。カレンダー・日報の件数は S.res から数えるので、同じ形にして入れる
+  const KT = { kigan: '個人祈祷', gaisai: '外祭', wedding: '結婚式' };   // 祈願・外祭・結婚式
+  st.res = (d.kigan || []).map(r => { const kind = KT[r.kind] ? r.kind : 'kigan'; return { id: r.id, date: r.date, start: tm(r.start), dur: num(r.dur) || (kind === 'kigan' ? 30 : 60), type: KT[kind], kind, sub: r.wish || '', name: r.name || '', name2: r.name2 || '', memo: r.memo || '', by: r.by || '', at: num(r.at) || 0, manual: true }; });
   st.rituals = (d.rituals || []).map(r => ({ id: r.id, name: r.name, repeat: r.repeat, day: num(r.day), month: num(r.month), nth: num(r.nth), wd: num(r.wd), date: r.repeat === 'monthly' ? undefined : r.date || undefined, skip: r.repeat === 'monthly' ? String(r.date || '').split(',').filter(Boolean).map(Number) : undefined, start: tm(r.start) || '00:00', dur: num(r.dur) || 0, allDay: yes(r.allDay) }));
   st.seasons = {}; (d.seasons || []).forEach(r => st.seasons[r.id] = r.type);
   (d.weather || []).forEach(([t, code, tmax, tmin, prec, cloud]) => { if (!WX[t]) WX[t] = { code, tmax, tmin, prec, cloud, real: true }; });   // 受け口に記録した天気
@@ -3339,7 +3676,7 @@ function fromServer(d, me) {
   st.stock = stockFromLog(st.items, st.stockLog);
   st.shogatsu = {}; (d.shogatsu || []).forEach(r => { if (r.data != null) st.shogatsu[r.id] = r.data; });   // 正月（宮司・職員だけに届く）
   // 第一弾で使わないもの（空のまま）
-  Object.assign(st, { res: [], tasks: [], inbox: [], events: [], suppliers: [], analytics: {}, seasonal: [], seasonShifts: {}, order: {}, nextDelivery: key(addDays(TODAY, 60)) });
+  Object.assign(st, { tasks: [], inbox: [], events: [], suppliers: [], analytics: {}, seasonal: [], seasonShifts: {}, order: {}, nextDelivery: key(addDays(TODAY, 60)) });
   // ログインしている人
   const role = ['guji', 'staff', 'temp'].includes(me.role) ? 'staff' : 'baito';
   st.me = me.id;
@@ -3380,6 +3717,7 @@ function toRows(st) {
   R.items = st.items.map(i => ({ id: i.id, name: i.name, cat: i.cat || '', price: i.price || 0, perBox: i.perBox ?? '', perCase: i.perCase ?? '', big: !!i.big, ord: i.ord ?? 999, active: i.active !== false }));
   R.stockLog = st.stockLog.map(l => ({ id: l.id, item: l.item, date: l.date, type: l.type, boxes: l.boxes, note: l.note || '' }));
   R.shogatsu = Object.entries(st.shogatsu || {}).map(([id, data]) => ({ id, data }));
+  R.kigan = (st.res || []).filter(r => r.manual).map(r => ({ id: r.id, date: r.date, start: r.start, dur: r.dur || 30, kind: r.kind || 'kigan', wish: r.sub || '', name: r.name || '', name2: r.name2 || '', memo: r.memo || '', by: r.by || '', at: r.at || '' }));
   R.jkNotes = (st.jkNotes || []).map(n => ({ id: n.id, team: n.team, body: n.body, by: n.by, at: n.at, until: n.until || '' }));
   R.jokin = [...st.regulars.map(p => ({ id: p.id, name: p.name, kana: p.kana || '', tel: p.tel || '', team: 'shuin', days: (p.days || []).join(','), note: p.note || '', color: p.color || '', at: p.at || '' })),
     ...['reitaisai', 'shichigosan'].flatMap(t => (st.seasonMembers[t] || []).map(m => ({ id: m.id, name: m.name, kana: m.kana || '', tel: m.tel || '', team: t, days: '', note: m.note || '', color: m.color || '', at: m.at || '' })))];
@@ -3510,7 +3848,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116173408';
+const BUILD = '20261116191203';
 const REJI_PAGE = true;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -3656,7 +3994,7 @@ function vAdmin() {
     </div>
     ${ADM.invites.length ? `<h4 class="small muted" style="margin:14px 0 6px">使われていない招待コード</h4><ul class="mini-list">${ADM.invites.map(i => `<li>${esc(i.label || '—')}<span class="small muted">${i.type === 'register' ? 'レジ' : i.type === 'shared' ? '共有' : esc(nameOf(i.userId))}・${fmt(i.expires)}まで</span></li>`).join('')}</ul>` : ''}`;
   } else {
-    const TB = { leaves: '休み', tempWork: '臨時職員の出勤', visits: '来訪者', outings: '外出', rituals: '祭典', seasons: '時期', board: '掲示板', reads: '既読', manual: 'マニュアル', diary: '日報', shifts: 'シフト', extraNeed: '追加の人数', requests: '希望シフト', seasonReq: '巫女の希望', draft: 'シフトの下書き', settings: '設定' };
+    const TB = { leaves: '休み', tempWork: '臨時職員の出勤', visits: '来訪者', kigan: '祈願・外祭・結婚式の予約', outings: '外出', rituals: '祭典', seasons: '時期', board: '掲示板', reads: '既読', manual: 'マニュアル', diary: '日報', shifts: 'シフト', extraNeed: '追加の人数', requests: '希望シフト', seasonReq: '巫女の希望', draft: 'シフトの下書き', settings: '設定' };
     const logTarget = t => { const m = /^(\w+):(.*)$/.exec(t || ''); return m && TB[m[1]] ? TB[m[1]] + (/^\d{4}-\d{2}(-\d{2})?$/.test(m[2]) ? '（' + (m[2].length === 10 ? warekiDate(parse(m[2])) : warekiMonth(Number(m[2].slice(0, 4)), Number(m[2].slice(5)))) + '）' : '') : (t || ''); };
     const A = { login: 'ログイン', login_fail: 'ログイン失敗', lock: 'ロック', add: '追加', update: '変更', delete: '削除', upload: 'PDFの登録', device_register: '端末の登録', device_register_fail: '招待コードの失敗', device_revoke: '端末の取り消し', invite: '招待コード', pin_change: '暗証番号の変更', user_add: '人の登録', user_resetPin: '番号の再発行', user_unlock: 'ロック解除', user_disable: '無効化', user_enable: '有効化', user_update: '人の編集', setup: '最初の設定' };
     body = `<div class="card" style="overflow:hidden"><div class="tbl-wrap"><table class="tbl"><thead><tr><th>日時</th><th>だれが</th><th>何を</th><th>対象</th></tr></thead><tbody>${ADM.logs.map(l => `<tr><td class="small num" style="white-space:nowrap">${esc(String(l.at).slice(5, 16))}</td><td class="small">${esc(nameOf(l.userId) === '—' ? (l.userId || '—') : nameOf(l.userId))}</td><td class="small">${esc(A[l.action] || l.action)}</td><td class="small muted">${esc(logTarget(l.target))}</td></tr>`).join('')}</tbody></table></div></div>`;
