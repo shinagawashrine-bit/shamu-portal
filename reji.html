@@ -503,6 +503,22 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 .kg-ent.wedding{background:var(--pink-soft)}.kg-ent.wedding b{color:var(--pink)}
 .kg-cell.wed .kg-slot:not(.off){border-style:dashed}
 .kg-cell.stop .kg-slot span{color:#b23b3b;font-weight:700}
+.an-ptype,.an-heat{width:100%;border-collapse:collapse;font-size:14px;min-width:440px}
+.an-ptype th,.an-ptype td,.an-heat th,.an-heat td{padding:8px;border-bottom:1px solid var(--hair);text-align:left;white-space:nowrap}
+.an-ptype th,.an-heat th{font-size:12px;color:var(--text-2);font-weight:600}
+.an-ptype .r,.an-heat .r{text-align:right}
+.an-ptype .an-best{color:var(--brand);font-weight:800}
+.an-slim,.an-heat{min-width:0}
+.an-heat{max-width:560px}
+.an-slim{max-width:720px}
+.an-lead{margin:0 0 10px;font-size:17px}
+.rank.an-tbar li{grid-template-columns:10em 1fr 64px;font-size:14px}
+.an-pbar{display:inline-block;width:110px;height:8px;border-radius:4px;background:var(--fill);vertical-align:middle;margin-right:8px;overflow:hidden}
+.an-pbar i{display:block;height:100%;border-radius:4px}
+.an-ptag{display:inline-block;padding:0 6px;border-radius:6px;background:var(--fill);color:var(--text-2);font-size:11px;font-weight:600}
+.kg-table{width:100%;border-collapse:collapse;font-size:16px}
+.kg-table th,.kg-table td{border-bottom:1px solid var(--line);padding:9px 8px;text-align:left;vertical-align:top}
+.kg-table th{font-size:13px;color:var(--text-2)}
 .btn.kg-stop{background:#b23b3b;border-color:#b23b3b;color:#fff}
 .kg-cell.wed .kg-slot span{color:var(--pink)}
 .ln.wedding{background:var(--pink-soft);color:var(--pink)}
@@ -785,6 +801,8 @@ button.kg-gitem{cursor:pointer}
   .ycal{grid-template-columns:repeat(2,1fr)}
   .rank li{grid-template-columns:20px 1fr 54px 54px;}
   .rank li .bar{display:none}
+  .rank.an-tbar li{grid-template-columns:8.5em minmax(60px,1fr) 52px;gap:8px}
+  .rank.an-tbar li .bar{display:block}   /* 種類別は横棒が主役なので、狭い画面でも出す */
   .order-sheet{padding:20px}
   .os-top{flex-direction:column}
   .week{grid-template-columns:40px repeat(7,minmax(46px,1fr))}
@@ -1538,7 +1556,7 @@ function cellLines(k) {
     if (hd.length) out.push(`<div class="ln honden"><i>本殿</i><span>${hd.map(r => shortName(r.name)).join('・')}</span></div>`);
   }
   if (L.kigan) {
-    if (kgStopText(k) && !kgClosed(k)) out.push(`<div class="ln kigan full"><i>祈</i><span>祈願停止 ${kgStopText(k)}</span></div>`);
+    if (kgStopText(k) && !kgClosed(k)) out.push(`<div class="ln kigan full"><i>祈</i><span>祈願停止 ${kgStopText(k)}${kgStopMemo(k) ? '（' + esc(kgStopMemo(k)) + '）' : ''}</span></div>`);
     if (kg.length) out.push(!kgClosed(k) && kgFull(k) ? '<div class="ln kigan full"><i>祈</i><span>祈願 満員</span></div>' : `<div class="ln kigan"><i>祈</i><span>祈願 ${kg.length}件</span></div>`);
     gs.forEach(g => out.push(`<div class="ln kigan" data-act="evDetail" data-kind="gaisai" data-id="${g.id}" title="${g.manual ? '' : '申込用紙を開く'}"><i>外</i><span>外祭 ${g.start}${g.manual && g.sub ? ' ' + esc(g.sub) : ''}</span></div>`));
     ws.forEach(w => out.push(`<div class="ln wedding" data-act="evDetail" data-kind="wedding" data-id="${w.id}"><i>婚</i><span>結婚式 ${w.start}</span></div>`));
@@ -1842,6 +1860,7 @@ const kgCap = k => +((S.rules.kiganCapDays || {})[k]) || +S.rules.kiganCap || 4;
 const kgOn = (k, t) => resOn(k).filter(r => kgInd(r) && (!t || r.start === t));
 const kgStops = k => (S.rules.kiganStops || {})[k] || [];
 const kgStopped = (k, t) => kgStops(k).includes(t);
+const kgStopMemo = k => (S.rules.kiganStopMemo || {})[k] || '';
 const kgStopText = k => { const st = KG_SLOTS.filter(t => kgStopped(k, t)); if (!st.length) return ''; if (st.length === KG_SLOTS.length) return '終日'; const g = []; st.forEach(t => { const last = g[g.length - 1]; if (last && tmin(last[1]) === tmin(t)) last[1] = tstr(tmin(t) + 30); else g.push([t, tstr(tmin(t) + 30)]); }); return g.map(x => x[0] + '〜' + x[1]).join('、'); };
 const kgLeft = (k, t) => kgStopped(k, t) ? 0 : Math.max(0, kgCap(k) - kgOn(k, t).length);
 const kgFull = k => KG_SLOTS.every(t => !kgLeft(k, t)) && !KG_SLOTS.every(t => kgStopped(k, t));
@@ -1990,14 +2009,14 @@ function kgDayModal(k) {
   const cells = times.map(t => {
     const es = kgOn(k, t), L = kgLeft(k, t), slot = KG_SLOTS.includes(t), wed = kgNearWedding(k, t);
     return `<div class="kg-cell${slot && !L ? ' full' : ''}${kgStopped(k, t) ? ' stop' : ''}${wed ? ' wed' : ''}">
-      ${slot && L ? `<button class="kg-slot" data-act="kgAdd" data-k="${k}" data-t="${t}"><b>${t}</b><span>残${L}組${wed ? '・結婚式の前後' : ''}</span></button>` : `<div class="kg-slot off"><b>${t}</b><span>${!slot ? '枠の外' : kgStopped(k, t) ? '停止' : '満員'}</span></div>`}
+      ${slot && L ? `<button class="kg-slot" data-act="kgAdd" data-k="${k}" data-t="${t}"><b>${t}</b><span>残${L}組${wed ? '・結婚式の前後' : ''}</span></button>` : `<div class="kg-slot off"><b>${t}</b><span>${!slot ? '枠の外' : kgStopped(k, t) ? '停止' + (kgStopMemo(k) ? '（' + esc(kgStopMemo(k)) + '）' : '') : '満員'}</span></div>`}
       ${es.length ? `<div class="kg-ents">${es.map(r => `<button class="kg-ent" data-act="evDetail" data-kind="kigan" data-id="${r.id}"><b>${esc(kgLabel(r))}</b> ${esc(kgName(r))}</button>`).join('')}</div>` : ''}
     </div>`;
   }).join('');
   modal(`<div class="modal-h"><h3>${mdw(parse(k))}　予約</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
   <div class="modal-b">
     ${ext.length ? `<div class="kg-ext">${ext.map(r => `<button class="kg-ent ${kgKindOf(r)}" data-act="evDetail" data-kind="${kgKindOf(r)}" data-id="${r.id}"><b>${r.start} ${esc(kgLabel(r))}</b> ${esc(kgName(r))}</button>`).join('')}</div>` : ''}
-    <div class="row small muted" style="margin-bottom:10px;gap:8px;flex-wrap:wrap"><span class="sp"></span>${canKgCap() ? `<button class="btn sm" style="color:var(--text)" data-act="kgCap" data-k="${k}">祈願の上限と停止</button>` : ''}</div>
+    <div class="row small muted" style="margin-bottom:10px;gap:8px;flex-wrap:wrap"><span class="sp"></span><button class="btn sm" style="color:var(--text)" data-act="kgFind" data-k="${k}">名前で探す</button><button class="btn sm" style="color:var(--text)" data-act="kgList" data-k="${k}">この日の一覧</button>${canKgCap() ? `<button class="btn sm" style="color:var(--text)" data-act="kgCap" data-k="${k}">祈願の上限と停止</button>` : ''}</div>
     <div class="kg-grid">${cells}</div></div>
   <div class="modal-f"><span class="small muted">この日の祈願 ${all.length}件</span><span class="sp"></span><button class="btn kg-btn" data-act="addEvent" data-k="${k}">＋ 予定を追加</button><button class="btn kg-btn" data-act="kgClose">閉じる</button></div>`, 'wide');
 }
@@ -2020,13 +2039,19 @@ function kgCapModal(k, f, t) {
     <div class="small muted" style="margin-top:6px">${f === t ? mdw(parse(f)) : md(parse(f)) + '〜' + md(parse(t))}の上限：${cur}組（${base}組がふだん）</div>
     <h4 style="margin:22px 0 8px">祈願の停止</h4>
     <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">${tOpts('kgcS', KG_SLOTS[0])}<span>〜</span>${tOpts('kgcE', tstr(tmin(KG_SLOTS[KG_SLOTS.length - 1]) + 30), true)}</div>
+    <div class="field" style="margin-top:10px"><label>理由（書かなくてもよい）</label><input class="input kg-big" id="kgcMemo" maxlength="20" placeholder="例：祭典準備" value="${esc(kgStopMemo(f))}"></div>
     <div class="row" style="gap:8px;margin-top:10px;flex-wrap:wrap"><button class="btn kg-stop" ${big} data-act="kgStop" data-on="1">祈願停止</button><button class="btn" ${big} data-act="kgStop" data-on="">停止をやめる</button></div>
-    <div class="small muted" style="margin-top:6px">${st ? `${mdw(parse(f))}は ${st} が停止中` : `${mdw(parse(f))}は停止なし`}</div>
+    <div class="small muted" style="margin-top:6px">${st ? `${mdw(parse(f))}は ${st} が停止中${kgStopMemo(f) ? '（' + esc(kgStopMemo(f)) + '）' : ''}` : `${mdw(parse(f))}は停止なし`}</div>
   </div>
   <div class="modal-f"><span class="sp"></span><button class="btn kg-btn" data-act="kgCapBack" data-k="${k}">戻る</button></div>`);
   KG_CAP_K = k;
 }
 let KG_CAP_K = '';
+/* 過ぎた日の上限・停止の記録を消す（たまり続けないように。1週間前まで残す） */
+function kgTidy() {
+  const lim = key(addDays(parse(TK), -7));
+  ['kiganCapDays', 'kiganStops', 'kiganStopMemo'].forEach(f => { const o = S.rules[f]; if (o) Object.keys(o).forEach(d => { if (d < lim) delete o[d]; }); });
+}
 /* 上限・停止の期間（はじめ〜おわり）を読む。おわりがはじめより前なら入れ替える。長すぎる期間は押し間違いとみなす */
 function kgRange() {
   let f = val('kgcFrom'), t = val('kgcTo') || f;
@@ -2035,6 +2060,32 @@ function kgRange() {
   const ds = []; for (let d = parse(f); key(d) <= t; d = addDays(d, 1)) ds.push(key(d));
   if (ds.length > 120) { toast('期間が長すぎます（120日まで）'); return null; }
   return { f, t, ds };
+}
+/* 名前で予約を探す：「予約を変えたい」という電話で、日付がわからなくても探せるように（2026-11-17）。これからの予約を先に、過ぎた予約はそのあとに出す */
+function kgFindHtml(q) {
+  q = String(q || '').replace(/[\s　様]/g, '');
+  if (!q) return '<div class="small muted">名前の一部を入れて「探す」を押してください。</div>';
+  const hit = S.res.filter(r => r.manual && [r.name, r.name2].some(n => String(n || '').replace(/[\s　]/g, '').includes(q)));
+  if (!hit.length) return '<div class="small muted">見つかりませんでした。</div>';
+  const fut = hit.filter(r => r.date >= TK).sort((a, b) => (a.date + a.start).localeCompare(b.date + b.start)), past = hit.filter(r => r.date < TK).sort((a, b) => (b.date + b.start).localeCompare(a.date + a.start)).slice(0, 20);
+  const li = r => `<li><button class="kg-gitem" data-act="evDetail" data-kind="${kgKindOf(r)}" data-id="${r.id}"><b>${mdw(parse(r.date))} ${r.start}</b><span>${esc(kgName(r))}</span><span class="small muted" style="margin-left:auto;font-weight:500">${esc(kgLabel(r))}</span></button></li>`;
+  return (fut.length ? `<h4 style="margin:0 0 6px">これからの予約 ${fut.length}件</h4><ul class="kg-glist">${fut.map(li).join('')}</ul>` : '') + (past.length ? `<h4 style="margin:16px 0 6px">過ぎた予約</h4><ul class="kg-glist">${past.map(li).join('')}</ul>` : '');
+}
+function kgFindModal(k) {
+  modal(`<div class="modal-h"><h3>名前で予約を探す</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b"><div class="row" style="gap:8px"><input class="input kg-big" id="kgQ" placeholder="名前（一部でもよい）" data-chg="kgFindGo" style="flex:1;min-width:0"><button class="btn pri kg-btn" data-act="kgFindGo">探す</button></div>
+    <div id="kgFound" style="margin-top:14px">${kgFindHtml('')}</div></div>
+  <div class="modal-f"><span class="sp"></span><button class="btn kg-btn" data-act="${k ? 'kgCapBack' : 'closeModal'}" data-k="${k || ''}">戻る</button></div>`);
+  setTimeout(() => { const i = document.getElementById('kgQ'); if (i) i.focus(); }, 50);
+}
+/* その日の一覧：祈願・外祭・結婚式を時間順に。そのまま印刷できる（2026-11-17） */
+function kgListModal(k) {
+  const rs = resOn(k).slice().sort((a, b) => tmin(a.start) - tmin(b.start)), n = rs.filter(kgInd).length;
+  const rows = rs.map(r => `<tr><td style="white-space:nowrap">${r.start}</td><td><b>${esc(kgName(r))}</b></td><td>${esc(kgLabel(r))}</td><td>${r.people ? r.people + '名' : ''}${r.memo ? ' ' + esc(r.memo) : ''}</td></tr>`).join('');
+  modal(`<div class="modal-h"><h3>この日の一覧</h3><span class="sp"></span><button class="icon-btn" data-act="closeModal">${ICON.x}</button></div>
+  <div class="modal-b"><h3 style="margin:0 0 4px">${ymdw(parse(k))}　祈願・外祭・結婚式</h3><div class="small muted" style="margin-bottom:10px">個人祈願 ${n}件${rs.length - n ? '・ほか ' + (rs.length - n) + '件' : ''}${kgStopText(k) ? '　／　祈願停止 ' + kgStopText(k) + (kgStopMemo(k) ? '（' + esc(kgStopMemo(k)) + '）' : '') : ''}</div>
+    ${rs.length ? `<table class="kg-table"><thead><tr><th>時間</th><th>名前</th><th>内容</th><th>メモ</th></tr></thead><tbody>${rows}</tbody></table>` : '<div class="small muted">この日の予約はありません。</div>'}</div>
+  <div class="modal-f">${rs.length ? '<button class="btn kg-btn" data-act="print">印刷する</button>' : ''}<span class="sp"></span><button class="btn kg-btn" data-act="kgCapBack" data-k="${k}">戻る</button></div>`, 'wide');
 }
 function autoInfo(k) {
   const d = parse(k), ky = KOYOMI.get(d), w = wxOf(k), s = seasonOf(k), e = S.diary[k];
@@ -3173,7 +3224,7 @@ const ACT = {
     if (!(n >= 1 && n <= 30)) return toast('組数を入れてください（1〜30）');
     const base = +S.rules.kiganCap || 4, days = S.rules.kiganCapDays = Object.assign({}, S.rules.kiganCapDays);
     R.ds.forEach(d => { if (n === base) delete days[d]; else days[d] = n; });
-    save(); render(); kgCapModal(KG_CAP_K, R.f, R.t);
+    kgTidy(); save(); render(); kgCapModal(KG_CAP_K, R.f, R.t);
     toast(`${R.f === R.t ? md(parse(R.f)) : md(parse(R.f)) + '〜' + md(parse(R.t))}は1つの時間に${n}組までにしました`);
   },
   kgStop(el) {
@@ -3183,10 +3234,16 @@ const ACT = {
     const ts = KG_SLOTS.filter(x => tmin(x) >= a && tmin(x) < b);
     const stops = S.rules.kiganStops = Object.assign({}, S.rules.kiganStops);
     R.ds.forEach(d => { const cur = new Set(stops[d] || []); ts.forEach(x => on ? cur.add(x) : cur.delete(x)); if (cur.size) stops[d] = KG_SLOTS.filter(x => cur.has(x)); else delete stops[d]; });
+    const memo = val('kgcMemo').trim().slice(0, 20), memos = S.rules.kiganStopMemo = Object.assign({}, S.rules.kiganStopMemo);
+    R.ds.forEach(d => { if (stops[d] && on && memo) memos[d] = memo; else if (!stops[d] || (on && !memo)) delete memos[d]; });
+    kgTidy(); const sT = val('kgcS'), eT = val('kgcE');
     save(); render(); kgCapModal(KG_CAP_K, R.f, R.t);
-    toast(`${val('kgcS')}〜${val('kgcE')}の祈願を${on ? '停止しました' : '再開しました'}`);
+    toast(`${sT}〜${eT}の祈願を${on ? '停止しました' : '再開しました'}`);
   },
   kgCapBack(el) { kgDayModal(el.dataset.k); },
+  kgFind(el) { kgFindModal(el.dataset.k || ''); },
+  kgFindGo() { const b = document.getElementById('kgFound'); if (b) b.innerHTML = kgFindHtml(val('kgQ')); },
+  kgList(el) { kgListModal(el.dataset.k); },
   evType(el) { el.parentElement.querySelectorAll('button').forEach(b => b.classList.toggle('on', b === el)); document.querySelectorAll('.evsec').forEach(x => x.hidden = x.dataset.sec !== el.dataset.v); document.querySelectorAll('.ev-time').forEach(x => x.style.display = ['temp', 'kigan'].includes(el.dataset.v) ? 'none' : ''); { const ds = document.getElementById('evStart'), dd = document.getElementById('evDur'), sai = el.dataset.v === 'sai', was = el.parentElement.dataset.sai === '1'; el.parentElement.dataset.sai = sai ? '1' : ''; if (ds && dd && sai !== was) { ds.value = sai ? '11:00' : '10:00'; dd.value = sai ? '30' : '60'; } } },   // 日中の祭典は11:00・30分から（2026-11-12 本人）
   saveEvent() {
     const type = document.querySelector('#evType .on').dataset.v, date = val('evDate'), start = val('evStart'), dur = +val('evDur');
@@ -3508,6 +3565,7 @@ const ACT = {
   reset() { askConfirm('入力した内容を消して、仮データに戻しますか？', () => { try { localStorage.removeItem(STORE_KEY); } catch (e) { } const ses = S.session; S = seed(); S.session = ses; save(); closeModal(); render(); toast('仮データに戻しました'); }); }
 };
 const CHG = {
+  kgFindGo() { ACT.kgFindGo(); },
   kgcFrom(el) { const f = el.value; let t = val('kgcTo'); if (!t || t < f) t = f; kgCapModal(KG_CAP_K, f, t); },   // はじめの日を変えたら、その日の上限・停止中を出し直す
   kgDate(el) { const s = document.getElementById('kgTime'); if (KG_CTX) KG_CTX.date = el.value; if (s && (!KG_CTX || KG_CTX.kind === 'kigan')) s.innerHTML = kgTimeOpts(el.value, s.value); },   // 予定を追加で日付を変えたら、満員の時間を出し直す
   diaryDate(el) { if (el.value) location.hash = '#/diary/' + el.value; },
@@ -3754,7 +3812,8 @@ async function flush() {
   try {
     for (let i = 0; i < changes.length; i += 150) {
       const r = await api('sync', { changes: changes.slice(i, i + 150) });
-      if (r.denied && r.denied.length) { toast('権限のない変更があったため、一部は保存されませんでした'); await refresh(true); }
+      if (r.full && r.full.length) { await refresh(true); modal(`<div class="modal-h"><h3>予約が入りませんでした</h3></div><div class="modal-b"><p style="font-size:17px">ほかの端末から先に予約が入り、その時間は満員（または停止）になっていました。<br>お手数ですが、時間を選び直してください。</p></div><div class="modal-f"><span class="sp"></span><button class="btn pri kg-btn" data-act="closeModal">わかりました</button></div>`); }
+      else if (r.denied && r.denied.length) { toast('権限のない変更があったため、一部は保存されませんでした'); await refresh(true); }
     }
     lsSet(PENDING_KEY, null);
   } catch (e) {
@@ -3848,7 +3907,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261116191203';
+const BUILD = '20261119174932';
 const REJI_PAGE = true;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -4824,6 +4883,20 @@ const SNS_CFG = [   // [記号, 名前, フォロワー, 見られた数, 反応
   ['threads', 'Threads', 'フォロワー数', '閲覧数', '反応数', '投稿数', 'いいね・返信・再投稿・引用の合計', '投稿が見られた回数', ['いいね', '返信', '再投稿', '引用'], '投稿'],
   ['youtube', 'YouTube', '登録者数', '再生回数', '反応数', '動画数', '高評価・コメント・共有の合計', '動画が再生された回数', ['高評価', 'コメント', '共有'], '動画'],
   ['tiktok', 'TikTok', 'フォロワー数', '再生回数', '反応数', '投稿数', 'いいね・コメント・シェアの合計', '動画が再生された回数', ['いいね', 'コメント', 'シェア'], '動画']];
+/* 投稿の種類（投稿の記録の10番目＝r[9]。2026-11-19 本人：Meta広告の分析画面から「投稿の種類別」を取り入れる）。
+   Instagram は連携すると自動で分かる（リール・写真1枚・複数枚・ストーリー）。種類のない投稿は数えない。LINE・TikTok は種類が1つなので出さない */
+const SNS_PTYPES = { instagram: [['reel', 'リール'], ['photo', '写真1枚'], ['carousel', '複数枚'], ['story', 'ストーリー']], facebook: [['photo', '写真'], ['carousel', '複数枚'], ['video', '動画・リール'], ['text', '文章だけ']], threads: [['text', '文章だけ'], ['photo', '写真'], ['video', '動画']], youtube: [['video', 'ふつうの動画'], ['short', 'ショート']] };
+const snsPType = (k, t) => ((SNS_PTYPES[k] || []).find(x => x[0] === t) || [])[1] || '';
+/* 月ごとの色付きの表（2026-11-19 本人：Meta広告の分析画面の「推移」を取り入れる）。行は月、列は数字。列ごとに多いほど濃く、減った（マイナス）は赤 */
+function anHeat(months, cols, color) {
+  // 色の濃さは、その列のいちばん少ない月〜いちばん多い月の間で決める（差が小さくても波が見えるように）
+  const vs = cols.map(c => months.map(m => c.v(m)).filter(v => v != null && v >= 0)), lo = vs.map(a => a.length ? Math.min(...a) : 0), hi = vs.map(a => a.length ? Math.max(...a) : 0);
+  const cell = (c, i, m) => { const v = c.v(m); if (v == null) return '<td class="r muted">—</td>'; const a = v < 0 ? 18 : hi[i] > lo[i] ? Math.round(4 + (v - lo[i]) / (hi[i] - lo[i]) * 40) : 10; return `<td class="r num" style="background:color-mix(in srgb, ${v < 0 ? 'var(--red)' : color} ${a}%, transparent)">${c.fmt ? c.fmt(v) : v.toLocaleString()}</td>`; };
+  return `<div style="overflow-x:auto"><table class="an-heat"><thead><tr><th>月</th>${cols.map(c => `<th class="r">${c.l}</th>`).join('')}</tr></thead><tbody>${months.map(m => `<tr><td>${warekiMonth(Number(m.slice(0, 4)), Number(m.slice(5)))}</td>${cols.map((c, i) => cell(c, i, m)).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+const snsMSum = (rs, m, f) => rs.reduce((n, [d, o]) => d.slice(0, 7) === m ? n + (o[f] || 0) : n, 0);
+const snsMEnd = (rs, m) => { let v = null; rs.forEach(([d, o]) => { if (d.slice(0, 7) <= m) v = o.f; }); return v; };
+const snsMHas = (rs, m) => rs.some(([d]) => d.slice(0, 7) === m);
 let anSns = 'all', anSMetric = 'f', anPostBy = 'v';   // anPostBy：投稿の並び（v＝閲覧数順、r＝反応率順）   // 最初は「全体」
 const SNS_ALL_METS = [['f', '総フォロワー数', 'すべてのSNSのフォロワー数・友だち数の合計'], ['fn', '総フォロワー数の増減', 'すべてのSNSの、増えた人数から減った人数を引いた数（減ったらマイナス）'], ['hp', 'SNSからのHP流入', 'SNSからHPに来た訪問の合計（GA4）。1か月ごとの数なので1年・3年で見る']];
 // 全体の毎日の数字：総フォロワー数（記録のない日は前の日の人数）と、前の日からの増減
@@ -5185,10 +5258,23 @@ function vAnalyticsProd() {
       const folList = fol.length ? `<ul class="rank an-fol">${fol.map(r => `<li><span><b>${r.name}</b></span><span class="bar"><i style="width:${r.v / fMax * 100}%;background:var(--sns-${r.k})"></i></span><span class="r num">${r.v.toLocaleString()}</span><span class="r num small ${r.d > 0 ? 'up' : r.d < 0 ? 'down' : 'muted'}">${r.d == null ? '—' : (r.d > 0 ? '+' : '') + r.d.toLocaleString()}</span></li>`).join('')}</ul>` : `<div class="empty small">記録はありません</div>`;
       const flow = part(SNS_CFG.map(([k, name]) => ({ k, label: name, v: hpOf(curMs, k) }))), flowMax = Math.max(1, ...flow.map(r => r.v)), flowTot = flow.reduce((n, r) => n + r.v, 0);
       const flowList = flow.length ? `<ul class="rank with-share">${flow.map((r, i) => { const p = pct(r.v, hpOf(lyMs, r.k)); return `<li><span class="n">${i + 1}</span><span><b>${r.label}</b></span><span class="bar"><i style="width:${r.v / flowMax * 100}%;background:var(--sns-${r.k})"></i></span><span class="r num">${r.v.toLocaleString()}</span><span class="r num small muted">${r.v / flowTot < 0.005 ? '&lt;1' : Math.round(r.v / flowTot * 100)}%</span><span class="r num small ${pctCls(p)}">${pctTxt(p)}</span></li>`; }).join('')}</ul>` : `<div class="empty small">${isY ? 'この期間' : 'この月'}の記録はありません</div>`;
+      // SNSどうしの比べ（2026-11-19 本人：Meta広告の分析画面の「プラットフォーム」を取り入れる）。期間中の数字を同じ物差しで1枚に並べる。
+      // 見られた数・反応の数え方はSNSごとに違う（LINEは開封・クリック）ので、合計はせず、率で比べる
+      const sumR = (rs, f) => rs.reduce((n, [d, o]) => d >= from && d <= to ? n + (o[f] || 0) : n, 0), psIn = k => ((D.sns || {}).posts || []).filter(r => r[1] === k && r[0] >= from && r[0] <= to).length;
+      const cmp = all.filter(x => x.rs.length).map(x => { const v = sumR(x.rs, 'v'), e = sumR(x.rs, 'e'), n = psIn(x.c[0]); return { k: x.c[0], name: x.c[1], f: at(x.rs, to), v, e, rt: v ? e / v * 100 : null, n, per: n ? v / n : null, hp: hpOf(curMs, x.c[0]), line: x.c[0] === 'line' }; });
+      const perMax = Math.max(1, ...cmp.map(r => r.per || 0));
+      // 2026-11-19 本人：列が多くてわかりにくいので、フォロワー・1投稿あたりの見られた数・HPに来た数の3つに絞る
+      const cmpCard = `<div class="card card-p an-wide"><div class="card-h"><h3>SNSどうしの比べ（${PL}）</h3></div>${cmp.length ? `<div style="overflow-x:auto"><table class="an-ptype an-slim"><thead><tr><th>SNS</th><th class="r">フォロワー</th><th>1投稿あたりの見られた数</th><th class="r">HPに来た数</th></tr></thead><tbody>${cmp.map(r => `<tr><td><b>${r.name}</b></td><td class="r num">${r.f == null ? '—' : r.f.toLocaleString()}</td><td>${r.per == null ? '<span class="muted">—</span>' : `<span class="an-pbar"><i style="width:${r.per / perMax * 100}%;background:var(--sns-${r.k})"></i></span><b class="num">${Math.round(r.per).toLocaleString()}</b>`}</td><td class="r num">${r.hp.toLocaleString()}</td></tr>`).join('')}</tbody></table></div>
+        <div class="small muted" style="margin-top:8px">1投稿あたりの見られた数が多いSNSほど、1回の投稿が広く届いています。${cmp.some(r => r.line) ? 'LINEは1回のメッセージが開かれた数です。' : ''}</div>` : '<div class="empty small">記録はありません</div>'}</div>`;
+      // 月ごとの表（直近12か月）：総フォロワー数・増減・SNSごとのHP流入
+      const m12 = Array.from({ length: 12 }, (_, i) => ym(new Date(Number(to.slice(0, 4)), Number(to.slice(5, 7)) - 12 + i, 1)));
+      const has = m => all.some(x => snsMHas(x.rs, m)), fEnd = m => all.reduce((n, x) => n + (snsMEnd(x.rs, m) || 0), 0), prevM = m => ym(new Date(Number(m.slice(0, 4)), Number(m.slice(5)) - 2, 1));
+      const heatAll = anHeat(m12, [{ l: 'フォロワーの増減', v: m => has(m) && has(prevM(m)) ? fEnd(m) - fEnd(prevM(m)) : null, fmt: v => (v > 0 ? '+' : '') + v.toLocaleString() }, { l: 'SNSからのHP流入', v: m => SNS_CFG.reduce((n, c) => n + hpOf([m], c[0]), 0) || null }], 'var(--brand)');
+      const heatCard = `<div class="card card-p an-wide"><div class="card-h"><h3>月ごとの表（直近12か月）</h3></div>${heatAll}<div class="small muted" style="margin-top:8px">列ごとに、多い月ほど濃く色を付けています。減った月は赤。季節（正月・七五三など）の波を見るための表です。</div></div>`;
       return head + `
   <div class="row" style="margin-bottom:14px;gap:8px;flex-wrap:wrap">${periodBar}</div>
   ${snsSel}
-  <div class="grid4 an-k3" style="margin-bottom:16px">
+  <div class="grid4 an-k3\" style="margin-bottom:16px">
     ${kpi(`総フォロワー数（${PL}）`, folAt(to).toLocaleString(), pct(folAt(to), folAt(lyTo)), '前年の記録なし')}
     ${kpi(`SNSからのHP流入（${PL}）`, hpAll(curMs).toLocaleString(), pct(hpAll(curMs), hpAll(lyMs)), '前年の記録なし')}
     ${kpi(`総フォロワー数の増減（${PL}）`, sign(allD(from, to)), null, `前年 ${sign(allD(lyFrom, lyTo))}`)}
@@ -5197,17 +5283,32 @@ function vAnalyticsProd() {
   <div class="grid2 an-grid"><div class="an-pair an-stack">
     ${card(`フォロワー数（${PL}）`, folList, 'SNSごとの人数。右は期間中に増えた数')}
     ${card(`SNSからのHP流入（${PL}）`, flowList, 'SNSからHPに来た訪問数と割合（GA4）')}
-  </div></div>`;
+  </div></div>
+  ${cmpCard}
+  ${heatCard}`;
     }
     // SNSごと：フォロワー数は期間の終わりの人数、ほかは期間中の合計
     const cfg = snsCfg(anSns), fA = at(DAILY, to), fB = at(DAILY, lyTo), tot3 = k => [sum(from, to, k), sum(lyFrom, lyTo, k)];
     const chg = (a, b) => { const x = at(DAILY, b), y0 = at(DAILY, key(addDays(parse(a), -1))); return x != null && y0 != null ? x - y0 : null; }, sgn = n => n == null ? '—' : (n > 0 ? '+' : '') + n.toLocaleString();   // 期間中に増えた人数（期間の前の日との差）
     // 投稿は閲覧数順と反応率順を切り替える（2026-11-02 本人）。反応率順は、見られた数が少なすぎる投稿（期間の平均の3割未満）を除く（数件の反応で率が跳ねるため）
     const rateNm = anSns === 'line' ? 'クリック率' : '反応率';
-    const pAll = ((D.sns || {}).posts || []).filter(r => r[1] === anSns && r[0] >= from && r[0] <= to).map(r => [r[0], r[1], r[2], r[3], r.slice(4, 8).reduce((n, v) => n + (v || 0), 0), cfg[8].map((l, i) => `${l} ${(r[4 + i] || 0).toLocaleString()}`).join('・')]);
+    const pRaw = ((D.sns || {}).posts || []).filter(r => r[1] === anSns && r[0] >= from && r[0] <= to);
+    const pAll = pRaw.map(r => [r[0], r[1], r[2], r[3], r.slice(4, 8).reduce((n, v) => n + (v || 0), 0), cfg[8].map((l, i) => `${l} ${(r[4 + i] || 0).toLocaleString()}`).join('・'), snsPType(anSns, r[9])]);
     const pAvg = pAll.reduce((n, r) => n + r[3], 0) / (pAll.length || 1), byRate = anPostBy === 'r';
     const posts = (byRate ? pAll.filter(r => r[3] && r[3] >= pAvg * 0.3).sort((a, b) => b[4] / b[3] - a[4] / a[3]) : pAll.sort((a, b) => b[3] - a[3])).slice(0, 5);
-    const postCard = `<div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>${byRate ? `${rateNm}の高い` : `${cfg[3]}の多い`}${cfg[9]}（${PL}）</h3><span class="sp"></span><div class="seg">${[['v', `${cfg[3]}順`], ['r', `${rateNm}順`]].map(([k, l]) => `<button class="${k === anPostBy ? 'on' : ''}" data-act="anPostBy" data-v="${k}">${l}</button>`).join('')}</div></div>${byRate && pAll.length ? `<div class="small muted" style="margin:-4px 0 8px">${cfg[3]}が少なすぎる${cfg[9]}（平均の3割未満）は除いています</div>` : ''}${posts.length ? `<ul class="rank an-post">${posts.map((r, i) => `<li><span class="n">${i + 1}</span><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r[2])}</b><span class="small muted">${md(r[0])}${cfg[8].length > 1 ? `　${r[5].split('・').map(t => `<span style="white-space:nowrap">${esc(t)}</span>`).join('・')}` : ''}</span></span><span class="r small"><span style="white-space:nowrap"><span class="muted">${cfg[3]}</span> <b class="num">${r[3].toLocaleString()}</b></span> <span style="white-space:nowrap;margin-left:6px"><span class="muted">${cfg[4]}</span> <b class="num">${r[4].toLocaleString()}</b></span> <span style="white-space:nowrap;margin-left:6px"><span class="muted">${rateNm}</span> <b class="num">${r[3] ? (r[4] / r[3] * 100).toFixed(1) + '%' : '—'}</b></span></span></li>`).join('')}</ul>` : `<div class="empty small">${isY ? 'この期間' : 'この月'}の${cfg[9]}はありません</div>`}</div>`;
+    const postCard = `<div class="card card-p an-wide"><div class="card-h" style="flex-wrap:wrap;gap:8px"><h3>${byRate ? `${rateNm}の高い` : `${cfg[3]}の多い`}${cfg[9]}（${PL}）</h3><span class="sp"></span><div class="seg">${[['v', `${cfg[3]}順`], ['r', `${rateNm}順`]].map(([k, l]) => `<button class="${k === anPostBy ? 'on' : ''}" data-act="anPostBy" data-v="${k}">${l}</button>`).join('')}</div></div>${byRate && pAll.length ? `<div class="small muted" style="margin:-4px 0 8px">${cfg[3]}が少なすぎる${cfg[9]}（平均の3割未満）は除いています</div>` : ''}${posts.length ? `<ul class="rank an-post">${posts.map((r, i) => `<li><span class="n">${i + 1}</span><span style="min-width:0"><b style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(r[2])}</b><span class="small muted">${md(r[0])}${r[6] ? `　<span class="an-ptag">${r[6]}</span>` : ''}${cfg[8].length > 1 ? `　${r[5].split('・').map(t => `<span style="white-space:nowrap">${esc(t)}</span>`).join('・')}` : ''}</span></span><span class="r small"><span style="white-space:nowrap"><span class="muted">${cfg[3]}</span> <b class="num">${r[3].toLocaleString()}</b></span> <span style="white-space:nowrap;margin-left:6px"><span class="muted">${cfg[4]}</span> <b class="num">${r[4].toLocaleString()}</b></span> <span style="white-space:nowrap;margin-left:6px"><span class="muted">${rateNm}</span> <b class="num">${r[3] ? (r[4] / r[3] * 100).toFixed(1) + '%' : '—'}</b></span></span></li>`).join('')}</ul>` : `<div class="empty small">${isY ? 'この期間' : 'この月'}の${cfg[9]}はありません</div>`}</div>`;
+    // 投稿の種類別：種類ごとの投稿数・1投稿あたりの見られた数・反応率。Instagram は保存・シェアも（あとで見返したい・人に教えたいの目安）
+    const pts = SNS_PTYPES[anSns] || [], isIg = anSns === 'instagram';
+    const tRows = pts.map(([t, l]) => { const rs = pRaw.filter(r => r[9] === t), v = rs.reduce((n, r) => n + (r[3] || 0), 0), e = rs.reduce((n, r) => n + r.slice(4, 8).reduce((m2, x) => m2 + (x || 0), 0), 0), ss = rs.reduce((n, r) => n + (r[6] || 0) + (r[7] || 0), 0); return { l, n: rs.length, av: rs.length ? v / rs.length : 0, rt: v ? e / v * 100 : null, ss: rs.length ? ss / rs.length : 0 }; }).filter(x => x.n);
+    const untyped = pRaw.filter(r => !snsPType(anSns, r[9])).length, avMax = Math.max(1, ...tRows.map(x => x.av)), rtBest = 0;
+    // 2026-11-19 本人：表をやめて、いちばん反応のいい種類を一文で言い、横棒で並べる（反応率の高い順）
+    const tSort = tRows.slice().sort((a, b) => (b.rt || 0) - (a.rt || 0)), best = tSort.find(x => x.n >= 2 && x.rt), rtMax = Math.max(0.1, ...tRows.map(x => x.rt || 0));
+    const typeCard = !pts.length ? '' : `<div class="card card-p an-wide"><div class="card-h"><h3>${cfg[9]}の種類別（${PL}）</h3></div>${tRows.length ? `${best ? `<p class="an-lead">いちばん反応がいいのは <b>${best.l}</b>（反応率 ${best.rt.toFixed(1)}%）</p>` : ''}<ul class="rank an-tbar">${tSort.map(x => `<li><span><b>${x.l}</b><span class="small muted">　${x.n}件</span></span><span class="bar"><i style="width:${(x.rt || 0) / rtMax * 100}%;background:var(--sns-${anSns})"></i></span><span class="r num">${x.rt == null ? '—' : x.rt.toFixed(1) + '%'}</span></li>`).join('')}</ul>
+      <div class="small muted" style="margin-top:8px">反応率＝${cfg[4]}÷${cfg[3]}（見た人のうち反応した割合）。${cfg[9]}が1件だけの種類は、いちばんに選びません。${untyped ? `種類のわからない${cfg[9]} ${untyped}件は数えていません。` : ''}</div>` : `<div class="empty small">${pRaw.length ? `種類のわかる${cfg[9]}がありません` : `${isY ? 'この期間' : 'この月'}の${cfg[9]}はありません`}</div>`}</div>`;
+    // 月ごとの表（直近12か月）：このSNSの数字
+    const m12s = Array.from({ length: 12 }, (_, i) => ym(new Date(Number(to.slice(0, 4)), Number(to.slice(5, 7)) - 12 + i, 1))), rsS = DAILY, hasS = m => snsMHas(rsS, m), pvM = m => ym(new Date(Number(m.slice(0, 4)), Number(m.slice(5)) - 2, 1));
+    const heatS = anHeat(m12s, [{ l: cfg[3], v: m => hasS(m) ? snsMSum(rsS, m, 'v') : null }, { l: `${cfg[2].replace('数', '')}の増減`, v: m => hasS(m) && hasS(pvM(m)) ? snsMEnd(rsS, m) - snsMEnd(rsS, pvM(m)) : null, fmt: v => (v > 0 ? '+' : '') + v.toLocaleString() }], `var(--sns-${anSns})`);
+    const heatSCard = `<div class="card card-p an-wide"><div class="card-h"><h3>月ごとの表（直近12か月）</h3></div>${heatS}<div class="small muted" style="margin-top:8px">列ごとに、多い月ほど濃く色を付けています。減った月は赤。</div></div>`;
     // 反応の中身（横棒）：数・割合・前年比。右上に反応率（反応数÷閲覧数）。項目が1つ（LINE）のときは出さない
     const rx = cfg[8].map((l, i) => ({ l, a: sum(from, to, 'r' + i), b: sum(lyFrom, lyTo, 'r' + i) })), [eA, eB] = tot3('e'), [vA, vB] = tot3('v'), rMax = Math.max(1, ...rx.map(r => r.a)), [wA, wB] = tot3('wt');
     const rate = (e, v) => v ? `${(e / v * 100).toFixed(1)}%` : '—';
@@ -5229,7 +5330,9 @@ function vAnalyticsProd() {
     ${kpi(`${cfg[10] ? '友だち' : cfg[2]}の増減（${PL}）`, sgn(chg(from, to)), null, cfg[10] && chg(from, to) != null ? `追加 ${(chg(from, to) + tot3('p')[0]).toLocaleString()}・ブロック ${tot3('p')[0].toLocaleString()}（前年 ${sgn(chg(lyFrom, lyTo))}）` : `前年 ${sgn(chg(lyFrom, lyTo))}`)}
   </div>
   ${chartCard}
-  <div class="grid2 an-grid">${rxCard}${postCard}</div>`;
+  <div class="grid2 an-grid">${rxCard}${postCard}</div>
+  ${typeCard}
+  ${heatSCard}`;
   }
   if (isG) {
     // 割合（円グラフ）：どこで表示されたか・どの端末か
