@@ -3907,7 +3907,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261119174932';
+const BUILD = '20261120102016';
 const REJI_PAGE = false;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -4157,7 +4157,9 @@ async function startReji(label) {
   await regLoadItems();
   regFlush();
 }
+let REG_LAST = 0;   // 最後に品目・写真を読みに行った時刻
 async function regLoadItems() {
+  REG_LAST = Date.now();
   try {
     const r = await api('regItems', { imgVer: REGI.imgVer }); REGI.items = r.items; REGI.label = r.label || REGI.label; REGI.err = ''; lsSet(REG_ITEMS_KEY, JSON.stringify(r.items));
     REGI.notes = r.notes || []; lsSet(REG_NOTES_KEY, JSON.stringify(REGI.notes));
@@ -4377,19 +4379,23 @@ if (PROD) {
   addEventListener('resize', () => { if (REGI.on) fitReji(); });
   setInterval(() => { if (REGI.on) regFlush(); if (REGI.on && key(new Date()) !== TK && !Object.keys(REGI.cart).length && !document.getElementById('modalBg')) location.reload(); }, 30000);
   setInterval(() => { if (REGI.on && document.visibilityState === 'visible') { regLoadItems(); regCheckNew(); } }, 10 * 60000);
-  document.addEventListener('visibilitychange', () => { if (REGI.on && document.visibilityState === 'visible') { regFlush(); render(); } });
+  /* iPadを開き直したとき（スリープ・ホーム画面から戻ったとき）も、品目・写真と新しい版を確かめる（2026-11-20 本人：写真を差し替えてもレジが変わらない。眠っている間は10分の時計が止まるため） */
+  const regWake = () => { if (!REGI.on || document.visibilityState !== 'visible') return; regFlush(); render(); if (Date.now() - REG_LAST > 60000) { regLoadItems(); regCheckNew(); } };
+  document.addEventListener('visibilitychange', regWake); addEventListener('pageshow', regWake); addEventListener('focus', regWake);
 }
 
 /* ── 職員：授与品（在庫・出数と集計・授与品の登録） ── */
 let SUM = { rows: null, at: 0, loading: false, err: '' }, sumMonth = ym(TODAY), sumItem = 'all', sumSpan = 'month';
-let JIMG = { imgs: null, loading: false };   // 授与品の写真（職員の画面用。品目の登録を開いたときに読む）
+let JIMG = { imgs: null, loading: false, at: 0 };   // 授与品の写真（職員の画面用。品目の登録を開いたときに読む）
 async function loadItemImgs(force) {
   if (JIMG.loading || (JIMG.imgs && !force)) return;
-  JIMG.loading = true;
+  JIMG.loading = true; JIMG.at = Date.now();
   try { const r = await api('itemImgs'); JIMG.imgs = r.imgs || {}; }
   catch (e) { JIMG.imgs = JIMG.imgs || {}; }
   finally { JIMG.loading = false; if (route().r === 'juyo') render(); }
 }
+/* 職員の画面も、開き直したときに写真を読み直す（ほかの端末で差し替えた写真が出るように） */
+if (PROD) document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !REGI.on && JIMG.imgs && Date.now() - JIMG.at > 60000) loadItemImgs(true); });
 /* 写真を横480×320に切り抜いて小さくする（受け口の1マスに収まる大きさまで画質を下げる） */
 /* 写真を整える：背景を白く明るく → 向きを直す（紐のある側を上に）→ 御守の本体に合わせて切り抜く */
 function photoFlatten(c) {   // 机など端につながる暗い所を外し、紙の明るさのむら（影・暗い隅）をならして背景を真っ白にする
