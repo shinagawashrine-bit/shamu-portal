@@ -540,7 +540,7 @@ function seedState() {
 }
 const SKEY = 'miko-shogatsu-demo-v21';
 let S;   // 読み込みは一番下（関数と定数がそろってから）
-const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps', 'made'];   // made：その年に「シフトを作る」を押したか（miko・g）
+const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps', 'made', 'marks'];   // made：その年に「シフトを作る」を押したか（miko・g）
 /* 「シフトを作る」を最初に押すまでは警報を出さない（2026-11-12 本人：見づらいため） */
 const madeMiko = () => !!(S.made && S.made.miko), madeG = () => !!(S.made && S.made.g);
 const markMade = t => { S.made = Object.assign({}, S.made || {}, { [t]: Date.now() }); };
@@ -659,6 +659,7 @@ function needOf(d) {
   return { n: Math.max(0, base + adj), rule, bookN, byBook: bookN > rule, adj };
 }
 const assigned = k => S.assign[k] || [];
+const markOf = (k, id) => ((S.marks || {})[k] || {})[id] || '';   // 出勤の印（徹・~AM3・AM など。2026-11-24 本人）
 const isLead = r => r !== 'new';
 const byId = id => S.members.find(m => m.id === id);
 
@@ -1042,7 +1043,7 @@ function vShift() {
   const groups = ORDER.map(r => [r, S.members.filter(m => rankOf(m) === r)]).filter(([, ms]) => ms.length);
   const body = groups.map(([r, ms]) => `<tr class="grp"><td class="name">${RANKS[r][0]}（${ms.length}人）</td><td colspan="${DAYS.length}"></td></tr>` + ms.map(m => `<tr><td class="name">${mbadge(m)} ${esc(m.name)} <span class="kind">${daysOf(m.id).length}日</span></td>${DAYS.map(d => {
     const as = assigned(d.k).includes(m.id), a = S.avail[m.id]?.[d.k];
-    const inner = as ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}">奉</span>` : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>';
+    const inner = as ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}"${markOf(d.k, m.id).length > 1 ? ' style="font-size:10px;white-space:nowrap"' : ''}>${esc(markOf(d.k, m.id) || '奉')}</span>` : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>';
     return `<td class="c" tabindex="0" data-cell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${inner}</td>`; }).join('')}</tr>`).join('')).join('');
   return `${vIssues(DAYS)}
   <div class="card" style="display:grid;gap:12px">
@@ -1292,6 +1293,7 @@ function shareSheetHTML() {
   const head = DAYS.map(d => `<th style="color:${col(d)}">${d.label}<small>${d.kind === 'eve' ? '夜' : d.sub}</small></th>`).join('');
   const body = ms.map((m, i) => `<tr style="height:${rowH}px;${i % 2 ? 'background:#faf6f6' : ''}"><td class="nm">${esc(m.name)}</td>${DAYS.map(d => {
     if (!assigned(d.k).includes(m.id)) return '<td></td>';
+    if (markOf(d.k, m.id)) return `<td style="font-size:9px;font-weight:700;white-space:nowrap">${esc(markOf(d.k, m.id))}</td>`;
     return (lateOf[d.k] || []).includes(m.id) ? '<td><span class="late"></span></td>' : '<td><span class="on"></span></td>';
   }).join('')}<td class="cnt">${daysOf(m.id).length}</td></tr>`).join('');
   const total = DAYS.map(d => `<td class="cnt">${assigned(d.k).length}</td>`).join('');
@@ -1824,7 +1826,7 @@ function centerChips() { document.querySelectorAll('#view .dchips').forEach(box 
   const r = on.getBoundingClientRect(), b = box.getBoundingClientRect(); box.scrollLeft += (r.left + r.width / 2) - (b.left + b.width / 2); }); }
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
-  const c = e.target.closest('[data-cell]'); if (c) { const k = c.dataset.cell, id = c.dataset.id, a = S.assign[k] = assigned(k).slice(); const i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); makePairs(k); save(); render(); return; }
+  const c = e.target.closest('[data-cell]'); if (c) { const k = c.dataset.cell, id = c.dataset.id, a = S.assign[k] = assigned(k).slice(); const i = a.indexOf(id); if (i >= 0) { a.splice(i, 1); if (S.marks && S.marks[k]) delete S.marks[k][id]; } else a.push(id); makePairs(k); save(); render(); return; }
   const gd = e.target.closest('[data-goday]'); if (gd) { dayK = gd.dataset.goday; tab = 'day'; pairSel = null; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
   const dy = e.target.closest('[data-day]'); if (dy) { dayK = dy.dataset.day; pairSel = null; render(); return; }
   const tc = e.target.closest('[data-tc]'); if (tc) { const [id, js] = tc.dataset.tc.split(','), j = Number(js), row = S.time[dayK][id], dk = DAYS.find(x => x.k === dayK).kind, jo = dk === 'sanga' ? JOB_ORDER : dk !== 'shigoto' ? ['J', 'R', 'L'] : JOB_ORDER_LATER; row[j] = jo[(jo.indexOf(row[j]) + 1) % jo.length]; save(); render(); return; }
