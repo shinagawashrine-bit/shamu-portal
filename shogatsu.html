@@ -702,7 +702,8 @@ function makeGroups(k, size) {
   const ms = onDuty(k).map(byId).filter(Boolean).sort((a, b) => o(a) - o(b));
   // 組の数は人数ではなく昼食の回数で決める：11:40〜13:40を40分ずつ3組（2026-11-24 本人：昼休みの間の授与所の人数をいちばん多く保つ）
   const H = S.rules.haichi, lunchN = Math.max(1, Math.floor((toMin(H.lunchEnd || '13:40') - toMin(H.lunchStart)) / (Number(H.lunchMin) || 40)));
-  const n = Math.max(1, Math.min(lunchN, ms.length)), g = Array.from({ length: n }, () => []);
+  // 4人以下の日は2組（2026-11-24 本人）
+  const n = Math.max(1, Math.min(ms.length <= 4 ? 2 : lunchN, ms.length)), g = Array.from({ length: n }, () => []);
   ms.forEach((m, i) => { const r = Math.floor(i / n), c = r % 2 ? n - 1 - (i % n) : i % n; g[c].push(m.id); });
   ms.forEach(a => (a.friends || []).forEach(fid => {
     const ga = g.findIndex(x => x.includes(a.id)), gb = g.findIndex(x => x.includes(fid)); if (ga < 0 || gb < 0 || ga === gb) return;
@@ -710,7 +711,7 @@ function makeGroups(k, size) {
     if (sw) { g[ga][g[ga].indexOf(sw)] = fid; g[gb][g[gb].indexOf(fid)] = sw; }
   }));
   // 祈願巫女は1組目と最後の組に入れる（昼食が続けて並ばない組から祈願担当を出すため。2026-11-24）。同じ経験の人と入れ替え、いなければ祈願巫女でない人と
-  if (n >= 2) [0, n - 1].forEach(t => {
+  if (n >= 2 && (DAYS.find(x => x.k === k) || {}).kind === 'sanga') [0, n - 1].forEach(t => {
     if (g[t].some(id => canKigan(byId(id)))) return;
     const from = g.findIndex((x, i) => i !== t && x.filter(id => canKigan(byId(id))).length > ((i === 0 || i === n - 1) ? 1 : 0)); if (from < 0) return;
     const kid = g[from].find(id => canKigan(byId(id)));
@@ -718,35 +719,21 @@ function makeGroups(k, size) {
     if (!sw) return;
     g[t][g[t].indexOf(sw)] = kid; g[from][g[from].indexOf(kid)] = sw;
   });
+  // 男性だけの組は作らない（巫女と組む）。男性だけの組があれば、巫女が2人以上いる組の、いちばん経験の短い巫女と入れ替える
+  g.forEach((x, t) => {
+    if (!x.length || !x.every(id => isMan(byId(id)))) return;
+    const from = g.findIndex((y, i) => i !== t && y.filter(id => !isMan(byId(id))).length >= 2); if (from < 0) return;
+    const sw = g[from].filter(id => !isMan(byId(id)) && !canKigan(byId(id))).pop() || g[from].filter(id => !isMan(byId(id))).pop();
+    const man = x[x.length - 1]; g[from][g[from].indexOf(sw)] = man; x[x.length - 1] = sw;
+  });
   S.pairs[k] = g.filter(x => x.length);
   makeTime(k);
 }
 const groupSizeOf = k => { const d = DAYS.find(x => x.k === k); return d && d.kind === 'sanga' ? Number(S.rules.groupSize) || 3 : Number(S.rules.groupSizeOther) || 2; };
 function makePairs(k) {
   if (isLocked(k)) return fitLocked(k);
-  const gsz = groupSizeOf(k);
-  if (gsz >= 3) return makeGroups(k, gsz);
-  const ms = onDuty(k).map(byId).filter(Boolean);
-  let news = ms.filter(m => rankOf(m) === 'new'), leads = ms.filter(m => isLead(rankOf(m)) && !isMan(m)).sort((a, b) => RANK_FOR_PAIR.indexOf(rankOf(a)) - RANK_FOR_PAIR.indexOf(rankOf(b)));
-  const pairs = [], used = new Set();
-  const free = m => !used.has(m.id);
-  // 1) 友達
-  ms.forEach(a => (a.friends || []).forEach(fid => {
-    const b = ms.find(m => m.id === fid); if (!b || !free(a) || !free(b)) return;
-    const ra = rankOf(a), rb = rankOf(b), bothNew = ra === 'new' && rb === 'new', bothLead = isLead(ra) && isLead(rb);
-    if (bothNew && !S.rules.friendNew) return;
-    const restNew = news.filter(m => free(m) && m !== a && m !== b).length, restLead = leads.filter(m => free(m) && m !== a && m !== b).length;
-    if (bothLead && restLead < restNew) return;   // 新人の相手が足りなくなるなら組まない
-    pairs.push([a.id, b.id]); used.add(a.id); used.add(b.id);
-  }));
-  // 2) 新人 ＋ ベテラン（いなければ録事・中堅）
-  news.filter(free).forEach(n => { const l = leads.find(free); if (l) { pairs.push([l.id, n.id]); used.add(l.id); used.add(n.id); } });
-  // 3) 残り：経験の多い人と少ない人を組む
-  const rest = ms.filter(free).sort((a, b) => ORDER.indexOf(rankOf(a)) - ORDER.indexOf(rankOf(b)));
-  while (rest.length >= 2) { const a = rest.shift(), b = rest.pop(); pairs.push([a.id, b.id]); }
-  if (rest.length) { if (pairs.length) pairs[pairs.length - 1].push(rest[0].id); else pairs.push([rest[0].id]); }
-  S.pairs[k] = pairs;
-  makeTime(k);
+  // 4日以降も昼食は3組（2026-11-24 本人「3組にする」）。それまでの2人1組の作り方は _backup/index_20261124_4日以降3組の前.html
+  return makeGroups(k, groupSizeOf(k));
 }
 /* 配置表：1人ずつ。休憩は組ごとに一緒（午前20分・昼食40分・午後20分）。
    祈願は担当2〜3人の交代で常に1人。授与所が最低人数より多い時間が30分以上続けば、1人が掃除・お焚き上げへ */
