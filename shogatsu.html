@@ -173,7 +173,9 @@ table.tl td.slot { cursor: pointer; padding: 3px 0 }
 .sh-time { font-size: 11px; color: var(--text-3); text-align: right; padding: 1px 6px 0 0; font-variant-numeric: tabular-nums; line-height: 1; border-top: 1px solid transparent }
 .sh-time.hr { color: var(--text); font-weight: 700; border-top-color: var(--line) }
 .jobpick { position: fixed; z-index: 50; background: var(--card, #fff); border: 1px solid var(--line, #ddd); border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 8px; display: grid; grid-template-columns: repeat(2, minmax(84px, auto)); gap: 6px }
-.jobpick .jp-h { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: var(--sub, #666); padding: 0 2px 2px }
+.jobpick .jp-h { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: var(--sub, #666); padding: 0 2px 2px; display: flex; align-items: center; justify-content: space-between; gap: 8px }
+.jobpick .jp-x { font: inherit; font-size: 14px; line-height: 1; width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line, #ddd); background: transparent; color: var(--sub, #666); cursor: pointer; flex: none }
+.jobpick .jp-x:hover { background: var(--line, #eee) }
 .jobpick .jp-b { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid transparent; border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left }
 .jobpick .jp-b.on { outline: 2px solid var(--acc, #9c545b); outline-offset: 1px }
 .jobpick .jp-b.none { background: #f4f4f4; color: #777 }
@@ -1211,7 +1213,7 @@ function jobPicker(cell) {
   const list = dk === 'sanga' ? ['J', 'K', 'S', 'O', 'R', 'L', 'X'] : dk === 'shigoto' ? ['J', 'U', 'R', 'L', 'X'] : ['J', 'R', 'L', 'X'];
   const r = cell.getBoundingClientRect(), m = byId(id), d = DAYS.find(x => x.k === dayK), t = slotsOf(d)[Number(js)];
   const box = document.createElement('div'); box.id = 'jobpick'; box.className = 'jobpick';
-  box.innerHTML = `<div class="jp-h">${esc(m ? m.name : '')} ${hm(t)}〜${hm(t + STEP)}</div>` + list.map(c => `<button type="button" class="jp-b ${JOBS[c][1]} ${row[Number(js)] === c ? 'on' : ''}" data-jp="${id},${js},${c}">${c === 'X' ? '勤務外' : JOBS[c][0]}</button>`).join('');
+  box.innerHTML = `<div class="jp-h"><span>${esc(m ? m.name : '')} ${hm(t)}〜${hm(t + STEP)}</span><button type="button" class="jp-x" data-jpx aria-label="閉じる">✕</button></div>` + list.map(c => `<button type="button" class="jp-b ${JOBS[c][1]} ${row[Number(js)] === c ? 'on' : ''}" data-jp="${id},${js},${c}">${c === 'X' ? '勤務外' : JOBS[c][0]}</button>`).join('');
   document.body.appendChild(box);
   const w = box.offsetWidth, h = box.offsetHeight;
   box.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + 'px';
@@ -1265,11 +1267,12 @@ function vDay() {
   });
   const keys = (isSanga ? ['J', 'K', 'S', 'O'] : d.kind !== 'shigoto' ? ['J'] : ['J', 'U']).map(c => `<span class="key"><i class="sh-c ${JOBS[c][1]}"></i>${JOBS[c][0]}</span>`).join('') + '<span class="key"><i class="sh-c rest"></i>休憩・昼食</span>';
   const noJuyo = ranges(slots, j => juyo(j) === 0 && ids.some(id => tm[id][j] !== 'X'));
-  const warn = [...(TPL_NOTE[dayK] || []), ...(noJuyo.length ? [`授与所が0人の時間：${noJuyo.join('、')}`] : []), ...(ukShort.length ? [`祈願受付が${ukN}人より少ない時間：${ukShort.join('、')}`] : []), ...(noKigan.length ? [`祈願がいない時間：${noKigan.join('、')}`] : []), ...(prepNG.length ? [`休憩・昼食のすぐ後に祈願（着替え・準備の時間がない）：${prepNG.join('、')}`] : []), ...(alignNG.length ? [`祈願が0分・30分の区切りに合っていない：${alignNG.join('、')}`] : [])];
+  const notKigan = ids.filter(id => tm[id].includes('K') && !canKigan(byId(id))).map(id => `${byId(id).name}さん`);   // 入れ替えたあとなど
+  const warn = [...(TPL_NOTE[dayK] || []), ...(notKigan.length ? [`祈願巫女でない人が祈願に入っています：${notKigan.join('、')}`] : []), ...(noJuyo.length ? [`授与所が0人の時間：${noJuyo.join('、')}`] : []), ...(ukShort.length ? [`祈願受付が${ukN}人より少ない時間：${ukShort.join('、')}`] : []), ...(noKigan.length ? [`祈願がいない時間：${noKigan.join('、')}`] : []), ...(prepNG.length ? [`休憩・昼食のすぐ後に祈願（着替え・準備の時間がない）：${prepNG.join('、')}`] : []), ...(alignNG.length ? [`祈願が0分・30分の区切りに合っていない：${alignNG.join('、')}`] : [])];
   return `${vIssues([d])}
   <div class="card noprint" style="display:grid;gap:12px">
     <div class="dchips">${chips}</div>
-    <div class="row"><button class="btn" id="repair">${isLocked(dayK) ? (repairSure ? 'もう一度押すと手直しが消えます' : 'この日を自動で作り直す') : 'この日を自動で作り直す'}</button>${isLocked(dayK) ? '<span class="tag">手で直した日（自動では作り直しません）</span>' : '<span class="kind">マスを押すと持ち場を変えられます</span>'}<span class="sp"></span>
+    <div class="row"><button class="btn" id="repair">${isLocked(dayK) ? (repairSure ? 'もう一度押すと手直しが消えます' : 'この日を自動で作り直す') : 'この日を自動で作り直す'}</button>${isLocked(dayK) ? '<span class="tag">手で直した日（自動では作り直しません）</span>' : ''}<span class="kind">${pairSel ? `<b>${esc(byId(pairSel).name)}さん</b>と入れ替える人の名前を押してください（もう一度押すと取り消し）` : 'マスを押すと持ち場、名前を2人続けて押すと人を入れ替えられます'}</span><span class="sp"></span>
       <button class="btn pri" id="hpdf">PDFにする</button></div>
     ${warn.length && madeMiko() ? `<ul class="warnlist">${warn.map(w => `<li>${w}</li>`).join('')}</ul>` : ''}
   </div>
@@ -1457,7 +1460,7 @@ function shareSheetHTML() {   // A4横1枚に収める（巫女・男性・御�
   };
   const menCell = (d, m) => { const j = menJob(d.k, m.id); return j === 'J' ? onDot : j === 'T' ? mk('徹') : ''; };
   const count = (m, f) => PD.filter(d => f(d, m)).length;
-  const lastDay = (m, f) => { const x = PD.filter(d => f(d, m)).pop(); return x ? (x.kind === 'eve' ? x.label : `${x.label}（${x.sub}）`) : ''; };   // 最終奉仕日（2026-11-24 本人）
+  const lastDay = (m, f) => { const x = PD.filter(d => f(d, m)).pop(); return x ? (/\//.test(x.label) ? `${Number(x.label.split('/')[1])}日` : x.label) : ''; };   // 最終奉仕日（2026-11-24 本人）。曜日なし・「3日」の表記（同日 本人）
   const rowsOf = (list, f, offset = 0) => list.map((m, i) => `<tr style="height:${rowH}px;${(i + offset) % 2 ? 'background:#faf6f6' : ''}"><td class="nm">${esc(m.name)}</td>${PD.map(d => `<td>${f(d, m)}</td>`).join('')}<td class="cnt">${count(m, f)}</td><td class="lastd">${lastDay(m, f)}</td></tr>`).join('');
   const sec = t => `<tr class="ss-sec" style="height:${rowH}px"><td class="nm" colspan="${PD.length + 3}">${t}</td></tr>`;
   const head = PD.map(d => `<th style="color:${col(d)}">${d.label}<small>${d.kind === 'eve' ? '夜' : d.sub}</small></th>`).join('');
@@ -2073,13 +2076,15 @@ document.addEventListener('click', e => {
   const c = e.target.closest('[data-cell]'); if (c) { const k = c.dataset.cell, id = c.dataset.id, a = S.assign[k] = assigned(k).slice(); const i = a.indexOf(id); if (i >= 0) { a.splice(i, 1); if (S.marks && S.marks[k]) delete S.marks[k][id]; } else a.push(id); makePairs(k); save(); render(); return; }
   const gd = e.target.closest('[data-goday]'); if (gd) { dayK = gd.dataset.goday; tab = 'day'; pairSel = null; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
   const dy = e.target.closest('[data-day]'); if (dy) { dayK = dy.dataset.day; pairSel = null; render(); return; }
+  if (e.target.closest('[data-jpx]')) { document.getElementById('jobpick')?.remove(); return; }
   const jpk = e.target.closest('[data-jp]'); if (jpk) { document.getElementById('jobpick')?.remove(); const [id, js, v] = jpk.dataset.jp.split(','), row = S.time[dayK] && S.time[dayK][id]; if (row) { row[Number(js)] = v; (S.locked = S.locked || {})[dayK] = true; repairSure = false; save(); } render(); return; }
   const tc = e.target.closest('[data-tc]'); if (tc) { jobPicker(tc); return; }
   const kgb = e.target.closest('[data-kg]'); if (kgb) { const id = kgb.dataset.kg, a = kiganOf(dayK).slice(), i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); S.kigan[dayK] = a; makeTime(dayK); save(); render(); return; }
   const pm = e.target.closest('[data-pm]'); if (pm) { const id = pm.dataset.pm;
     if (!pairSel || pairSel === id) pairSel = pairSel === id ? null : id;
     else { const ps = S.pairs[dayK] || []; let a, b; ps.forEach((g, gi) => g.forEach((x, xi) => { if (x === pairSel) a = [gi, xi]; if (x === id) b = [gi, xi]; }));
-      if (a && b) { ps[a[0]][a[1]] = id; ps[b[0]][b[1]] = pairSel; if (isLocked(dayK) && S.time[dayK]) { const tt = S.time[dayK], x = tt[id]; tt[id] = tt[pairSel]; tt[pairSel] = x; } } pairSel = null; makeTime(dayK); save(); }
+      // 2人の場所（組・並び）と持ち場をそのまま入れ替え、手で直した日にする（2026-11-24 本人「配置表で巫女さんを入れ替えたり」）
+      if (a && b) { ps[a[0]][a[1]] = id; ps[b[0]][b[1]] = pairSel; const tt = S.time[dayK]; if (tt && tt[id] && tt[pairSel]) { const x = tt[id]; tt[id] = tt[pairSel]; tt[pairSel] = x; (S.locked = S.locked || {})[dayK] = true; repairSure = false; } else makeTime(dayK); } pairSel = null; save(); }
     render(); return; }
   if (e.target.closest('#repair')) { if (isLocked(dayK) && !repairSure) { repairSure = true; render(); return; } repairSure = false; (S.locked = S.locked || {})[dayK] = false; delete S.kigan[dayK]; makePairs(dayK); pairSel = null; save(); render(); return; }
   const adj = e.target.closest('[data-adj]'); if (adj) { const k = adj.dataset.k; S.adj[k] = (S.adj[k] || 0) + Number(adj.dataset.adj); if (needOf(DAYS.find(d => d.k === k)).n === 0 && S.adj[k] < 0) S.adj[k] = -Math.max(Number(S.rules.need[DAYS.find(d => d.k === k).kind]) || 0, 0); save(); render(); return; }
