@@ -3907,7 +3907,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261124115802';
+const BUILD = '20261124124952';
 const REJI_PAGE = true;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -5464,7 +5464,7 @@ if (PROD) {
    - 見られるのは宮司・職員・臨時職員（2026-11-12 本人）。助勤のログインには出さない
    ========================================================= */
 const SG_PAGE = PROD ? 'shogatsu.html' : 'shogatsu-demo.html';
-const SG_VER = 'd7e5753dea';   // 正月の画面の版（build.py が中身から作る）。URLに付けて、古い画面がブラウザに残らないようにする（2026-11-15）
+const SG_VER = 'f31d9cca57';   // 正月の画面の版（build.py が中身から作る）。URLに付けて、古い画面がブラウザに残らないようにする（2026-11-15）
 const sgFrame = () => document.getElementById('sgFrame');
 const SG_BOOK = { tok: undefined, d: null, p: null, cbs: [] };   // 正月の団体予約の読み込み（ログインごと）
 window.SG_HOST = {
