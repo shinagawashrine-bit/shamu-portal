@@ -748,6 +748,7 @@ function makeGroups(k, size) {
     const ps = S.pairs[k], main = uketsukeOf(k)[0];
     if (main) {
       const gi = ps.findIndex(x => x.includes(main)), y = ps[0][0]; ps[gi][ps[gi].indexOf(main)] = y; ps[0][0] = main;
+      const sub = uketsukeOf(k)[1], si = sub ? ps.findIndex(x => x.includes(sub)) : -1; if (si > 0 && si !== ps.length - 1) ps.push(ps.splice(si, 1)[0]);   // 組を新しく作るときだけ、受付の2人目の組を最後（遅番）に置く
       const late = lateRuleOf(k), rk = id => ['rokuji', 'vet', 'mid', 'new'].indexOf(rankOf(byId(id)));
       const f = ps.slice(1).flat().sort((a, b) => late.includes(a) - late.includes(b) || rk(a) - rk(b) || isMan(byId(a)) - isMan(byId(b)))[0];
       const fi = f ? ps.findIndex(x => x.includes(f)) : -1;
@@ -784,12 +785,10 @@ function helperWin(k) { const H = S.rules.haichi, ls = toMin(H.lunchStart); retu
 const dayEnd = d => d && d.kind === 'shigoto' ? toMin(S.rules.haichi.shigotoTo || '19:00') : 18 * 60;   // 仕事始めの平日は会社祈願が19:00まで
 function slotsOf(d) { const a = [], e = dayEnd(d); for (let t = 9 * 60; t < e; t += STEP) a.push(t); return a; }
 /* 遅番の組（仕事始めの平日）：受付の2人目（ベテラン）の組。19:00まで受付を受け持てるように。昼食がいちばん遅くなるよう最後の組にする */
-function lateGroupOf(k) {
+function lateGroupOf(k) {   // 遅番は最後の組（位置で固定。組の並びは動かさない。2026-11-24 本人「勝手にずらすな」）
   const d = DAYS.find(x => x.k === k); if (!d || d.kind !== 'shigoto' || !S.pairs[k]) return null;
-  const sub = uketsukeOf(k)[1]; if (!sub) return null;
-  const i = S.pairs[k].findIndex(g => g.includes(sub)); if (i < 0) return null;
-  if (i !== S.pairs[k].length - 1) S.pairs[k].push(S.pairs[k].splice(i, 1)[0]);
-  return pairsOf(k).find(g => g.includes(sub)) || null;
+  if (!uketsukeOf(k)[1]) return null;
+  const ps = pairsOf(k); return ps.length ? ps[ps.length - 1] : null;
 }
 /* 遅番の人：配置表ができている日は、配置表の中身から読む（朝が勤務外で、あとから来る人）。
    配置で人を入れ替えても遅番は最後の組のまま（その位置の持ち場ごと入れ替わる）、シフト表・シフトのPDFにもそのまま出る（2026-11-24 本人「遅番は3組で固定」「配置で動かした普通か遅番がシフトに反映」） */
@@ -802,9 +801,9 @@ function lateMembersOf(k) {
 /* 遅番を自動で決める（2026-11-11 本人：遅番は来る時刻と人数だけ決める）：受付の2人目の組を最後の組にし、その組の人から、足りなければ前の組から */
 function lateRuleOf(k) {
   const g = lateGroupOf(k); if (!g) return [];
-  const sub = uketsukeOf(k)[1], main = uketsukeOf(k)[0], ps = pairsOf(k), n = Number(S.rules.haichi.osobanN) || g.length;
-  const cand = [sub, ...g.filter(id => id !== sub)];
-  for (let i = ps.length - 1; i >= 0; i--) ps[i].forEach(id => { if (!cand.includes(id) && id !== main) cand.push(id); });
+  const main = uketsukeOf(k)[0], ps = pairsOf(k), n = Number(S.rules.haichi.osobanN) || g.length;
+  const cand = g.filter(id => id !== main);
+  for (let i = ps.length - 2; i >= 0; i--) ps[i].slice().reverse().forEach(id => { if (!cand.includes(id) && id !== main) cand.push(id); });
   return cand.slice(0, Math.max(0, n));
 }
 const canKigan = m => !!(m && m.kigan && rankOf(m) !== 'rokuji');   // 祈願巫女（巫女の登録で決める。録事は授与所だけ）
