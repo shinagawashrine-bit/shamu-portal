@@ -432,7 +432,7 @@ tr.cur td { background: var(--brand-soft) }
    local：見本（この端末にだけ保存） */
 const API_URL = 'https://script.google.com/macros/s/AKfycbx-QNVOKsc6rMszEqwt9BjpfjqU0sIm2wOtfTBnyazvxA4PJHhNqOkaMszVWZi-JUWLgw/exec';
 const HOST = (() => { try { return window.parent !== window && window.parent.SG_HOST ? window.parent.SG_HOST : null; } catch (e) { return null; } })();
-const INPUT_HASHES = ['#nyuryoku', '#goshuin', '#daidokoro'];
+const INPUT_HASHES = ['#nyuryoku', '#goshuin', '#daidokoro', '#otoko'];
 const MODE = HOST ? 'host' : API_URL ? 'api' : 'local';
 const PROD = HOST ? !!HOST.prod : !!API_URL;
 /* ---- 期間と日の種類 ---- */
@@ -1155,9 +1155,10 @@ function vShozoku() {
     const by = { S: [], M: [], L: [], '?': [] }; ms.forEach(m => by[sizeOf(m) || '?'].push(m));
     return `<tr><td style="white-space:nowrap"><b class="${dayCls(d)}">${d.label}${d.kind === 'eve' ? ' 夜' : `（${d.sub}）`}</b></td>${sizes.map(s => { const n = by[s].length, st = stock[s] === '' ? null : Number(stock[s]); return `<td class="n ${st != null && n > st ? 'short' : ''}">${n}${st != null && n > st ? `（${n - st}着不足）` : ''}</td>`; }).join('')}<td><div class="chips">${sizes.concat('?').map(s => by[s].map(m => `<span class="chip">${s === '?' ? '' : s + circ((sno[d.k] || {})[m.id]) + ' '}${esc(m.name)}</span>`).join('')).join('')}${mn.map(m => `<span class="chip"><b>男</b> ${esc(m.name)}${m.height ? ` ${m.height}cm` : ''}${m.tabi ? `・足袋${Number(m.tabi).toFixed(1)}` : ''}</span>`).join('')}</div></td></tr>`;
   }).join('');
-  const workers = S.members.filter(m => daysOf(m.id).length);
+  const workers = S.members.filter(m => daysOf(m.id).length).concat(menAll().filter(m => menDays(m.id)));   // 足袋は出勤する男性も（2026-11-24 本人）
   const tabi = {}; workers.forEach(m => { const t = m.tabi ? Number(m.tabi).toFixed(1) : '未登録'; tabi[t] = (tabi[t] || 0) + 1; });
   const tabiRows = Object.keys(tabi).sort().map(t => `<tr><td>${t === '未登録' ? t : t + ' cm'}</td><td class="n">${tabi[t]}足</td></tr>`).join('');
+  const menRows = menAll().filter(m => menDays(m.id)).map(m => `<tr><td>${mbadge(m)} ${esc(m.name)}</td><td class="n">${m.height || '—'} cm</td><td>—</td><td class="n">${m.tabi ? Number(m.tabi).toFixed(1) + ' cm' : '—'}</td><td class="n">${menDays(m.id)}日</td></tr>`).join('');
   const person = S.members.slice().sort((a, b) => (sizeOf(a) || 'Z').localeCompare(sizeOf(b) || 'Z') || a.height - b.height).map(m => `<tr><td>${mbadge(m)} ${esc(m.name)}</td><td class="n">${m.height || '—'} cm</td><td>${sizeOf(m) ? `<span class="size">${sizeOf(m)}${[...new Set(daysOf(m.id).map(d => (sno[d.k] || {})[m.id]))].filter(Boolean).map(circ).join('')}</span>` : '<span class="size none">?</span>'}</td><td class="n">${m.tabi ? Number(m.tabi).toFixed(1) + ' cm' : '—'}</td><td class="n">${daysOf(m.id).length}日</td></tr>`).join('');
   return `
   <div class="card" style="display:grid;gap:10px">
@@ -1169,7 +1170,7 @@ function vShozoku() {
     <div class="card" style="display:grid;gap:10px"><h2>足袋の支給（1人1足）</h2>
       <table class="t"><thead><tr><th>大きさ</th><th style="text-align:right">数</th></tr></thead><tbody>${tabiRows}</tbody><tfoot><tr><td><b>合計</b></td><td class="n"><b>${workers.length}足</b></td></tr></tfoot></table></div>
     <div class="card" style="display:grid;gap:10px;min-width:0"><h2>人ごとのサイズ</h2>
-      <div class="scroll"><table class="t"><thead><tr><th>名前</th><th style="text-align:right">身長</th><th>装束</th><th style="text-align:right">足袋</th><th style="text-align:right">出勤</th></tr></thead><tbody>${person}</tbody></table></div></div>
+      <div class="scroll"><table class="t"><thead><tr><th>名前</th><th style="text-align:right">身長</th><th>装束</th><th style="text-align:right">足袋</th><th style="text-align:right">出勤</th></tr></thead><tbody>${person}${menRows}</tbody></table></div></div>
   </div>`;
 }
 
@@ -1528,7 +1529,7 @@ function seedG(st) {   // 見本の人と希望（作り物）
   st.homeTemp = sampleHomeTemp();
   const kd = DAYS.filter(d => d.kind !== 'eve'); st.leaves = { [(kd[6] || {}).k]: ['鈴木'], [(kd[10] || {}).k]: ['今井'] };   // 見本：神職の休み（本番は神社くんの休み申告から）
 }
-const G_URLS = { goshuin: PAGE_URL + '#goshuin', kitchen: PAGE_URL + '#daidokoro' };   // 見本のシフト登録URL。御朱印と台所で別（2026-11-11 本人）
+const G_URLS = { goshuin: PAGE_URL + '#goshuin', kitchen: PAGE_URL + '#daidokoro', men: PAGE_URL + '#otoko' };   // 見本のシフト登録URL。御朱印と台所で別（2026-11-11 本人）
 const gById = id => (S.goMembers || []).find(m => m.id === id);
 const gTeam = t => (S.goMembers || []).filter(m => m.team === t);
 const gNeedRule = k => { const d = DAYS.find(x => x.k === k), v = ((S.rules.goNeed || {})[d ? d.kind : '']); return v == null || v === '' ? 2 : Number(v); };   // 御朱印の人数：ルールの日の種類ごと（2026-11-11 本人。空なら仮で2人）
@@ -1569,6 +1570,8 @@ function vMenList() {
   const M = menAll(), rows = M.map(m => { const a = age(m); return `<tr><td style="white-space:nowrap"><b>${esc(m.name)}</b></td><td class="n">${m.first ? years(m) + '年目' : '—'}</td><td class="n">${a == null ? '—' : a + '歳'}</td><td>${schoolLabel(m)}</td><td class="n">${m.height || '—'} cm</td><td class="n">${m.tabi ? Number(m.tabi).toFixed(1) : '—'}</td><td class="n">${menDays(m.id)}日</td><td>${esc(m.note || '') || '—'}</td><td><button class="btn" style="white-space:nowrap" data-menedit="${m.id}">編集</button></td></tr>`; }).join('');
   return `<div class="card" style="display:grid;gap:12px" id="menlist">
     <div class="row"><h2>男性（${M.length}人）</h2><span class="tag">全員 授与所</span><span class="sp"></span><button class="btn pri" data-menedit="">＋ 登録</button></div>
+    <div class="urlbox"><div class="urlbox-h">シフト登録URL（男性）</div>
+      <div class="urlrow"><a class="url" id="gurl-men" href="${G_URLS.men}" target="_blank" rel="noopener">${G_URLS.men}</a><button type="button" class="btn" data-gcopy="men">コピー</button></div></div>
     <div class="scroll"><table class="t"><thead><tr><th>名前</th><th style="text-align:right">経験</th><th style="text-align:right">年齢</th><th>大学・学年</th><th style="text-align:right">身長</th><th style="text-align:right">足袋</th><th style="text-align:right">出勤</th><th>メモ</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="9" class="kind">男性を登録してください</td></tr>'}</tbody></table></div>
   </div>`;
 }
@@ -1669,10 +1672,11 @@ function gEditDlg(id, team) {
 
 /* 御朱印・台所の人が自分のスマホで入れる画面（#goshuin）：名前 → シフトの希望 → 送信。あとから変更もできる */
 let ginp = { step: 'name' };
-const isGInput = () => location.hash === '#goshuin' || location.hash === '#daidokoro';
-const gHashTeam = () => location.hash === '#daidokoro' ? 'kitchen' : 'goshuin';
+const isGInput = () => location.hash === '#goshuin' || location.hash === '#daidokoro' || location.hash === '#otoko';   // #otoko：男性（2026-11-24 本人）
+const gHashTeam = () => location.hash === '#daidokoro' ? 'kitchen' : location.hash === '#otoko' ? 'men' : 'goshuin';
+const G_LABEL = t => TEAMS[t] || (t === 'men' ? '男性' : '');
 function vGInput() {
-  const team = gHashTeam(), top = `<div class="in-top"><div class="in-t">${wareki(Y)} 正月 ${TEAMS[team]}</div><div class="in-s">シフトの希望を入れてください</div></div>`;
+  const team = gHashTeam(), top = `<div class="in-top"><div class="in-t">${wareki(Y)} 正月 ${G_LABEL(team)}</div><div class="in-s">シフトの希望を入れてください</div></div>`;
   const si = { name: 0, info: 0, shift: 1, done: 1 }[ginp.step];
   const bar = `<ol class="in-steps two">${['名前', 'シフト'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'on' : ''}">${x}</li>`).join('')}</ol>`;
   if (ginp.step === 'name') return top + bar + `<section class="in-card"><h2>お名前を選んでください</h2>
@@ -1971,7 +1975,7 @@ document.addEventListener('change', e => {
 /* ===== シフト登録URL（本番。神社くんの受け口に直接送る。2026-11-12）=====
    名前を選ぶ → その人の希望（○×）と基本情報を読む → 基本情報を確かめる（変わっていれば直す）→ 送信。
    本人確認はないが、基本情報は変わっているかもしれないので確かめさせる（2026-11-12 本人） */
-const apiTeam = () => ({ '#nyuryoku': 'miko', '#goshuin': 'goshuin', '#daidokoro': 'kitchen' })[location.hash] || '';
+const apiTeam = () => ({ '#nyuryoku': 'miko', '#goshuin': 'goshuin', '#daidokoro': 'kitchen', '#otoko': 'men' })[location.hash] || '';
 const apiMine = new Set(), apiInfo = {};
 async function sgApi(action, body) {
   const res = await fetch(API_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(Object.assign({ action }, body)) });
