@@ -172,6 +172,12 @@ table.tl td.slot { cursor: pointer; padding: 3px 0 }
 .sh-h .sz { font-size: 10px; color: var(--text-3); font-weight: 700 }
 .sh-time { font-size: 11px; color: var(--text-3); text-align: right; padding: 1px 6px 0 0; font-variant-numeric: tabular-nums; line-height: 1; border-top: 1px solid transparent }
 .sh-time.hr { color: var(--text); font-weight: 700; border-top-color: var(--line) }
+.jobpick { position: fixed; z-index: 50; background: var(--card, #fff); border: 1px solid var(--line, #ddd); border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,.18); padding: 8px; display: grid; grid-template-columns: repeat(2, minmax(84px, auto)); gap: 6px }
+.jobpick .jp-h { grid-column: 1 / -1; font-size: 12px; font-weight: 700; color: var(--sub, #666); padding: 0 2px 2px }
+.jobpick .jp-b { font: inherit; font-size: 13px; font-weight: 700; border: 1px solid transparent; border-radius: 6px; padding: 8px 10px; cursor: pointer; text-align: left }
+.jobpick .jp-b.on { outline: 2px solid var(--acc, #9c545b); outline-offset: 1px }
+.jobpick .jp-b.none { background: #f4f4f4; color: #777 }
+@media print { .jobpick { display: none } }
 .sh-c { font: inherit; border: 0; margin: 0; padding: 3px 8px 0; text-align: left; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: flex-start; min-height: 0; overflow: hidden }
 .sh-c.s { border-top-left-radius: 6px; border-top-right-radius: 6px; margin-top: 2px }
 .sh-c.e { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; margin-bottom: 2px }
@@ -500,7 +506,7 @@ const DEFAULT_RULES = {
   groupSize: 3,
   groupSizeOther: 2,          // 4日以降の組の人数（2026-11-11 本人：2人1組）               // 組の人数（2026-11-11 本人：昼食を変な時間にしないため3人組）
   haichi: { shigotoTo: '19:00', osobanFrom: '10:00', osobanN: 2,   // 仕事始めの平日は会社祈願が19:00まで（2026-11-11 本人）。1組が遅番（10:00からは仮）
-    juyoMin: 6, lunchShortOK: true, amStart: '10:00', amMin: 20, lunchStart: '11:40', lunchMin: 40, pmStart: '15:00', pmMin: 20, kiganFrom: '9:00', kiganTo: '17:00', kiganN: 2, kiganTurn: 60, extraMin: 30, juyoMax: 7, helpMin: 5, lateFrom: '15:00', lateMin: 4, uketsukeN: 1 },   // 4日以降は祈願受付＋授与所。受付は常に1人。録事がメイン、2人目は一番長いベテラン（2026-11-11 本人）   // 授与所の最低人数：ふだん6・助っ人の時間5・15:00から4（2026-11-11 本人）   // juyoMax：授与所は7人まで。8人になる時間だけ掃除・お焚き上げへ（2026-11-11 本人）
+    juyoMin: 5, lunchShortOK: true, amStart: '10:00', amMin: 20, lunchStart: '11:40', lunchMin: 40, pmStart: '15:00', pmMin: 20, kiganFrom: '9:00', kiganTo: '17:00', kiganN: 2, kiganTurn: 60, extraMin: 30, juyoMax: 7, helpMin: 5, lateFrom: '15:00', lateMin: 4, uketsukeN: 1 },   // 4日以降は祈願受付＋授与所。受付は常に1人。録事がメイン、2人目は一番長いベテラン（2026-11-11 本人）   // 授与所の最低人数：ふだん6・助っ人の時間5・15:00から4（2026-11-11 本人）   // juyoMax：授与所は7人まで。8人になる時間だけ掃除・お焚き上げへ（2026-11-11 本人）
 };
 const SEED = [
   ['佐藤 美咲', 2020, '1999-05', 'grad', 161, 24],
@@ -544,7 +550,7 @@ function seedState() {
 }
 const SKEY = 'miko-shogatsu-demo-v21';
 let S;   // 読み込みは一番下（関数と定数がそろってから）
-const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps', 'made', 'marks', 'menShift'];   // made：その年に「シフトを作る」を押したか（miko・g）
+const YEAR_FIELDS = ['assign', 'avail', 'adj', 'pairs', 'time', 'kigan', 'extraDays', 'sent', 'goAvail', 'goSent', 'goAssign', 'goNeed', 'kitchen', 'meals', 'temps', 'made', 'marks', 'menShift', 'locked'];   // made：その年に「シフトを作る」を押したか（miko・g）
 /* 「シフトを作る」を最初に押すまでは警報を出さない（2026-11-12 本人：見づらいため） */
 const madeMiko = () => !!(S.made && S.made.miko), madeG = () => !!(S.made && S.made.g);
 const markMade = t => { S.made = Object.assign({}, S.made || {}, { [t]: Date.now() }); };
@@ -694,18 +700,30 @@ const RANK_FOR_PAIR = ['vet', 'rokuji', 'mid'];
 function makeGroups(k, size) {
   const o = m => ORDER.indexOf(rankOf(m));
   const ms = onDuty(k).map(byId).filter(Boolean).sort((a, b) => o(a) - o(b));
-  const n = Math.max(1, Math.round(ms.length / size)), g = Array.from({ length: n }, () => []);
+  // 組の数は人数ではなく昼食の回数で決める：11:40〜13:40を40分ずつ3組（2026-11-24 本人：昼休みの間の授与所の人数をいちばん多く保つ）
+  const H = S.rules.haichi, lunchN = Math.max(1, Math.floor((toMin(H.lunchEnd || '13:40') - toMin(H.lunchStart)) / (Number(H.lunchMin) || 40)));
+  const n = Math.max(1, Math.min(lunchN, ms.length)), g = Array.from({ length: n }, () => []);
   ms.forEach((m, i) => { const r = Math.floor(i / n), c = r % 2 ? n - 1 - (i % n) : i % n; g[c].push(m.id); });
   ms.forEach(a => (a.friends || []).forEach(fid => {
     const ga = g.findIndex(x => x.includes(a.id)), gb = g.findIndex(x => x.includes(fid)); if (ga < 0 || gb < 0 || ga === gb) return;
     const sw = g[ga].find(id => id !== a.id && rankOf(byId(id)) === rankOf(byId(fid)) && !(byId(id).friends || []).some(f => g[ga].includes(f)));
     if (sw) { g[ga][g[ga].indexOf(sw)] = fid; g[gb][g[gb].indexOf(fid)] = sw; }
   }));
+  // 祈願巫女は1組目と最後の組に入れる（昼食が続けて並ばない組から祈願担当を出すため。2026-11-24）。同じ経験の人と入れ替え、いなければ祈願巫女でない人と
+  if (n >= 2) [0, n - 1].forEach(t => {
+    if (g[t].some(id => canKigan(byId(id)))) return;
+    const from = g.findIndex((x, i) => i !== t && x.filter(id => canKigan(byId(id))).length > ((i === 0 || i === n - 1) ? 1 : 0)); if (from < 0) return;
+    const kid = g[from].find(id => canKigan(byId(id)));
+    const sw = g[t].find(id => !canKigan(byId(id)) && rankOf(byId(id)) === rankOf(byId(kid))) || g[t].find(id => !canKigan(byId(id)) && rankOf(byId(id)) !== 'rokuji');
+    if (!sw) return;
+    g[t][g[t].indexOf(sw)] = kid; g[from][g[from].indexOf(kid)] = sw;
+  });
   S.pairs[k] = g.filter(x => x.length);
   makeTime(k);
 }
 const groupSizeOf = k => { const d = DAYS.find(x => x.k === k); return d && d.kind === 'sanga' ? Number(S.rules.groupSize) || 3 : Number(S.rules.groupSizeOther) || 2; };
 function makePairs(k) {
+  if (isLocked(k)) return fitLocked(k);
   const gsz = groupSizeOf(k);
   if (gsz >= 3) return makeGroups(k, gsz);
   const ms = onDuty(k).map(byId).filter(Boolean);
@@ -734,6 +752,7 @@ function makePairs(k) {
    祈願は担当2〜3人の交代で常に1人。授与所が最低人数より多い時間が30分以上続けば、1人が掃除・お焚き上げへ */
 const JOBS = { X: ['', 'none'], J: ['授与所', 'p0'], K: ['祈願', 'p1'], U: ['祈願受付', 'p1'], S: ['掃除', 'p2'], O: ['お焚き上げ', 'p3'], R: ['休憩', 'rest'], L: ['昼食', 'rest'] };
 const JOB_ORDER = ['J', 'K', 'S', 'O', 'R', 'L'], JOB_ORDER_LATER = ['J', 'U', 'R', 'L'];   // 4日以降は祈願受付と授与所だけ
+const AM_FROM = 9 * 60 + 20;   // 三が日の午前休憩は9:20から入れてよい（全員が1人ずつ取れるように。2026-11-24 本人「案B」）
 const STEP = 20;   // 20分刻み（2026-11-11 本人：時計を見る暇がないので分かりやすく）。祈願の30分は準備・片付けを含めて20分の枠に広げる
 const hm = t => `${Math.floor(t / 60) % 24}:${pad(t % 60)}`;
 const toMin = s => { const [h, m] = String(s).split(':').map(Number); return h * 60 + (m || 0); };
@@ -787,6 +806,7 @@ function kiganOf(k) {
   return S.kigan[k] = best.concat(rest).slice(0, n).map(m => m.id);
 }
 function makeTime(k) {
+  if (isLocked(k)) return fitLocked(k);
   const d = DAYS.find(x => x.k === k); if (!d || d.kind === 'eve') return;
   const lateM = lateMembersOf(k), lateG = lateM.length ? lateM : null, lateF = toMin(S.rules.haichi.osobanFrom || '10:00'), isLate = g => g.some(id => lateM.includes(id));
   const H = S.rules.haichi, slots = slotsOf(d), ps = pairsOf(k), ids = ps.flat(), grid = {};
@@ -835,12 +855,12 @@ function makeTime(k) {
       for (const id of P) {
         const row = rows[id], ls = lunchOf(gIdx(id)), le = ls + Number(H.lunchMin);
         for (let j = 1; j < n; j++) if (row[j] === 'K' && row[j - 1] === 'L' && slots[j] % 60 === 0) return;   // 昼食の直後に :00 の祈願は不可
-        const am = bestBreak(row, NS, 9 * 60 + 30, ls - 20, (9 * 60 + ls) / 2); if (am.j >= 0) for (let x = am.j; x < am.j + NS; x++) row[x] = 'R';
+        const am = bestBreak(row, NS, AM_FROM, ls - 20, (9 * 60 + ls) / 2); if (am.j >= 0) for (let x = am.j; x < am.j + NS; x++) row[x] = 'R';
         const pm = bestBreak(row, NP, le + 40, 17 * 60 + 40, (le + 18 * 60) / 2); if (pm.j >= 0) for (let x = pm.j; x < pm.j + NP; x++) row[x] = 'R';
         cost += pm.c + (NS && am.j < 0 ? 40 : 0);
       }
       const ka = asg.filter(x => x === A).length, kb = asg.filter(x => x === B).length;
-      cost += 3 * hand + 10 * over + 0.3 * (ka - kb) ** 2;
+      cost += 3 * hand + 100 * over + 0.3 * (ka - kb) ** 2;
       if (!best || cost < best.cost) best = { cost, rows, asg: asg.slice() };
     };
     const dfs = (i, hand) => {
@@ -885,27 +905,33 @@ function makeTime(k) {
   const cap = d.kind === 'sanga' ? Math.max(1, ids.length - 1 - minJ) : Math.max(1, Math.floor(ids.length / 3));
   const brk = j => ids.filter(id => off(grid[id][j])).length;
   const [hw0, hw1] = helperWin(k), inHelp = j => H.lunchShortOK !== false && slots[j] >= hw0 && slots[j] < hw1;
-  const capAt = j => d.kind === 'sanga' ? Math.max(1, ids.length - ids.filter(id => grid[id][j] === 'K').length - juyoFloor(k, slots[j])) : cap;   // 時刻ごとの最低人数を割らない範囲で休憩
-  const place = (id, len, lo, hi, target) => {
-    if (!len) return;
-    const all = slots.filter(t => t >= lo && t + len <= hi).sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
+  const capAt = j => d.kind === 'sanga' ? Math.max(0, ids.length - ids.filter(id => grid[id][j] === 'K').length - juyoFloor(k, slots[j])) : cap;   // 時刻ごとの最低人数を割らない範囲で休憩
+  const place0 = (id, len, lo, hi, target) => {
+    if (!len) return true;
+    const jAt = t => Math.min(...slots.map((x, j) => j).filter(j => slots[j] >= t && slots[j] < t + len).map(j => ids.filter(x => grid[x][j] === 'J').length));
+    const all = slots.filter(t => t >= lo && t + len <= hi).sort((a, b) => earliest ? a - b : (d.kind === 'sanga' ? jAt(b) - jAt(a) : 0) || Math.abs(a - target) - Math.abs(b - target));   // 三が日は授与所の人数が多い時間から
     for (const starts of [all.filter(t => t % 20 === 0), all.filter(t => t % 20 !== 0)]) {   // まず :00 :20 :40 始まり
       for (const st of starts) {
         const js = slots.map((t, j) => j).filter(j => slots[j] >= st && slots[j] < st + len), after = js[js.length - 1] + 1;
-        if (js.every(j => grid[id][j] === 'J' && brk(j) < capAt(j)) && !(after < slots.length && grid[id][after] === 'K' && slots[after] % 60 === 0)) { js.forEach(j => grid[id][j] = 'R'); return; }
+        if (js.every(j => grid[id][j] === 'J' && brk(j) < capAt(j) + extra) && !(after < slots.length && grid[id][after] === 'K' && slots[after] % 60 === 0)) { js.forEach(j => grid[id][j] = 'R'); return true; }
       }
     }
+    return false;
   };
+  let extra = 0, earliest = false;
+  const place = (id, len, lo, hi, target) => { extra = 0; if (place0(id, len, lo, hi, target)) return; extra = 1; place0(id, len, lo, hi, target); extra = 0; };   // 入らないときだけ、同時に休む人を1人増やす（休憩なしで4時間続けて働かないように。2026-11-24）
   const r10 = t => Math.round(t / 10) * 10;
-  const jobs = [];
+  const jobs = [], amJobs = [];
   ps.forEach((g, i) => g.forEach(id => {
     if (d.kind !== 'sanga') return;   // 4日以降はペアで（下）
     if (planned && kg.includes(id)) return;
     const ls = lunchOf(i), le = ls + Number(H.lunchMin);
-    jobs.push({ id, len: Number(H.amMin), lo: 9 * 60 + 30, hi: ls - 20, target: r10((9 * 60 + ls) / 2) });
+    amJobs.push({ id, len: Number(H.amMin), lo: AM_FROM, hi: ls - 20 });
     jobs.push({ id, len: Number(H.pmMin), lo: le + 40, hi: 17 * 60 + 40, target: r10((le + 18 * 60) / 2) });
   }));
-  jobs.sort((a, b) => a.target - b.target).forEach(x => place(x.id, x.len, x.lo, x.hi, x.target));
+  // 午前の休憩は1組の左の人から順に、空いているいちばん早い時刻へ（9:20・9:40・10:00…の階段。2026-11-24 本人「もっと綺麗に」）
+  amJobs.forEach(x => { earliest = true; place(x.id, x.len, x.lo, x.hi, x.lo); earliest = false; });
+  jobs.sort((a, b) => a.hi - b.hi || a.target - b.target).forEach(x => place(x.id, x.len, x.lo, x.hi, x.target));
   if (d.kind !== 'sanga') {   // 4日以降：休憩もペアで一緒に。休むペアは同時に1組だけ（2026-11-11 本人：2人1組）
     const pairOff = (g, j) => g.some(id => off(grid[id][j]));
     ps.forEach((g, i) => {
@@ -957,6 +983,15 @@ function makeTime(k) {
     }
   }
   S.time[k] = grid;
+}
+/* 手で直した日（2026-11-24 本人「私がいじれるように」）：配置表のマスを手で変えた日は、巫女の登録・ルールの変更・シフトのマスでは作り直さない。
+   人が増えたらその人の行だけ足す（授与所、昼食は組の時刻）。作り直すのは「この日を自動で作り直す」を押したときだけ */
+const isLocked = k => !!((S.locked || {})[k]);
+function fitLocked(k) {
+  const d = DAYS.find(x => x.k === k); if (!d || d.kind === 'eve') return;
+  const H = S.rules.haichi, slots = slotsOf(d), t = S.time[k] = S.time[k] || {};
+  pairsOf(k).forEach((g, i) => g.forEach(id => { if (t[id] && t[id].length === slots.length) return;
+    const ls = toMin(H.lunchStart) + i * Number(H.lunchMin); t[id] = slots.map(x => x >= ls && x < ls + Number(H.lunchMin) ? 'L' : 'J'); }));
 }
 const pairsOf = k => {
   const all = onDuty(k), src = S.pairs[k] || [], has = new Set(src.flat());
@@ -1010,7 +1045,7 @@ function draft() {
     pick.forEach(m => cnt[m.id]++);
     menAll().filter(m => (S.goAvail[m.id] || {})[d.k] === 'ok' && !menJob(d.k, m.id)).sort((a, b) => menDays(a.id) - menDays(b.id)).slice(0, Math.max(0, need - pick.length)).forEach(m => setMenJob(d.k, m.id, 'J'));   // 巫女で足りない分だけ男性（2026-11-24 本人）
   });
-  S.pairs = {}; DAYS.forEach(d => makePairs(d.k));
+  S.locked = {}; S.pairs = {}; DAYS.forEach(d => makePairs(d.k));
 }
 
 /* ---- 画面 ---- */
@@ -1082,6 +1117,19 @@ function fullDate(d) { return wafuDate(d); }
 const wafuYM = ym => { if (!ym) return ''; const [y, m] = ym.split('-').map(Number); return `${wareki(y)}${m}月`; };
 const wafuToday = () => { const t = new Date(); return `${wareki(t.getFullYear())}${t.getMonth() + 1}月${t.getDate()}日`; };
 function ranges(slots, f) { const out = []; let s0 = null; slots.forEach((t, j) => { if (f(j)) { if (s0 == null) s0 = t; } else if (s0 != null) { out.push(`${hm(s0)}〜${hm(t)}`); s0 = null; } }); if (s0 != null) out.push(`${hm(s0)}〜${hm(slots[slots.length - 1] + STEP)}`); return out; }
+let repairSure = false;
+/* 配置表のマス：持ち場を選ぶ小さなメニュー（2026-11-24 本人） */
+function jobPicker(cell) {
+  const [id, js] = cell.dataset.tc.split(','), dk = DAYS.find(x => x.k === dayK).kind, row = S.time[dayK] && S.time[dayK][id]; if (!row) return;
+  const list = dk === 'sanga' ? ['J', 'K', 'S', 'O', 'R', 'L', 'X'] : dk === 'shigoto' ? ['J', 'U', 'R', 'L', 'X'] : ['J', 'R', 'L', 'X'];
+  const r = cell.getBoundingClientRect(), m = byId(id), d = DAYS.find(x => x.k === dayK), t = slotsOf(d)[Number(js)];
+  const box = document.createElement('div'); box.id = 'jobpick'; box.className = 'jobpick';
+  box.innerHTML = `<div class="jp-h">${esc(m ? m.name : '')} ${hm(t)}〜${hm(t + STEP)}</div>` + list.map(c => `<button type="button" class="jp-b ${JOBS[c][1]} ${row[Number(js)] === c ? 'on' : ''}" data-jp="${id},${js},${c}">${c === 'X' ? '勤務外' : JOBS[c][0]}</button>`).join('');
+  document.body.appendChild(box);
+  const w = box.offsetWidth, h = box.offsetHeight;
+  box.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left)) + 'px';
+  box.style.top = (r.bottom + h + 8 > window.innerHeight ? Math.max(8, r.top - h - 4) : r.bottom + 4) + 'px';
+}
 function vDay() {
   const days = DAYS.filter(d => d.kind !== 'eve' && (needOf(d).n || assigned(d.k).length));   // 大晦日は全員授与所なので配置表なし
   if (!days.length) return '<div class="card">シフトがまだありません</div>';
@@ -1131,7 +1179,7 @@ function vDay() {
   return `${vIssues([d])}
   <div class="card noprint" style="display:grid;gap:12px">
     <div class="dchips">${chips}</div>
-    <div class="row"><button class="btn" id="repair">シフトを作る</button><span class="sp"></span>
+    <div class="row"><button class="btn" id="repair">${isLocked(dayK) ? (repairSure ? 'もう一度押すと手直しが消えます' : 'この日を自動で作り直す') : 'この日を自動で作り直す'}</button>${isLocked(dayK) ? '<span class="tag">手で直した日（自動では作り直しません）</span>' : '<span class="kind">マスを押すと持ち場を変えられます</span>'}<span class="sp"></span>
       <button class="btn pri" id="hpdf">PDFにする</button></div>
     ${warn.length && madeMiko() ? `<ul class="warnlist">${warn.map(w => `<li>${w}</li>`).join('')}</ul>` : ''}
   </div>
@@ -1929,18 +1977,21 @@ function render() {
 function centerChips() { document.querySelectorAll('#view .dchips').forEach(box => { const on = box.querySelector('.on'); if (!on) return;
   const r = on.getBoundingClientRect(), b = box.getBoundingClientRect(); box.scrollLeft += (r.left + r.width / 2) - (b.left + b.width / 2); }); }
 document.addEventListener('click', e => {
+  const jpo = document.getElementById('jobpick'); if (jpo && !e.target.closest('#jobpick')) jpo.remove();
+  if (!e.target.closest('#repair') && repairSure) repairSure = false;
   const t = e.target.closest('[data-tab]'); if (t) { tab = t.dataset.tab; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
   const c = e.target.closest('[data-cell]'); if (c) { const k = c.dataset.cell, id = c.dataset.id, a = S.assign[k] = assigned(k).slice(); const i = a.indexOf(id); if (i >= 0) { a.splice(i, 1); if (S.marks && S.marks[k]) delete S.marks[k][id]; } else a.push(id); makePairs(k); save(); render(); return; }
   const gd = e.target.closest('[data-goday]'); if (gd) { dayK = gd.dataset.goday; tab = 'day'; pairSel = null; try { localStorage.setItem('miko-shogatsu-tab', tab); } catch (x) {} render(); return; }
   const dy = e.target.closest('[data-day]'); if (dy) { dayK = dy.dataset.day; pairSel = null; render(); return; }
-  const tc = e.target.closest('[data-tc]'); if (tc) { const [id, js] = tc.dataset.tc.split(','), j = Number(js), row = S.time[dayK][id], dk = DAYS.find(x => x.k === dayK).kind, jo = dk === 'sanga' ? JOB_ORDER : dk !== 'shigoto' ? ['J', 'R', 'L'] : JOB_ORDER_LATER; row[j] = jo[(jo.indexOf(row[j]) + 1) % jo.length]; save(); render(); return; }
+  const jpk = e.target.closest('[data-jp]'); if (jpk) { const [id, js, v] = jpk.dataset.jp.split(','), row = S.time[dayK] && S.time[dayK][id]; if (row) { row[Number(js)] = v; (S.locked = S.locked || {})[dayK] = true; repairSure = false; save(); } render(); return; }
+  const tc = e.target.closest('[data-tc]'); if (tc) { jobPicker(tc); return; }
   const kgb = e.target.closest('[data-kg]'); if (kgb) { const id = kgb.dataset.kg, a = kiganOf(dayK).slice(), i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); S.kigan[dayK] = a; makeTime(dayK); save(); render(); return; }
   const pm = e.target.closest('[data-pm]'); if (pm) { const id = pm.dataset.pm;
     if (!pairSel || pairSel === id) pairSel = pairSel === id ? null : id;
     else { const ps = S.pairs[dayK] || []; let a, b; ps.forEach((g, gi) => g.forEach((x, xi) => { if (x === pairSel) a = [gi, xi]; if (x === id) b = [gi, xi]; }));
-      if (a && b) { ps[a[0]][a[1]] = id; ps[b[0]][b[1]] = pairSel; } pairSel = null; makeTime(dayK); save(); }
+      if (a && b) { ps[a[0]][a[1]] = id; ps[b[0]][b[1]] = pairSel; if (isLocked(dayK) && S.time[dayK]) { const tt = S.time[dayK], x = tt[id]; tt[id] = tt[pairSel]; tt[pairSel] = x; } } pairSel = null; makeTime(dayK); save(); }
     render(); return; }
-  if (e.target.closest('#repair')) { delete S.kigan[dayK]; makePairs(dayK); pairSel = null; save(); render(); return; }
+  if (e.target.closest('#repair')) { if (isLocked(dayK) && !repairSure) { repairSure = true; render(); return; } repairSure = false; (S.locked = S.locked || {})[dayK] = false; delete S.kigan[dayK]; makePairs(dayK); pairSel = null; save(); render(); return; }
   const adj = e.target.closest('[data-adj]'); if (adj) { const k = adj.dataset.k; S.adj[k] = (S.adj[k] || 0) + Number(adj.dataset.adj); if (needOf(DAYS.find(d => d.k === k)).n === 0 && S.adj[k] < 0) S.adj[k] = -Math.max(Number(S.rules.need[DAYS.find(d => d.k === k).kind]) || 0, 0); save(); render(); return; }
   const mk = e.target.closest('#mk'); if (mk) { const has = Object.values(S.assign).some(a => a.length); if (has && !mkSure) { mkSure = true; render(); return; } mkSure = false; draft(); save(); render(); return; }
   if (e.target.closest('#addday')) { addDayDlg(); return; }
