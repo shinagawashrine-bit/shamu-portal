@@ -1978,7 +1978,7 @@ function mealPeople(k) {
   if (hasDinner(k)) HELPERS.forEach(n => out.push({ key: 'h:' + n, name: n, grp: '本殿' }));   // 宮司の友達。毎年三が日だけ手伝いに来る（2026-11-15 本人）
   return out;
 }
-const MEAL0 = () => ({ lunchOff: {}, dinner: {}, extraL: 0, extraD: 0, stay: {}, order: {} });
+const MEAL0 = () => ({ lunchOff: {}, dinner: {}, extraL: 0, extraD: 0, guests: [], stay: {}, order: {} });
 const HOW = { yoyaku: '配達', kaini: '当日', nashi: 'なし' };   // 手配は「配達」と「当日」の2つ（2026-11-15 本人。中の値は前のまま：yoyaku＝配達、kaini＝当日）
 const isNo = h => h === 'nashi';   // 夕食を頼まない日（夕食だけ選べる。2026-11-11 本人）
 const howOpts = m => Object.entries(HOW).filter(([v]) => m === 'D' || !isNo(v));
@@ -1990,11 +1990,16 @@ const BREAK = { L: ['神職', '臨時神職', '巫女', '授与所（男性）',
 function mealBreak(k, m) {   // 内訳（担当ごとの数）
   const ps = mealPeople(k).filter(p => m === 'L' ? lunchOn(k, p) : dinnerOn(k, p)), out = [], cat = p => m === 'D' && p.family ? '小泉家' : p.grp === '本殿' ? p.name : p.grp;
   BREAK[m].forEach(g => { const n = ps.filter(p => cat(p) === g).length; if (n) out.push(`${g} ${n}`); });
-  const x = Number(mealOf(k)[m === 'L' ? 'extraL' : 'extraD']) || 0; if (x) out.push(`追加 ${x}`);
-  return { list: out, names: ps.map(p => p.name) };
+  const x = gN(k, m); if (x) out.push(`追加 ${x}`);
+  return { list: out, names: [...ps.map(p => p.name), ...(isEveK(k) ? [] : guestsOf(k).filter(g => (m === 'L' ? g.L : g.D) && g.name).map(g => g.name))] };
 }
 const mealOf = k => ({ ...MEAL0(), ...(S.meals[k] || {}) });
 const mealW = k => (S.meals[k] = { ...MEAL0(), ...(S.meals[k] || {}) });
+/* 追加（来客・予備など）は1人ずつ名前の欄を持つ（2026-11-24 本人）。前の「＋−の数」は名前なしの行として出し、さわったときに行へ直す */
+const guestsOf = k => { const M = mealOf(k), g = Array.isArray(M.guests) ? M.guests : [], xl = Number(M.extraL) || 0, xd = Number(M.extraD) || 0;
+  return isEveK(k) || !(xl || xd) ? g : [...g, ...Array.from({ length: Math.max(xl, xd) }, (_, i) => ({ name: '', L: i < xl, D: i < xd }))]; };
+const guestsW = k => { const M = mealW(k); M.guests = guestsOf(k).map(g => ({ ...g })); if (!isEveK(k)) { M.extraL = 0; M.extraD = 0; } return M.guests; };
+const gN = (k, m) => isEveK(k) ? Number(mealOf(k)[m === 'L' ? 'extraL' : 'extraD']) || 0 : guestsOf(k).filter(g => m === 'L' ? g.L : g.D && hasDinner(k)).length;
 const lunchOn = (k, p) => !p.off && !mealOf(k).lunchOff[p.key];
 /* 夕食は三が日だけ（2026-11-15 本人：4日以降は夕食なし。11-11の「4日以降も宮司一家と御朱印の泊まりはあり」をやめた）。三が日は全員あり、あとは手で直す */
 const hasDinner = k => { const d = DAYS.find(x => x.k === k); return !!d && (d.kind === 'sanga' || d.kind === 'eve'); };
@@ -2016,7 +2021,7 @@ function dinnerDefault(k, p) {
   return false;
 }
 const dinnerOn = (k, p) => hasDinner(k) && !p.off && (mealOf(k).dinner[p.key] ?? dinnerDefault(k, p));
-function mealCount(k) { const M = mealOf(k); if (isEveK(k)) return { L: Number(M.extraL) || 0, D: Number(M.extraD) || 0 }; const ps = mealPeople(k); return { L: ps.filter(p => lunchOn(k, p)).length + (Number(M.extraL) || 0), D: hasDinner(k) ? ps.filter(p => dinnerOn(k, p)).length + (Number(M.extraD) || 0) : 0 }; }
+function mealCount(k) { const M = mealOf(k); if (isEveK(k)) return { L: Number(M.extraL) || 0, D: Number(M.extraD) || 0 }; const ps = mealPeople(k); return { L: ps.filter(p => lunchOn(k, p)).length + gN(k, 'L'), D: hasDinner(k) ? ps.filter(p => dinnerOn(k, p)).length + gN(k, 'D') : 0 }; }
 /* お弁当の手配表：お弁当担当が1枚で分かる（何を・どこで・何個・配達か当日か） */
 function bentoHTML(k) {
   const d = DAYS.find(x => x.k === k), c = mealCount(k), dash = '<span class="bt-none">（未記入）</span>';
@@ -2100,7 +2105,8 @@ function vMeal() {
     return `<tr class="grp"><td colspan="${cs}">${g}（${xs.filter(p => !p.off).length}人）${g === '神職' ? ' <span class="kind">神社くんの休み申告から</span>' : g === '臨時神職' ? ' <span class="kind">神社くんのホームから</span>' : ''}</td></tr>` + xs.map(p => p.off
       ? `<tr class="off"><td>${esc(p.name)}</td><td colspan="${cs - 1}"><span class="tag">休み</span></td></tr>`
       : `<tr><td>${esc(p.name)}${p.canStay ? ` <button class="tog sm ${p.tomari ? 'on' : ''}" data-mst="${p.key.slice(2)}" aria-pressed="${p.tomari}">泊まり</button>` : ''}</td><td><button class="tog ${lunchOn(k, p) ? 'on' : ''}" data-ml="${p.key}" aria-pressed="${lunchOn(k, p)}">${lunchOn(k, p) ? 'あり' : 'なし'}</button></td>${hd ? `<td><button class="tog ${dinnerOn(k, p) ? 'on' : ''}" data-md="${p.key}" aria-pressed="${dinnerOn(k, p)}">${dinnerOn(k, p) ? 'あり' : 'なし'}</button></td>` : ''}</tr>`).join(''); }).join('');
-  const step = (f, v) => `<span class="need big"><button data-mx="${f},-1" aria-label="減らす">−</button><b>${v}</b><button data-mx="${f},1" aria-label="増やす">＋</button></span>`;
+  const gtog = (i, m, on) => `<button class="tog ${on ? 'on' : ''}" data-gm="${i},${m}" aria-pressed="${!!on}">${on ? 'あり' : 'なし'}</button>`;
+  const gRows = guestsOf(k).map((g, i) => `<tr><td><span class="row" style="gap:6px;flex-wrap:nowrap"><input class="in" data-gname="${i}" value="${esc(g.name || '')}" placeholder="名前（来客・予備など）" style="width:200px"><button class="btn" data-gdel="${i}" aria-label="この行を消す">消す</button></span></td><td>${gtog(i, 'L', g.L)}</td>${hd ? `<td>${gtog(i, 'D', g.D)}</td>` : ''}</tr>`).join('');
   return `<div class="card" style="display:grid;gap:14px">
     <div class="row"><h2>食事の準備</h2><span class="sp"></span><button class="btn pri" id="yoyaku-pdf">予約のチェックシート</button></div>
     <div class="mstats">${stat('お昼の合計', `${totL}個`)}${stat('夕食の合計', `${totD}個`)}${stat('配達', `${cnt('yoyaku')}件`, 'ok')}${stat('当日', `${cnt('kaini')}件`, 'kaini')}${stat('夕食なし', `${noB}件`, 'nb')}${stat('手配 未定', `${cnt('')}件`, cnt('') ? 'mi' : '')}${stat('お店 未記入', `${noShop}件`, noShop ? 'mi' : '')}</div>
@@ -2116,7 +2122,7 @@ function vMeal() {
     </section>`; }).join('')}</div>
     <p class="kind" style="margin:0">業者・電話番号・場所・お弁当・手配・備考は、上の「食事の準備」の表で入力します。</p>
     ${isEveK(k) ? '<p class="kind" style="margin:0">12/31は決まった人がいないので、お昼と年越しそばの個数を上の表で手入力します。</p>' : `<div class="scroll"><table class="t meal"><thead><tr><th>名前</th><th>お昼</th>${hd ? '<th>夕食</th>' : ''}</tr></thead><tbody>${rows}
-      <tr class="grp"><td colspan="${cs}">追加（来客・予備など）</td></tr><tr><td>追加</td><td>${step('extraL', Number(M.extraL) || 0)}</td>${hd ? `<td>${step('extraD', Number(M.extraD) || 0)}</td>` : ''}</tr></tbody></table></div>`}
+      <tr class="grp"><td colspan="${cs}">追加（来客・予備など）（${guestsOf(k).length}人）</td></tr>${gRows}<tr><td colspan="${cs}"><button class="btn" id="guest-add">＋ 追加</button></td></tr></tbody></table></div>`}
   </div>`;
 }
 document.addEventListener('click', e => {
@@ -2133,7 +2139,9 @@ document.addEventListener('click', e => {
   const md = e.target.closest('[data-mday]'); if (md) { mealK = md.dataset.mday; render(); if (md.dataset.mgo) document.getElementById('mealday').scrollIntoView({ block: 'start' }); return; }
   const ml = e.target.closest('[data-ml]'); if (ml) { const M = mealW(mealK), p = mealPeople(mealK).find(x => x.key === ml.dataset.ml); M.lunchOff[p.key] = lunchOn(mealK, p); if (!M.lunchOff[p.key]) delete M.lunchOff[p.key]; save(); render(); return; }
   const mdn = e.target.closest('[data-md]'); if (mdn) { const M = mealW(mealK), p = mealPeople(mealK).find(x => x.key === mdn.dataset.md); const v = !dinnerOn(mealK, p); if (v === dinnerDefault(mealK, p)) delete M.dinner[p.key]; else M.dinner[p.key] = v; save(); render(); return; }
-  const mx = e.target.closest('[data-mx]'); if (mx) { const [f, n] = mx.dataset.mx.split(','), M = mealW(mealK); M[f] = Math.max(0, (Number(M[f]) || 0) + Number(n)); save(); render(); return; }
+  if (e.target.closest('#guest-add')) { guestsW(mealK).push({ name: '', L: true, D: hasDinner(mealK) }); save(); render(); const ins = document.querySelectorAll('[data-gname]'); if (ins.length) ins[ins.length - 1].focus(); return; }
+  const gm = e.target.closest('[data-gm]'); if (gm) { const [i, m] = gm.dataset.gm.split(','), g = guestsW(mealK)[Number(i)]; if (g) g[m] = !g[m]; save(); render(); return; }
+  const gd = e.target.closest('[data-gdel]'); if (gd) { const gs = guestsW(mealK), i = Number(gd.dataset.gdel), g = gs[i]; if (g && (!g.name || confirm(`「${g.name}」の行を消しますか？`))) { gs.splice(i, 1); save(); render(); } return; }
   const st = e.target.closest('[data-mst]'); if (st) { const M = mealW(mealK), id = st.dataset.mst; if (M.stay[id]) delete M.stay[id]; else M.stay[id] = true; delete M.dinner['g:' + id]; save(); render(); return; }
   const xc = e.target.closest('[data-xcell]'); if (xc) { const t = S.temps[xc.dataset.id]; if (t.days[xc.dataset.xcell]) delete t.days[xc.dataset.xcell]; else t.days[xc.dataset.xcell] = true; save(); render(); return; }
   const xr = e.target.closest('[data-xrm]'); if (xr) { if (!xr.dataset.sure) { xr.dataset.sure = 1; xr.textContent = 'もう一度押すと削除'; return; } delete S.temps[xr.dataset.xrm]; save(); render(); return; }
@@ -2145,6 +2153,7 @@ document.addEventListener('click', e => {
   if (e.target.closest('#tomari-add')) { const v = document.getElementById('tomari-new').value.trim(); if (v && !(S.tomari || []).includes(v)) { S.tomari = [...(S.tomari || []), v]; save(); render(); } return; }
 });
 document.addEventListener('change', e => { const el = e.target, of = el.dataset && el.dataset.of;
+  if (el.dataset && el.dataset.gname != null) { const g = guestsW(mealK)[Number(el.dataset.gname)]; if (g) { g.name = el.value.trim(); save(); } return; }   // 追加の人の名前
   if (el.dataset && el.dataset.mxin) { const M = mealW(el.dataset.k); M[el.dataset.mxin] = Math.max(0, Math.floor(Number(el.value) || 0)); save(); render(); return; }   // 12/31の個数
   if (!of) return;
   const [m, f] = of.split(','), k = el.dataset.k || mealK, v = el.value.trim(), o = ordW(k, m); o[f] = v;
