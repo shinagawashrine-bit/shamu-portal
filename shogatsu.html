@@ -1768,6 +1768,8 @@ const gTeam = t => (S.goMembers || []).filter(m => m.team === t);
 const gNeedRule = k => { const d = DAYS.find(x => x.k === k), v = ((S.rules.goNeed || {})[d ? d.kind : '']); return v == null || v === '' ? 2 : Number(v); };   // 御朱印の人数：ルールの日の種類ごと（2026-11-11 本人。空なら仮で2人）
 const gNeed = k => S.goNeed[k] ?? gNeedRule(k);   // 日ごとに＋−で手直しできる
 const gAs = k => S.goAssign[k] || [];
+const kOf = k => { const v = (S.kitchen || {})[k]; return Array.isArray(v) ? v : v ? [v] : []; };   // 台所は1日に何人でも（2026-11-24 本人の表：大晦日・2日は5人）
+const kitDays = () => DAYS;   // 台所は大晦日の夜も入る（2026-11-24 本人の表）
 /* 男性：巫女とは別の表。全員が授与所担当で、印は奉（授与所）と徹（12/31の徹夜）だけ（2026-11-24 本人） */
 const MEN_JOBS = { J: ['奉', '授与所'], T: ['徹', '徹夜'] };
 const menAll = () => gTeam('men');
@@ -1845,28 +1847,28 @@ function menEditDlg(id) {
 }
 const gOk = (id, k) => (S.goAvail[id] || {})[k] === 'ok';
 const kDays = () => DAYS.filter(d => d.kind !== 'eve');   // 台所と食事は昼の日だけ（大晦日の夜は除く）
-const gDaysOf = id => DAYS.filter(d => gAll(d.k).includes(id) || S.kitchen[d.k] === id).length;
-const daysFor = m => m && m.team === 'kitchen' ? kDays() : DAYS;
+const gDaysOf = id => DAYS.filter(d => gAll(d.k).includes(id) || kOf(d.k).includes(id)).length;
+const daysFor = m => m && m.team === 'kitchen' ? kitDays() : DAYS;
 function gDraft() {   // 神社くんの御朱印と同じ：出られる人が少ない日から、出勤の少ない人を入れる
   markMade('g');
   const cnt = {}, G = gTeam('goshuin'); G.forEach(p => cnt[p.id] = 0); S.goAssign = {};
   DAYS.map(d => ({ k: d.k, need: gNeed(d.k), av: G.filter(p => gOk(p.id, d.k)).length })).filter(x => x.need > 0).sort((a, b) => a.av - b.av)
     .forEach(x => { S.goAssign[x.k] = G.filter(p => gOk(p.id, x.k)).sort((a, b) => cnt[a.id] - cnt[b.id]).slice(0, x.need).map(p => (cnt[p.id]++, p.id)); });
   const kc = {}, K = gTeam('kitchen'); K.forEach(p => kc[p.id] = 0); S.kitchen = {};
-  kDays().map(d => ({ k: d.k, av: K.filter(p => gOk(p.id, d.k)).length })).sort((a, b) => a.av - b.av)
-    .forEach(x => { const p = K.filter(q => gOk(q.id, x.k)).sort((a, b) => kc[a.id] - kc[b.id])[0]; if (p) { S.kitchen[x.k] = p.id; kc[p.id]++; } });
+  kitDays().map(d => ({ k: d.k, av: K.filter(p => gOk(p.id, d.k)).length })).sort((a, b) => a.av - b.av)
+    .forEach(x => { const p = K.filter(q => gOk(q.id, x.k)).sort((a, b) => kc[a.id] - kc[b.id])[0]; if (p) { S.kitchen[x.k] = [p.id]; kc[p.id]++; } });
 }
 let gSure = false;
 function gHead(days) { return days.map(d => `<th class="dh ${dayCls(d)}">${d.label}<br>${d.kind === 'eve' ? '夜' : d.sub}<div class="kind">${kindShort[d.kind]}</div></th>`).join(''); }
 function gMark(id, k, on) { const a = (S.goAvail[id] || {})[k]; return on ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}">${gById(id).team === 'kitchen' ? '台' : '朱'}</span>` : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>'; }
 function gSub(m) { return S.goSent[m.id] ? `<span class="kind">提出 ${sentLabel(S.goSent[m.id])}</span>` : '<span class="tag ngt">未提出</span>'; }
 function vGoshuin() {
-  const G = gTeam('goshuin'), K = gTeam('kitchen'), KD = kDays();
+  const G = gTeam('goshuin'), K = gTeam('kitchen'), KD = kitDays();
   const needRow = DAYS.map(d => `<td><span class="need"><button data-gadj="-1" data-k="${d.k}" aria-label="${d.label}の人数を減らす">−</button><b>${gNeed(d.k)}</b><button data-gadj="1" data-k="${d.k}" aria-label="${d.label}の人数を増やす">＋</button></span></td>`).join('');
   const gotRow = DAYS.map(d => { const n = gNeed(d.k), a = gAll(d.k).length; return `<td><span class="chk ${!n && !a || !madeG() ? '' : a < n ? 'bad' : 'good'}">${n || a ? `${a}/${n}${!madeG() ? '' : a < n ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
   const gRows = G.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${DAYS.map(d => `<td class="c" tabindex="0" data-gcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, gAll(d.k).includes(m.id))}</td>`).join('')}</tr>`).join('');
-  const kWho = KD.map(d => { const m = gById(S.kitchen[d.k]); return `<td><span class="chk ${m ? 'good' : madeG() ? 'bad' : ''}">${m ? esc(m.name.split(' ')[0]) : madeG() ? '未定 !' : '—'}</span></td>`; }).join('');
-  const kRows = K.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${KD.map(d => `<td class="c" tabindex="0" data-kcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, S.kitchen[d.k] === m.id)}</td>`).join('')}</tr>`).join('');
+  const kWho = KD.map(d => { const n = kOf(d.k).filter(gById).length; return `<td><span class="chk ${n ? 'good' : madeG() ? 'bad' : ''}">${n ? n + '人' : madeG() ? '未定 !' : '—'}</span></td>`; }).join('');
+  const kRows = K.map(m => `<tr><td class="name"><b>${esc(m.name)}</b> <span class="kind">${gDaysOf(m.id)}日</span><br>${gSub(m)}</td>${KD.map(d => `<td class="c" tabindex="0" data-kcell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${gMark(m.id, d.k, kOf(d.k).includes(m.id))}</td>`).join('')}</tr>`).join('');
   const list = t => gTeam(t).map(m => `<li><button class="linkish" data-gedit="${m.id}">${esc(m.name)}</button>${m.note ? `<span class="kind">${esc(m.note)}</span>` : ''}<span class="sp"></span><button class="btn" style="white-space:nowrap" data-gedit="${m.id}">編集</button></li>`).join('') || '<li class="kind">まだいません</li>';
   return `<div class="card" style="display:grid;gap:12px">
     <div class="row"><h2>御朱印のシフト</h2><span class="sp"></span><button class="btn pri" id="gmk">${gSure ? 'もう一度押すと作り直します（手で直した分は消えます）' : 'シフトを作る'}</button></div>
@@ -1876,10 +1878,10 @@ function vGoshuin() {
       <tr><td class="name"><b>割り当て</b></td>${gotRow}</tr>${gRows || `<tr><td class="name kind" colspan="${DAYS.length + 1}">御朱印の人を登録してください</td></tr>`}</tbody></table></div>
   </div>
   <div class="card" style="display:grid;gap:12px">
-    <div class="row"><h2>台所担当のシフト</h2><span class="tag">毎日1人</span></div>
+    <div class="row"><h2>台所担当のシフト</h2></div>
     <div class="legend"><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">台</span>台所</span><span><span class="m ok">○</span>可</span><span><span class="m ng">×</span>不可</span><span><span class="m no">・</span>未</span></div>
     <div class="scroll"><table class="g"><thead><tr><th class="name">名前</th>${gHead(KD)}</tr></thead><tbody>
-      <tr><td class="name"><b>担当</b></td>${kWho}</tr>${kRows || `<tr><td class="name kind" colspan="${KD.length + 1}">台所の人を登録してください</td></tr>`}</tbody></table></div>
+      <tr><td class="name"><b>人数</b></td>${kWho}</tr>${kRows || `<tr><td class="name kind" colspan="${KD.length + 1}">台所の人を登録してください</td></tr>`}</tbody></table></div>
   </div>
   <div class="card" style="display:grid;gap:12px">
     <div class="gteams">
@@ -1903,10 +1905,10 @@ function gEditDlg(id, team) {
   const del = document.getElementById('gdel');
   if (del) del.onclick = () => { if (!del.dataset.sure) { del.dataset.sure = 1; del.textContent = 'もう一度押すと削除'; return; }
     S.goMembers = S.goMembers.filter(x => x.id !== m.id); Object.keys(S.goAssign).forEach(k => S.goAssign[k] = gAs(k).filter(x => x !== m.id));
-    Object.keys(S.kitchen).forEach(k => { if (S.kitchen[k] === m.id) delete S.kitchen[k]; }); delete S.goAvail[m.id]; delete S.goSent[m.id]; save(); close(); render(); };
+    Object.keys(S.kitchen).forEach(k => { S.kitchen[k] = kOf(k).filter(x => x !== m.id); }); delete S.goAvail[m.id]; delete S.goSent[m.id]; save(); close(); render(); };
   f.onsubmit = e => { e.preventDefault(); const name = document.getElementById('g-name').value.trim(); if (!name) return;
     const team = m.team, note = document.getElementById('g-note').value.trim();
-    if (m.id) { if (m.team !== team) { Object.keys(S.goAssign).forEach(k => S.goAssign[k] = gAs(k).filter(x => x !== m.id)); Object.keys(S.kitchen).forEach(k => { if (S.kitchen[k] === m.id) delete S.kitchen[k]; }); } Object.assign(m, { name, team, note }); }
+    if (m.id) { if (m.team !== team) { Object.keys(S.goAssign).forEach(k => S.goAssign[k] = gAs(k).filter(x => x !== m.id)); Object.keys(S.kitchen).forEach(k => { S.kitchen[k] = kOf(k).filter(x => x !== m.id); }); } Object.assign(m, { name, team, note }); }
     else { const n = { id: 'g' + Date.now(), name, team, note }; S.goMembers.push(n); S.goAvail[n.id] = {}; }
     save(); close(); render(); };
 }
@@ -1972,7 +1974,7 @@ function mealPeople(k) {
   ORDER.flatMap(r => assigned(k).map(byId).filter(m => m && rankOf(m) === r)).forEach(m => out.push({ key: 'm:' + m.id, name: m.name, grp: '巫女' }));
   gAll(k).map(gById).filter(Boolean).forEach(m => out.push({ key: 'g:' + m.id, name: m.name, grp: '御朱印', canStay: true, tomari: !!stay[m.id] }));
   menIds(k, 'J').map(gById).forEach(m => out.push({ key: 'g:' + m.id, name: m.name, grp: '授与所（男性）' }));   // 泊まりは御朱印の人と宮司一家だけ
-  const kc = gById(S.kitchen[k]); if (kc) out.push({ key: 'g:' + kc.id, name: kc.name, grp: '台所' });
+  kOf(k).map(gById).filter(Boolean).forEach(kc => out.push({ key: 'g:' + kc.id, name: kc.name, grp: '台所' }));
   if (hasDinner(k)) HELPERS.forEach(n => out.push({ key: 'h:' + n, name: n, grp: '本殿' }));   // 宮司の友達。毎年三が日だけ手伝いに来る（2026-11-15 本人）
   return out;
 }
@@ -2123,9 +2125,9 @@ document.addEventListener('click', e => {
   const me = e.target.closest('[data-menedit]'); if (me) { menEditDlg(me.dataset.menedit); return; }
   const gc = e.target.closest('[data-gcell]');
   if (gc) { const k = gc.dataset.gcell, id = gc.dataset.id, a = S.goAssign[k] = gAs(k).slice(), i = a.indexOf(id); if (i >= 0) a.splice(i, 1); else a.push(id); save(); render(); return; }
-  const kc = e.target.closest('[data-kcell]'); if (kc) { const k = kc.dataset.kcell, id = kc.dataset.id; if (S.kitchen[k] === id) delete S.kitchen[k]; else S.kitchen[k] = id; save(); render(); return; }
+  const kc = e.target.closest('[data-kcell]'); if (kc) { const k = kc.dataset.kcell, id = kc.dataset.id, a = kOf(k); S.kitchen[k] = a.includes(id) ? a.filter(x => x !== id) : a.concat(id); save(); render(); return; }
   const ga = e.target.closest('[data-gadj]'); if (ga) { const k = ga.dataset.k, v = Math.max(0, gNeed(k) + Number(ga.dataset.gadj)); if (v === gNeedRule(k)) delete S.goNeed[k]; else S.goNeed[k] = v; save(); render(); return; }
-  if (e.target.closest('#gmk')) { const has = Object.values(S.goAssign).some(a => a.length) || Object.keys(S.kitchen).length; if (has && !gSure) { gSure = true; render(); return; } gSure = false; gDraft(); save(); render(); return; }
+  if (e.target.closest('#gmk')) { const has = Object.values(S.goAssign).some(a => a.length) || Object.values(S.kitchen).some(v => Array.isArray(v) ? v.length : v); if (has && !gSure) { gSure = true; render(); return; } gSure = false; gDraft(); save(); render(); return; }
   if (gSure && tab === 'goshuin') { gSure = false; render(); }
   const ge = e.target.closest('[data-gedit]'); if (ge) { gEditDlg(ge.dataset.gedit, ge.dataset.team); return; }
   const md = e.target.closest('[data-mday]'); if (md) { mealK = md.dataset.mday; render(); if (md.dataset.mgo) document.getElementById('mealday').scrollIntoView({ block: 'start' }); return; }
