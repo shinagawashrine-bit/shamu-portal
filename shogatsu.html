@@ -748,7 +748,7 @@ function makeGroups(k, size) {
     const ps = S.pairs[k], main = uketsukeOf(k)[0];
     if (main) {
       const gi = ps.findIndex(x => x.includes(main)), y = ps[0][0]; ps[gi][ps[gi].indexOf(main)] = y; ps[0][0] = main;
-      const late = lateMembersOf(k), rk = id => ['rokuji', 'vet', 'mid', 'new'].indexOf(rankOf(byId(id)));
+      const late = lateRuleOf(k), rk = id => ['rokuji', 'vet', 'mid', 'new'].indexOf(rankOf(byId(id)));
       const f = ps.slice(1).flat().sort((a, b) => late.includes(a) - late.includes(b) || rk(a) - rk(b) || isMan(byId(a)) - isMan(byId(b)))[0];
       const fi = f ? ps.findIndex(x => x.includes(f)) : -1;
       if (fi > 0) { ps[fi] = [f].concat(ps[fi].filter(id => id !== f)); if (fi !== 1 && !late.includes(f) && !ps[1].some(id => late.includes(id))) [ps[1], ps[fi]] = [ps[fi], ps[1]]; }
@@ -791,8 +791,16 @@ function lateGroupOf(k) {
   if (i !== S.pairs[k].length - 1) S.pairs[k].push(S.pairs[k].splice(i, 1)[0]);
   return pairsOf(k).find(g => g.includes(sub)) || null;
 }
-/* 遅番の人（2026-11-11 本人：遅番は来る時刻と人数だけ決める）：受付の2人目から、その組の人、足りなければ前の組から */
+/* 遅番の人：配置表ができている日は、配置表の中身から読む（朝が勤務外で、あとから来る人）。
+   配置で人を入れ替えても遅番は最後の組のまま（その位置の持ち場ごと入れ替わる）、シフト表・シフトのPDFにもそのまま出る（2026-11-24 本人「遅番は3組で固定」「配置で動かした普通か遅番がシフトに反映」） */
 function lateMembersOf(k) {
+  const d = DAYS.find(x => x.k === k); if (!d || d.kind !== 'shigoto') return [];
+  const tm = S.time && S.time[k], ids = pairsOf(k).flat();
+  if (tm && !Array.isArray(tm) && ids.length && ids.every(id => Array.isArray(tm[id]))) return ids.filter(id => tm[id][0] === 'X' && tm[id].some(v => v !== 'X'));
+  return lateRuleOf(k);
+}
+/* 遅番を自動で決める（2026-11-11 本人：遅番は来る時刻と人数だけ決める）：受付の2人目の組を最後の組にし、その組の人から、足りなければ前の組から */
+function lateRuleOf(k) {
   const g = lateGroupOf(k); if (!g) return [];
   const sub = uketsukeOf(k)[1], main = uketsukeOf(k)[0], ps = pairsOf(k), n = Number(S.rules.haichi.osobanN) || g.length;
   const cand = [sub, ...g.filter(id => id !== sub)];
@@ -828,7 +836,7 @@ function makeTime(k) {
   if (isLocked(k)) return fitLocked(k);
   const d = DAYS.find(x => x.k === k); if (!d || d.kind === 'eve') return;
   const note = TPL_NOTE[k] = [];
-  const lateM = lateMembersOf(k), lateG = lateM.length ? lateM : null, lateF = toMin(S.rules.haichi.osobanFrom || '10:00'), isLate = g => g.some(id => lateM.includes(id));
+  const lateM = lateRuleOf(k), lateG = lateM.length ? lateM : null, lateF = toMin(S.rules.haichi.osobanFrom || '10:00'), isLate = g => g.some(id => lateM.includes(id));
   const H = S.rules.haichi, slots = slotsOf(d), ps = pairsOf(k), ids = ps.flat(), grid = {};
   S.time = S.time || {};
   ids.forEach(id => grid[id] = slots.map(() => 'J'));
@@ -1178,14 +1186,15 @@ function vShift() {
   const gotRow = DAYS.map(d => { const n = needOf(d).n, a = staffed(d.k), bad = madeMiko() && checkDay(d).length; return `<td><span class="chk ${!n && !a || !madeMiko() ? '' : bad ? 'bad' : 'good'}">${n || a ? `${a}/${n}${!madeMiko() ? '' : bad ? ' !' : ' ✓'}` : '—'}</span></td>`; }).join('');
   const bookRow = DAYS.map(d => `<td class="kind">${bookOf(d.k) ? bookOf(d.k) + '件' : ''}</td>`).join(''), bi = bookInfo();
   const groups = ORDER.map(r => [r, S.members.filter(m => rankOf(m) === r)]).filter(([, ms]) => ms.length);
+  const lateOf = {}; DAYS.forEach(d => { if (d.kind === 'shigoto') lateOf[d.k] = lateMembersOf(d.k); });   // 配置表の遅番をシフト表にも「遅」で出す（2026-11-24 本人）
   const body = groups.map(([r, ms]) => `<tr class="grp"><td class="name">${RANKS[r][0]}（${ms.length}人）</td><td colspan="${DAYS.length}"></td></tr>` + ms.map(m => `<tr><td class="name">${mbadge(m)} ${esc(m.name)} <span class="kind">${daysOf(m.id).length}日</span></td>${DAYS.map(d => {
     const as = assigned(d.k).includes(m.id), a = S.avail[m.id]?.[d.k];
-    const inner = as ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}"${markOf(d.k, m.id).length > 1 ? ' style="font-size:10px;white-space:nowrap"' : ''}>${esc(markOf(d.k, m.id) || '奉')}</span>` : goSame(d.k, m) ? '<span class="m no" title="この日は御朱印">朱</span>' : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>';
+    const inner = as ? `<span class="m as ${a !== 'ok' ? 'ngas' : ''}"${markOf(d.k, m.id).length > 1 ? ' style="font-size:10px;white-space:nowrap"' : ''}>${esc(markOf(d.k, m.id) || (lateOf[d.k] || []).includes(m.id) && '遅' || '奉')}</span>` : goSame(d.k, m) ? '<span class="m no" title="この日は御朱印">朱</span>' : a === 'ok' ? '<span class="m ok">○</span>' : a === 'ng' ? '<span class="m ng">×</span>' : '<span class="m no">・</span>';
     return `<td class="c" tabindex="0" data-cell="${d.k}" data-id="${m.id}" title="${esc(m.name)} ${dayName(d)}">${inner}</td>`; }).join('')}</tr>`).join('')).join('');
   return `${vIssues(DAYS)}
   <div class="card" style="display:grid;gap:12px">
     <div class="row"><h2>巫女のシフト表</h2><span class="sp"></span><button class="btn" id="addday">＋ 日程を追加</button><button class="btn" id="pdf">PDFにする</button><button class="btn pri" id="mk">${mkSure ? 'もう一度押すと作り直します（手で直した分は消えます）' : 'シフトを作る'}</button></div>
-    <div class="legend"><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">奉</span>奉仕</span><span><span class="m ok">○</span>可</span><span><span class="m ng">×</span>不可</span><span><span class="m no">・</span>未</span></div>
+    <div class="legend"><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">奉</span>奉仕</span><span><span class="m as" style="width:22px;height:18px;display:inline-flex;align-items:center;justify-content:center;border-radius:4px">遅</span>遅番</span><span><span class="m ok">○</span>可</span><span><span class="m ng">×</span>不可</span><span><span class="m no">・</span>未</span></div>
     <div class="scroll"><table class="g">
       <thead><tr><th class="name">名前</th>${head}</tr></thead>
       <tbody>
