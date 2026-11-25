@@ -1647,15 +1647,15 @@ function vInput() {
   const bar = `<ol class="in-steps">${steps.map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'on' : ''}">${x}</li>`).join('')}</ol>`;
   if (inp.step === 'name') return top + bar + `<section class="in-card"><h2>お名前を選んでください</h2>
     <div class="in-names">${S.members.map(x => `<button class="in-name" data-in-pick="${x.id}"><span>${esc(x.name)}</span>${S.sent && S.sent[x.id] ? '<small>送信済み</small>' : ''}</button>`).join('')}</div>
-    <button class="in-new" data-in-pick="new">名前がない（はじめての方）</button></section>`;
+    <button class="in-new" data-in-pick="new">登録（はじめての方）</button></section>`;
   if (inp.step === 'info') {
     const d = inp.d, others = S.members.filter(x => x.id !== d.id && !String(x.id).startsWith('_'));
     const grade = (GRADES.find(g => g[0] === d.grade) || [])[1] || '';
-    const people = ids => (ids || []).map(byId).filter(Boolean).map(x => esc(x.name)).join('、') || 'なし';
+    const people = ids => (ids || []).map(byId).filter(Boolean).map(x => esc(x.name)).join('、') || '—';   // 友達がいないときは「—」（2026-11-25 本人：「なし」だと寂しい）
     if (!inp.edit) return top + bar + `<section class="in-card"><h2>${esc(d.name)}さんの基本情報</h2><p class="in-note">変わったところがあれば「変更する」を押してください。</p>
       <dl class="in-dl"><dt>大学名</dt><dd>${esc(d.univ) || '—'}</dd><dt>学年</dt><dd>${grade || '—'}</dd><dt>年齢</dt><dd>${d.age !== '' && d.age != null ? d.age + '歳' : '—'}</dd>
         <dt>身長</dt><dd>${d.height ? d.height + ' cm' : '—'}</dd><dt>足袋</dt><dd>${d.tabi ? Number(d.tabi).toFixed(1) + ' cm' : '—'}</dd>
-        <dt>友達</dt><dd>${people(d.friends)}</dd><dt>NG</dt><dd>${MODE === 'api' ? '表示しません' : people(d.ng)}</dd></dl>
+        <dt>友達</dt><dd>${people(d.friends)}</dd></dl>
       <div class="in-btns"><button class="in-btn" data-in-edit>変更する</button><button class="in-btn pri" data-in-go="shift">このままで次へ</button></div></section>`;
     const chips = (nm, sel) => `<div class="in-picked" data-in-box="${nm}">${(sel || []).map(byId).filter(Boolean).map(x => inPicked(nm, x)).join('')}<button type="button" class="in-add" data-in-add="${nm}">＋ 追加</button></div>
       <div class="in-list" data-in-list="${nm}" hidden><div class="in-list-h">名前を選んでください<button type="button" class="in-x" data-in-add="${nm}" aria-label="閉じる">×</button></div>${others.map(x => `<button type="button" class="in-li" data-in-addid="${nm},${x.id}">${esc(x.name)}</button>`).join('')}</div>`;
@@ -1667,16 +1667,16 @@ function vInput() {
       <label class="in-f"><span>年齢</span><input class="in" id="i-age" type="number" inputmode="numeric" min="15" max="40" value="${d.age}"></label>
       <div class="in-two"><label class="in-f"><span>身長（cm）</span><input class="in" id="i-height" type="number" inputmode="numeric" value="${d.height}"></label>
         <label class="in-f"><span>足袋（cm）</span><input class="in" id="i-tabi" type="number" inputmode="decimal" step="0.5" value="${d.tabi}"></label></div>
-      <div class="in-f"><span>友達</span>${others.length ? chips('i-fr', d.friends) : '<p class="in-note">まだいません</p>'}</div>
-      <div class="in-f"><span>NG（同じ日に入りたくない人）</span>${others.length ? chips('i-ng', d.ng) : '<p class="in-note">まだいません</p>'}<p class="in-note">${MODE === 'api' ? 'すでに登録したNGは表示しません。ここでは追加だけできます（外すときは神社に伝えてください）。' : ''}NGはほかの人には見えません。</p></div>
+      <div class="in-f"><span>友達（可能なら出社日を合わせます。）</span>${others.length ? chips('i-fr', d.friends) : '<p class="in-note">まだいません</p>'}</div>
+      <!-- NGは巫女さんには入れてもらわない。神職が直接聞いて、巫女の一覧（神社くん）で付ける（2026-11-25 本人） -->
       <p class="in-msg" id="i-msg"></p>
       <div class="in-btns">${d.id ? '<button type="button" class="in-btn" data-in-cancel>戻る</button>' : '<button type="button" class="in-btn" data-in-go="name">戻る</button>'}<button class="in-btn pri">保存して次へ</button></div></form>`;
   }
   const days = DAYS, ans = inp.ans, left = days.filter(d => !ans[d.k]).length;
   if (inp.step === 'shift') return top + bar + `<section class="in-card"><h2>${esc(m.name)}さんのシフトの希望</h2>
-      <p class="in-note">出られる日に「○」、出られない日に「×」を押してください。${S.sent && S.sent[m.id] ? `前回の送信：${sentLabel(S.sent[m.id])}` : ''}</p>
-      ${left ? `<button class="in-all" data-in-all>まだの日をすべて ○ にする</button>` : ''}
-      <div class="in-days">${days.map(d => `<div class="in-day ${ans[d.k] ? '' : 'todo'}"><div class="in-d"><b class="${dayCls(d)}">${d.label}<small>（${d.sub}）</small></b><span>${d.kind === 'eve' ? '大晦日の夜 24:00〜3:00' : d.hol || kindShort[d.kind]}</span></div>
+      ${S.sent && S.sent[m.id] ? `<p class="in-note">前回の送信：${sentLabel(S.sent[m.id])}</p>` : ''}
+      ${left ? `<button class="in-all" data-in-all>全て○</button>` : ''}
+      <div class="in-days">${days.map(d => `<div class="in-day ${ans[d.k] ? '' : 'todo'}"><div class="in-d"><b class="${dayCls(d)}">${d.label}<small>（${d.sub}）</small></b><span>${d.kind === 'eve' ? '大晦日の夜 0時〜3時' : d.hol || kindShort[d.kind]}</span></div>
         <div class="in-yn"><button class="${ans[d.k] === 'ok' ? 'on ok' : ''}" data-in-ans="${d.k},ok" aria-pressed="${ans[d.k] === 'ok'}">○</button><button class="${ans[d.k] === 'ng' ? 'on ng' : ''}" data-in-ans="${d.k},ng" aria-pressed="${ans[d.k] === 'ng'}">×</button></div></div>`).join('')}</div></section>
     <div class="in-send"><span>${left ? `あと${left}日` : `○ ${days.filter(d => ans[d.k] === 'ok').length}日`}</span><button class="in-btn pri" data-in-send ${left ? 'disabled' : ''}>${S.sent && S.sent[m.id] ? '変更して送信' : '送信'}</button></div>`;
   const okDays = days.filter(d => S.avail[m.id] && S.avail[m.id][d.k] === 'ok');
@@ -1716,7 +1716,7 @@ function inSaveInfo(f) {
   const ag = v('i-age');   // 年齢（2026-11-11 本人：生まれた年月ではなく年齢）。変わったときだけ入れ直す
   if (me) { if (String(age(me) ?? '') !== ag) { me.birth = ''; me.ageAt = { age: ag === '' ? '' : Number(ag), year: Y }; } Object.assign(me, vals); }
   else { me = { id: 'm' + Date.now(), first: Y, rank: 'auto', note: '', kigan: false, birth: '', ageAt: { age: ag === '' ? '' : Number(ag), year: Y }, ...vals }; S.members.push(me); S.avail[me.id] = {}; }
-  me.ng = ng;   // NGは本人が付けた分だけ持つ（相手のNGは変えない・見せない）。シフトでは両方向に効く
+  // NGはこの画面では変えない（神職が巫女の一覧で付ける。2026-11-25 本人）
   const fr2 = fr.filter(id => !ngEither(me.id, id));
   me.friends = fr2; S.members.forEach(x => { if (x.id === me.id) return; x.friends = (x.friends || []).filter(y => y !== me.id); if (fr2.includes(x.id)) x.friends.push(me.id); });   // 友達は両方向（2026-11-11 本人：片方が友達にしたら相手も自動で友達。どちらかがNGなら友達にしない）
   DAYS.forEach(d => makePairs(d.k));
@@ -1924,16 +1924,16 @@ function vGInput() {
   const bar = `<ol class="in-steps two">${['名前', 'シフト'].map((x, i) => `<li class="${i < si ? 'done' : i === si ? 'on' : ''}">${x}</li>`).join('')}</ol>`;
   if (ginp.step === 'name') return top + bar + `<section class="in-card"><h2>お名前を選んでください</h2>
     <div class="in-names">${gTeam(team).map(x => `<button class="in-name" data-g-pick="${x.id}"><span>${esc(x.name)}</span>${S.goSent[x.id] ? '<small>送信済み</small>' : ''}</button>`).join('') || '<p class="in-note">まだいません</p>'}</div>
-    <button class="in-new" data-g-pick="new">名前がない（はじめての方）</button></section>`;
+    <button class="in-new" data-g-pick="new">登録（はじめての方）</button></section>`;
   if (ginp.step === 'info') return top + bar + `<form class="in-card" id="gnf"><h2>はじめての方</h2><p class="in-note">名前を入力してください。</p>
     <label class="in-f"><span>名前</span><input class="in" id="gi-name" required autocomplete="name"></label>
     <p class="in-msg" id="gi-msg"></p>
     <div class="in-btns"><button type="button" class="in-btn" data-g-go="name">戻る</button><button class="in-btn pri">次へ</button></div></form>`;
   const m = gById(ginp.id), days = daysFor(m), ans = ginp.ans, left = days.filter(d => !ans[d.k]).length;
   if (ginp.step === 'shift') return top + bar + `<section class="in-card"><h2>${esc(m.name)}さんのシフトの希望</h2>
-      <p class="in-note">出られる日に「○」、出られない日に「×」を押してください。${S.goSent[m.id] ? `前回の送信：${sentLabel(S.goSent[m.id])}` : ''}</p>
-      ${left ? '<button class="in-all" data-g-all>まだの日をすべて ○ にする</button>' : ''}
-      <div class="in-days">${days.map(d => `<div class="in-day ${ans[d.k] ? '' : 'todo'}"><div class="in-d"><b class="${dayCls(d)}">${d.label}<small>（${d.sub}）</small></b><span>${d.kind === 'eve' ? '大晦日の夜 24:00〜3:00' : d.hol || kindShort[d.kind]}</span></div>
+      ${S.goSent[m.id] ? `<p class="in-note">前回の送信：${sentLabel(S.goSent[m.id])}</p>` : ''}
+      ${left ? '<button class="in-all" data-g-all>全て○</button>' : ''}
+      <div class="in-days">${days.map(d => `<div class="in-day ${ans[d.k] ? '' : 'todo'}"><div class="in-d"><b class="${dayCls(d)}">${d.label}<small>（${d.sub}）</small></b><span>${d.kind === 'eve' ? (gHashTeam() === 'men' ? '大晦日の夜 0時〜9時' : '大晦日の夜 0時〜3時') : d.hol || kindShort[d.kind]}</span></div>
         <div class="in-yn"><button class="${ans[d.k] === 'ok' ? 'on ok' : ''}" data-g-ans="${d.k},ok" aria-pressed="${ans[d.k] === 'ok'}">○</button><button class="${ans[d.k] === 'ng' ? 'on ng' : ''}" data-g-ans="${d.k},ng" aria-pressed="${ans[d.k] === 'ng'}">×</button></div></div>`).join('')}</div>
       <button class="in-new" data-g-go="name">名前を選び直す</button></section>
     <div class="in-send"><span>${left ? `あと${left}日` : `○ ${days.filter(d => ans[d.k] === 'ok').length}日`}</span><button class="in-btn pri" data-g-send ${left ? 'disabled' : ''}>${S.goSent[m.id] ? '変更して送信' : '送信'}</button></div>`;
@@ -2074,7 +2074,6 @@ function yoyakuPages() {
 function yoyakuDlg() {
   const pages = yoyakuPages();
   document.getElementById('dlg').innerHTML = `<div class="overlay"><div class="dlg btdlg"><h2>予約のチェックシート</h2>
-    <div class="note">1ページ目がお昼、2ページ目が夕食（12/31の年越しそばと三が日）です。12/31は個数が空でも載せます（手書き用）。手配が「なし」の夕食だけ除いています。</div>
     <div class="ykprevs">${pages.map(h => `<div class="ss-prev bt-prev">${h}</div>`).join('')}</div>
     <div class="row"><span class="note" id="ykmsg"></span><span class="sp"></span><button type="button" class="btn" id="cancel">閉じる</button><button type="button" class="btn pri" id="ykgo">PDFで保存</button></div></div></div>`;
   const pvs = [...document.querySelectorAll('.ykprevs > .ss-prev')], fit = () => pvs.forEach(pv => { const k = pv.clientWidth / 1123; pv.firstElementChild.style.transform = `scale(${k})`; pv.style.height = `${794 * k}px`; });
@@ -2122,7 +2121,6 @@ function vMeal() {
       <div class="order-h"><b>${mealName(k, m)}</b><span class="order-n"><b>${n}</b>${isNo(o.how) ? '人' : '個'}</span></div>
       ${n || isEveK(k) ? `<dl class="oinfo"><dt>業者</dt><dd data-ov="${m},vendor" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.vendor, isNo(o.how))}</dd><dt>お店の場所</dt><dd data-ov="${m},place" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.place, isNo(o.how))}</dd><dt>電話番号</dt><dd data-ov="${m},tel" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.tel, isNo(o.how))}</dd><dt>お弁当</dt><dd data-ov="${m},menu" data-k="${k}" ${isNo(o.how) ? 'data-opt="1"' : ''}>${ovHTML(o.menu, isNo(o.how))}</dd><dt>手配</dt><dd>${o.how ? `<span class="hw ${o.how}">${HOW[o.how]}</span>` : '<span class="ov-mi">未定</span>'}</dd>${o.note ? `<dt>備考</dt><dd>${esc(o.note)}</dd>` : ''}</dl>` : '<p class="kind">この日はありません</p>'}
     </section>`; }).join('')}</div>
-    <p class="kind" style="margin:0">業者・電話番号・場所・お弁当・手配・備考は、上の「食事の準備」の表で入力します。</p>
     ${isEveK(k) ? '<p class="kind" style="margin:0">12/31は決まった人がいないので、お昼と年越しそばの個数を上の表で手入力します。</p>' : `<div class="scroll"><table class="t meal"><thead><tr><th>名前</th><th>お昼</th>${hd ? '<th>夕食</th>' : ''}</tr></thead><tbody>${rows}
       <tr class="grp"><td colspan="${cs}">追加（来客・予備など）（${guestsOf(k).reduce((a, g) => a + gCnt(g), 0)}個）</td></tr>${gRows}<tr><td colspan="${cs}"><button class="btn" id="guest-add">＋ 追加</button></td></tr></tbody></table></div>`}
   </div>`;

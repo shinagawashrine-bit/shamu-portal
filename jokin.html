@@ -87,11 +87,28 @@ a.btn { display: block; text-align: center; text-decoration: none; box-sizing: b
 <div class="wrap" id="app"></div>
 <script>
 const API_URL = 'https://script.google.com/macros/s/AKfycbx-QNVOKsc6rMszEqwt9BjpfjqU0sIm2wOtfTBnyazvxA4PJHhNqOkaMszVWZi-JUWLgw/exec';
-const HOLIDAYS = {
-  '2025-01-01': '元日', '2025-01-13': '成人の日', '2025-02-11': '建国記念の日', '2025-02-23': '天皇誕生日', '2025-02-24': '振替休日', '2025-03-20': '春分の日', '2025-04-29': '昭和の日', '2025-05-03': '憲法記念日', '2025-05-04': 'みどりの日', '2025-05-05': 'こどもの日', '2025-05-06': '振替休日', '2025-07-21': '海の日', '2025-08-11': '山の日', '2025-09-15': '敬老の日', '2025-09-23': '秋分の日', '2025-10-13': 'スポーツの日', '2025-11-03': '文化の日', '2025-11-23': '勤労感謝の日', '2025-11-24': '振替休日',
-  '2026-01-01': '元日', '2026-01-12': '成人の日', '2026-02-11': '建国記念の日', '2026-02-23': '天皇誕生日', '2026-03-20': '春分の日', '2026-04-29': '昭和の日', '2026-05-03': '憲法記念日', '2026-05-04': 'みどりの日', '2026-05-05': 'こどもの日', '2026-05-06': '振替休日', '2026-07-20': '海の日', '2026-08-11': '山の日', '2026-09-21': '敬老の日', '2026-09-22': '国民の休日', '2026-09-23': '秋分の日', '2026-10-12': 'スポーツの日', '2026-11-03': '文化の日', '2026-11-23': '勤労感謝の日',
-  '2027-01-01': '元日', '2027-01-11': '成人の日', '2027-02-11': '建国記念の日', '2027-02-23': '天皇誕生日', '2027-03-21': '春分の日', '2027-03-22': '振替休日', '2027-04-29': '昭和の日', '2027-05-03': '憲法記念日', '2027-05-04': 'みどりの日', '2027-05-05': 'こどもの日', '2027-07-19': '海の日', '2027-08-11': '山の日', '2027-09-20': '敬老の日', '2027-09-23': '秋分の日', '2027-10-11': 'スポーツの日', '2027-11-03': '文化の日', '2027-11-23': '勤労感謝の日'
-};
+const HOLIDAYS = (() => {
+  const HOL_FIX = {};
+  const o = {}, p2 = n => String(n).padStart(2, '0'), k = (y, m, d) => `${y}-${p2(m)}-${p2(d)}`;
+  const nthMon = (y, m, n) => { const w = new Date(y, m - 1, 1).getDay(); return 1 + ((8 - w) % 7) + (n - 1) * 7; };
+  for (let y = 2022; y <= 2099; y++) {
+    const a = 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4);
+    const fixed = [[1, 1, '元日'], [1, nthMon(y, 1, 2), '成人の日'], [2, 11, '建国記念の日'], [2, 23, '天皇誕生日'], [3, Math.floor(20.8431 + a), '春分の日'],
+      [4, 29, '昭和の日'], [5, 3, '憲法記念日'], [5, 4, 'みどりの日'], [5, 5, 'こどもの日'], [7, nthMon(y, 7, 3), '海の日'], [8, 11, '山の日'],
+      [9, nthMon(y, 9, 3), '敬老の日'], [9, Math.floor(23.2488 + a), '秋分の日'], [10, nthMon(y, 10, 2), 'スポーツの日'], [11, 3, '文化の日'], [11, 23, '勤労感謝の日']];
+    const h = {}; fixed.forEach(([m, d, n]) => h[k(y, m, d)] = n);
+    Object.keys(HOL_FIX).filter(x => x.startsWith(y + '-')).forEach(x => { if (HOL_FIX[x]) h[x] = HOL_FIX[x]; else delete h[x]; });
+    const at = x => { const [Y, M, D] = x.split('-').map(Number); return new Date(Y, M - 1, D); }, kd = d => k(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    const base = Object.keys(h).sort();   // 国民の祝日（振替休日を足す前）
+    base.forEach(x => {   // 振替休日：日曜の祝日の次の、祝日でない日
+      if (at(x).getDay() !== 0) return; const d = at(x); do d.setDate(d.getDate() + 1); while (h[kd(d)]); h[kd(d)] = '振替休日'; });
+    base.forEach(x => {   // 国民の休日：前の日も次の日も国民の祝日である日
+      const d = at(x); d.setDate(d.getDate() + 2); if (!base.includes(kd(d))) return; const m = at(x); m.setDate(m.getDate() + 1);
+      if (!h[kd(m)] && m.getDay() !== 0) h[kd(m)] = '国民の休日'; });
+    Object.assign(o, h);
+  }
+  return o;
+})();
 const TEAMS = {
   goshuin: { team: 'shuin', label: '御朱印', post: '御朱印' },
   reitaisai: { team: 'reitaisai', label: '例大祭', post: '本殿' },
@@ -171,16 +188,16 @@ function vList() {
   return `<div class="card"><h2>お名前を選んでください</h2>
     ${ppl.length ? `<ul class="people">${ppl.map(p => `<li data-act="pick" data-id="${esc(p.id)}"><b>${esc(p.name)}</b><span class="sp"></span>${sentTag(p)}</li>`).join('')}</ul>` : '<div class="muted">まだだれも登録されていません。</div>'}
   </div>
-  <div class="card"><h2>はじめての方</h2><div class="muted" style="margin-bottom:10px">一覧にお名前がないときは、先に登録してください。</div><button class="btn wide" data-act="toReg">登録する</button></div>`;
+  <div class="card"><h2>はじめての方</h2><div class="muted" style="margin-bottom:10px">一覧にお名前がないときは、登録してください。</div><button class="btn wide" data-act="toReg">登録</button></div>`;
 }
 function vReg() {
   const r = V.reg2, t = T();
   return `<div class="card"><h2>${t.label}の助勤の登録</h2>
     <div class="muted" style="margin-bottom:12px">はじめての方だけ登録してください。</div>
-    <div class="field"><label>お名前<span class="req">必須</span></label><input class="in" id="rName" value="${esc(r.name)}" placeholder="例：品川 花子" autocomplete="name"></div>
-    <div class="field"><label>ふりがな</label><input class="in" id="rKana" value="${esc(r.kana)}" placeholder="例：しながわ はなこ"></div>
+    <div class="field"><label>お名前<span class="req">必須</span></label><input class="in" id="rName" value="${esc(r.name)}" autocomplete="name"></div>
+    <div class="field"><label>ふりがな</label><input class="in" id="rKana" value="${esc(r.kana)}"></div>
     ${t.team === 'shuin' ? `<div class="field"><label>ふだん出られる曜日</label><div class="chips" id="rWd">${WD.map((w, i) => `<span class="chip ${r.wdays.includes(i) ? 'on' : ''}" data-act="wd" data-i="${i}">${w}</span>`).join('')}</div></div>` : ''}
-    <div class="field"><label>神社への連絡（任意）</label><input class="in" id="rMemo" value="${esc(r.memo)}" placeholder="例：午前だけ出られます"></div>
+    <div class="field"><label>神社への連絡（任意）</label><input class="in" id="rMemo" value="${esc(r.memo)}"></div>
     ${V.err ? `<div class="err">${esc(V.err)}</div>` : ''}
     <button class="btn pri wide" data-act="doReg" ${V.busy ? 'disabled' : ''}>${V.busy ? '送っています…' : '登録する'}</button>
   </div>${V.reg ? '' : '<button class="btn wide" data-act="back">もどる</button>'}`;
@@ -216,12 +233,12 @@ function vInput() {
   <div class="card"><h2>${t.label}の希望${t.team === 'shuin' ? '' : `（${f.days.length}日）`}</h2>
     ${head}
     ${t.team === 'shuin' ? deadlineNote() : ''}
-    <div class="muted" style="margin-bottom:10px">${t.team === 'shuin' ? '土日・祝日だけ入れられます。' : ''}日付を押すと ○（出られる）→ ×（出られない）→ 空欄 と変わります。${sent ? `<br>送信済み（${at2s(sent)}）。直して送り直せます。` : ''}</div>
+    <div class="muted" style="margin-bottom:10px">${t.team === 'shuin' ? '土日・祝日だけ入れられます。<br>' : ''}日付を押すと ○ → × → 空欄 と変わります。${sent ? `<br>送信済み（${at2s(sent)}）。` : ''}</div>
     ${body}
     ${V.err ? `<div class="err" style="margin-top:12px">${esc(V.err)}</div>` : ''}
-    <div class="row" style="margin-top:14px"><button class="btn" data-act="all">${t.team === 'shuin' ? '土日祝をすべて○' : 'すべて○'}</button><span class="sp"></span><button class="btn pri" data-act="send" ${V.busy || (t.team !== 'shuin' && !f.days.length) ? 'disabled' : ''}>${V.busy ? '送っています…' : sent ? '送り直す' : '送信する'}</button></div>
+    <div class="row" style="margin-top:14px"><button class="btn" data-act="all">${t.team === 'shuin' ? '土日祝をすべて○' : 'すべて○'}</button><span class="sp"></span><button class="btn pri" data-act="send" ${V.busy || (t.team !== 'shuin' && !f.days.length) ? 'disabled' : ''}>${V.busy ? '送っています…' : sent ? '再送信' : '送信する'}</button></div>
   </div>
-  <div class="note small">このページをホーム画面に置くと、次からすぐ開けます（この端末では名前を選ばずに出勤日が出ます）。<br>iPhone：下の共有ボタン →「ホーム画面に追加」　Android：右上の︙ →「ホーム画面に追加」</div>`;
+  <div class="note small">このページをホーム画面に置くと、次からすぐ開けます。<br>iPhone：下の共有ボタン →「ホーム画面に追加」　Android：右上の︙ →「ホーム画面に追加」</div>`;
 }
 /* あなたの出勤日（決まったシフト・今日から先）。スマホのカレンダーに入れられる */
 function icsUrl() { return API_URL + '?ics=1&team=' + encodeURIComponent(T().team) + '&id=' + encodeURIComponent(V.who.id); }
@@ -233,7 +250,7 @@ function vMine(days) {
   return `<div class="card mycard"><h2>あなたの出勤日</h2>
     <div class="next">次は ${md(nx)}${diff === 0 ? '　今日' : diff === 1 ? '　明日' : ''}</div>
     <ul class="days">${days.map(k => `<li><b>${md(k)}</b><span>${t.post}</span></li>`).join('')}</ul>
-    ${DEMO ? '<button class="btn pri wide" data-act="icsDemo">スマホのカレンダーに入れる</button>' : `<a class="btn pri wide" href="${esc(icsUrl())}">スマホのカレンダーに入れる</a>`}
+    ${DEMO ? '<button class="btn pri wide" data-act="icsDemo">カレンダーに登録</button>' : `<a class="btn pri wide" href="${esc(icsUrl())}">カレンダーに登録</a>`}
     <div class="muted small" style="margin-top:8px">上の出勤日がまとめて入り、前の日の夜7時に通知が出ます。シフトが変わったときは神社から連絡します。</div>
   </div>`;
 }
@@ -267,7 +284,7 @@ document.addEventListener('click', async e => {
   if (a === 'icsDemo') {
     const ds = (V.mine && V.mine.shifts) || [], ymd = k => k.replace(/-/g, ''), nx = k => { const d = parse(k); d.setDate(d.getDate() + 1); return ymd(key(d)); };
     const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//shinagawa-jinja//demo//JA'];
-    ds.forEach(k => L.push('BEGIN:VEVENT', 'UID:' + k + '-' + V.who.id + '@demo', 'DTSTAMP:20260101T000000Z', 'DTSTART;VALUE=DATE:' + ymd(k), 'DTEND;VALUE=DATE:' + nx(k), 'SUMMARY:品川神社 ' + t.label + '（見本）', 'LOCATION:品川神社', 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:明日は品川神社です', 'TRIGGER:-PT5H', 'END:VALARM', 'END:VEVENT'));
+    ds.forEach(k => L.push('BEGIN:VEVENT', 'UID:' + k + '-' + V.who.id + '@demo', 'DTSTAMP:20260101T000000Z', 'DTSTART;VALUE=DATE:' + ymd(k), 'DTEND;VALUE=DATE:' + nx(k), 'SUMMARY:' + ({ shuin: '品川神社　御朱印助勤', reitaisai: '品川神社　例大祭　助勤', shichigosan: '品川神社　七五三　助勤' }[t.team]) + '（見本）', 'LOCATION:品川神社', 'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:明日は品川神社です', 'TRIGGER:-PT5H', 'END:VALARM', 'END:VEVENT'));
     L.push('END:VCALENDAR');
     const u = URL.createObjectURL(new Blob([L.join('\r\n')], { type: 'text/calendar' })), aa = document.createElement('a'); aa.href = u; aa.download = 'shinagawa.ics'; document.body.appendChild(aa); aa.click(); setTimeout(() => { URL.revokeObjectURL(u); aa.remove(); }, 500);
     return;

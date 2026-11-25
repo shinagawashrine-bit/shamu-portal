@@ -920,12 +920,31 @@ const tstr = m => `${Math.floor(m / 60)}:${pad(m % 60)}`;
 function rng(seed) { let s = seed >>> 0; return () => { s = (s + 0x6D2B79F5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 const hashStr = s => { let h = 2166136261; for (const c of s) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; };
 
-/* ── 祝日（2025〜2027） ── */
-const HOLIDAYS = {
-  '2025-01-01': '元日', '2025-01-13': '成人の日', '2025-02-11': '建国記念の日', '2025-02-23': '天皇誕生日', '2025-02-24': '振替休日', '2025-03-20': '春分の日', '2025-04-29': '昭和の日', '2025-05-03': '憲法記念日', '2025-05-04': 'みどりの日', '2025-05-05': 'こどもの日', '2025-05-06': '振替休日', '2025-07-21': '海の日', '2025-08-11': '山の日', '2025-09-15': '敬老の日', '2025-09-23': '秋分の日', '2025-10-13': 'スポーツの日', '2025-11-03': '文化の日', '2025-11-23': '勤労感謝の日', '2025-11-24': '振替休日',
-  '2026-01-01': '元日', '2026-01-12': '成人の日', '2026-02-11': '建国記念の日', '2026-02-23': '天皇誕生日', '2026-03-20': '春分の日', '2026-04-29': '昭和の日', '2026-05-03': '憲法記念日', '2026-05-04': 'みどりの日', '2026-05-05': 'こどもの日', '2026-05-06': '振替休日', '2026-07-20': '海の日', '2026-08-11': '山の日', '2026-09-21': '敬老の日', '2026-09-22': '国民の休日', '2026-09-23': '秋分の日', '2026-10-12': 'スポーツの日', '2026-11-03': '文化の日', '2026-11-23': '勤労感謝の日',
-  '2027-01-01': '元日', '2027-01-11': '成人の日', '2027-02-11': '建国記念の日', '2027-02-23': '天皇誕生日', '2027-03-21': '春分の日', '2027-03-22': '振替休日', '2027-04-29': '昭和の日', '2027-05-03': '憲法記念日', '2027-05-04': 'みどりの日', '2027-05-05': 'こどもの日', '2027-07-19': '海の日', '2027-08-11': '山の日', '2027-09-20': '敬老の日', '2027-09-23': '秋分の日', '2027-10-11': 'スポーツの日', '2027-11-03': '文化の日', '2027-11-23': '勤労感謝の日'
-};
+/* ── 祝日（2026-11-25 本人：手で書いた一覧をやめ、祝日法の決まりから毎年自動で計算する。2022〜2099年） ──
+   春分・秋分の日は計算式（国が前の年の2月に正式発表。ずれたときは HOL_FIX で直す）。
+   法律が変わった年・特別な移動がある年は HOL_FIX に書く（日付: 名前。'' なら祝日から外す） */
+const HOLIDAYS = (() => {
+  const HOL_FIX = {};
+  const o = {}, p2 = n => String(n).padStart(2, '0'), k = (y, m, d) => `${y}-${p2(m)}-${p2(d)}`;
+  const nthMon = (y, m, n) => { const w = new Date(y, m - 1, 1).getDay(); return 1 + ((8 - w) % 7) + (n - 1) * 7; };
+  for (let y = 2022; y <= 2099; y++) {
+    const a = 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4);
+    const fixed = [[1, 1, '元日'], [1, nthMon(y, 1, 2), '成人の日'], [2, 11, '建国記念の日'], [2, 23, '天皇誕生日'], [3, Math.floor(20.8431 + a), '春分の日'],
+      [4, 29, '昭和の日'], [5, 3, '憲法記念日'], [5, 4, 'みどりの日'], [5, 5, 'こどもの日'], [7, nthMon(y, 7, 3), '海の日'], [8, 11, '山の日'],
+      [9, nthMon(y, 9, 3), '敬老の日'], [9, Math.floor(23.2488 + a), '秋分の日'], [10, nthMon(y, 10, 2), 'スポーツの日'], [11, 3, '文化の日'], [11, 23, '勤労感謝の日']];
+    const h = {}; fixed.forEach(([m, d, n]) => h[k(y, m, d)] = n);
+    Object.keys(HOL_FIX).filter(x => x.startsWith(y + '-')).forEach(x => { if (HOL_FIX[x]) h[x] = HOL_FIX[x]; else delete h[x]; });
+    const at = x => { const [Y, M, D] = x.split('-').map(Number); return new Date(Y, M - 1, D); }, kd = d => k(d.getFullYear(), d.getMonth() + 1, d.getDate());
+    const base = Object.keys(h).sort();   // 国民の祝日（振替休日を足す前）
+    base.forEach(x => {   // 振替休日：日曜の祝日の次の、祝日でない日
+      if (at(x).getDay() !== 0) return; const d = at(x); do d.setDate(d.getDate() + 1); while (h[kd(d)]); h[kd(d)] = '振替休日'; });
+    base.forEach(x => {   // 国民の休日：前の日も次の日も国民の祝日である日
+      const d = at(x); d.setDate(d.getDate() + 2); if (!base.includes(kd(d))) return; const m = at(x); m.setDate(m.getDate() + 1);
+      if (!h[kd(m)] && m.getDay() !== 0) h[kd(m)] = '国民の休日'; });
+    Object.assign(o, h);
+  }
+  return o;
+})();
 const isWeekend = d => d.getDay() === 0 || d.getDay() === 6 || !!HOLIDAYS[key(d)];
 
 /* =========================================================
@@ -1762,12 +1781,11 @@ function vHome() {
         ${isTemp() ? `<div class="leave-box"><button class="btn pri act-btn" data-act="tempToggle" data-k="${selDay}" data-s="${S.me}">${S.tempWork.some(w => w.staff === S.me && w.date === selDay) ? '出勤を取り消す' : '＋ 出勤を登録'}</button><span class="leave-left">${md(parse(selDay))}・${lm.getMonth() + 1}月の出勤 <b>${S.tempWork.filter(w => w.staff === S.me && w.date.startsWith(ym(lm))).length}日</b></span></div>` : ''}${isGuji() || isTemp() ? '' : `<div class="leave-box"><button class="btn pri act-btn" data-act="leaveModal" data-k="${selDay}">休みを申告</button><span class="leave-left">${lm.getMonth() + 1}月の休み <b class="${ll.left < 0 ? 'down' : ''}">残${ll.left}日</b><span class="muted">（${ll.quota}日中）</span></span></div>`}</div>
       </div>
       ${isMonth ? monthView() : weekView()}
-      <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '朱印・本殿（助勤）', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
+      <div class="layers layers-below"><button class="chip ${mineOnly() ? 'on mine-on' : ''}" data-act="mineOnly">${mineOnly() ? '✓ ' : ''}自分の予定だけ</button><span style="width:1px;background:var(--line);margin:0 2px"></span>${chip('sai', '祭典', 'var(--shu)')}${PROD ? '' : chip('kigan', '祈願・外祭', 'var(--brand)')}${chip('visit', '来訪者', 'var(--violet)')}${chip('out', '外出', 'var(--pink)')}${chip('leave', '休み・臨時職員', 'var(--blue)')}${chip('baito', '助勤', 'var(--green)')}${chip('koyomi', '六曜・吉日', 'var(--gold)')}${chip('bunka', '季節の行事', 'var(--gold)')}</div>
       <div class="legend">
-        <span><span class="off-b" style="background:${(STAFF[1] || STAFF[0] || {}).color || 'var(--blue)'}">${esc((STAFF[1] || STAFF[0] || { name: '鈴木' }).name)}</span>名前＝休みの職員（その人の色）</span><span><span class="bunka" style="font-size:11px">節分</span> 季節の行事</span>
+        <span><span class="off-b" style="background:${(STAFF[1] || STAFF[0] || {}).color || 'var(--blue)'}">名前</span>休みの職員</span>
         <span><span class="kd inu">戌</span>戌の日</span><span><span class="kd ichi">一</span>一粒万倍日</span><span><span class="kd ten">天</span>天赦日</span>
         <span><span class="season uke">受付順</span> 予約なし</span><span><span class="season hou">法人のみ</span></span><span><span class="season nok">祈願なし</span></span>
-        <span class="small">※暦は計算値。祈願・来訪・外出・助勤名は仮のデータです</span>
       </div>
     </section>
     <aside class="card day" id="dayPanel">${dayPanel(selDay)}</aside>
@@ -2275,7 +2293,6 @@ function juyoStock() {
   const alerts = rows.filter(r => r.st.status === 'warn' || r.st.status === 'urgent').sort((a, b) => a.st.orderBy - b.st.orderBy);
   const lastC = rows.map(r => r.st.lastCount?.date).filter(Boolean).sort().pop();
   return `
-  <div class="note" style="margin-bottom:14px">${ICON.info}<span><b>在庫は箱で数えます。</b>レジの出数とは合わせません（宮司が接客した分はレジに入らないため）。箱を開けたら「1箱開けた」、正月など忙しい時期は落ち着いたときに「まとめて数える」で実際の箱数を入力します。</span></div>
   <div class="grid2" style="margin-bottom:16px">
     <div class="card kpi"><div class="l">臨時発注をおすすめ</div><div class="v" style="color:${alerts.length ? 'var(--warn)' : 'inherit'}">${alerts.length}品</div><div class="small muted">業者の納期を考えると、そろそろ発注が必要な品</div></div>
     <div class="card kpi"><div class="l">最後に数えた日</div><div class="v">${lastC ? md(parse(lastC)) : '—'}</div><div class="small muted"><a href="javascript:void 0" data-act="countModal">まとめて数える →</a></div></div>
@@ -2495,13 +2512,13 @@ function jkUrlCard(team, label) {
   return `<div class="card card-p" style="margin-top:16px"><div class="card-h"><h3>${label}のURL</h3><span class="sp"></span><span class="small muted">ログインなし・名前を選ぶだけ</span></div>
     ${row('登録URL', true, '初めての人に送ります。名前・ふりがなを入れて登録します。')}
     ${row('シフト入力URL', false, '登録した人に送ります。名前を選んで○×を入れて送信します（あとから直せます）。初めての人もここから登録できます。' + (team === 'shuin' ? '御朱印は土日・祝日だけ入れられ、締め切りは毎月25日（翌月分）です。' : '') + '2回目からは名前を選ばずに、決まった出勤日が出ます。')}
-    <div style="margin-top:12px"><div class="small" style="font-weight:700">シフトが決まったときの連絡文</div><div class="small muted" style="margin-bottom:4px">確定したらコピーして、LINEなどに貼ってください。開くと自分の出勤日が出て、スマホのカレンダーにも入れられます。</div>
+    <div style="margin-top:12px"><div class="small" style="font-weight:700">シフトが決まったときの連絡文</div><div class="small muted" style="margin-bottom:4px">確定したらコピーして、LINEなどに貼ってください。開くと自分の出勤日が出て、カレンダーアプリにも登録できます。</div>
       <div class="row" style="gap:6px;flex-wrap:nowrap"><div class="small" style="flex:1;min-width:0;white-space:pre-wrap;background:var(--bg);border-radius:8px;padding:8px 10px">${esc(jkMsg(team, label))}</div><button class="btn sm" data-act="jkCopy" data-u="${esc(jkMsg(team, label))}">コピー</button></div></div></div>`;
 }
 /* シフトが決まったときの連絡文（2026-11-16 本人：確定したら助勤に知らせる） */
 function jkMsg(team, label) {
   const m = team === 'shuin' ? `${shiftMonth.getMonth() + 1}月の` : '';
-  return `${m}${label}のシフトが決まりました。\n下のページで自分の出勤日を確認できます（スマホのカレンダーにも入れられます）。\n${jkUrl(team, false)}`;
+  return `${m}${label}のシフトが決まりました。\n下のページで自分の出勤日を確認できます（カレンダーアプリにも登録できます）。\n${jkUrl(team, false)}`;
 }
 /* 助勤への伝達事項（2026-11-16 本人：神社に来たときに授与所のレジのiPadで見る） */
 const JK_NOTE_TEAM = { all: '助勤みんな', shuin: '御朱印', reitaisai: '例大祭', shichigosan: '七五三' };
@@ -3907,7 +3924,7 @@ async function afterLogin(r) {
 }
 
 /* ── 新しい版が出たら自動で読み直す（ホーム画面に追加した神社くんも、開き直したときに新しくなる） ── */
-const BUILD = '20261124202134';
+const BUILD = '20261125111253';
 const REJI_PAGE = false;   // レジ専用の入口（reji.html）のとき true。build.py が書き換える
 const pageStamp = Date.parse(document.lastModified) || Date.now();   // 開いている画面ファイルの日付
 async function checkUpdate() {
@@ -4505,7 +4522,6 @@ function juyoStockProd() {
   const rows = items.map(it => ({ it, st: stockStat(it) }));
   const lastC = rows.map(r => r.st.lastCount?.date).filter(Boolean).sort().pop();
   return `
-  <div class="note" style="margin-bottom:14px">${ICON.info}<span><b>在庫は箱で数えます。</b>レジの出数とは合わせません（宮司が接客した分はレジに入らないため）。箱を開けたら「1箱開けた」、入荷したときや忙しい時期のあとは「まとめて数える」で実際の箱数を入れます。</span></div>
   <div class="grid2" style="margin-bottom:16px">
     <div class="card kpi"><div class="l">最後に数えた日</div><div class="v">${lastC ? md(parse(lastC)) : '—'}</div><div class="small muted"><a href="javascript:void 0" data-act="countModal">まとめて数える →</a></div></div>
     <div class="card kpi"><div class="l">在庫の合計</div><div class="v">${rows.reduce((a, r) => a + r.st.now, 0)}箱</div><div class="small muted">${items.length}品</div></div>
@@ -4517,8 +4533,7 @@ function juyoStockProd() {
       <td class="r num"><b style="font-size:16px">${st.now}</b>箱<div class="small muted">約${(st.now * (it.perBox || 0)).toLocaleString()}体</div></td>
       <td class="r num small">${st.rate ? (st.rate * 7).toFixed(1) + '箱/週' : '—'}</td>
       <td class="small">${st.now <= 0 ? '<span class="tag red">在庫なし</span>' : st.out ? mdw(st.out) + `<div class="muted">あと約${st.daysLeft}日</div>` : '<span class="muted">記録が足りない</span>'}</td>
-      <td><button class="btn sm" data-act="openBox" data-id="${it.id}" ${st.now <= 0 ? 'disabled' : ''}>1箱開けた</button></td></tr>`).join('')}</tbody></table></div></div>
-  <div class="small muted" style="margin-top:8px">減り方は、90日以内に数えた記録から計算します（7日以上たつと出ます）。</div>`;
+      <td><button class="btn sm" data-act="openBox" data-id="${it.id}" ${st.now <= 0 ? 'disabled' : ''}>1箱開けた</button></td></tr>`).join('')}</tbody></table></div></div>`;
 }
 function juyoSalesProd() {
   if (!SUM.rows) { loadSalesSummary(); return `<div class="card card-p"><div class="empty">${SUM.err ? esc(SUM.err) : '集計を読み込んでいます…'}</div></div>`; }
@@ -4549,7 +4564,6 @@ function juyoSalesProd() {
   const pickName = pick ? (rank.find(t => t.id === pick)?.name || S.items.find(i => i.id === pick)?.name || '') : '';
   const yoy = qty(inLY) ? Math.round((sum / qty(inLY) - 1) * 100) : null;
   return `
-  <div class="note" style="margin-bottom:14px">${ICON.info}<span>出数は<b>授与所のレジ端末</b>の記録です。宮司が接客した分などは入らないので、在庫とは合わせません。</span></div>
   <div class="row" style="margin-bottom:14px;gap:8px"><button class="icon-btn" data-act="sumMonth" data-n="-1" aria-label="前の月">${ICON.left}</button><h3 style="font-size:18px;margin:0">${warekiMonth(y, m)}</h3><button class="icon-btn" data-act="sumMonth" data-n="1" aria-label="次の月">${ICON.right}</button><span class="sp"></span><button class="btn sm" data-act="sumCsv">日ごとの集計をCSVで保存</button><button class="btn sm ghost" data-act="sumReload">読み直す</button></div>
   <div class="grid3" style="margin-bottom:16px">
     <div class="card kpi"><div class="l">出数</div><div class="v">${sum.toLocaleString()}体</div><div class="small muted">${yoy == null ? '前年の記録なし' : `前年同月 ${yoy >= 0 ? '+' : ''}${yoy}%`}</div></div>
@@ -4602,8 +4616,7 @@ function juyoItemsProd() {
   return `
   <div class="card"><div class="card-h card-p" style="margin:0;padding-bottom:6px"><h3>授与品（${all.filter(i => i.active !== false).length}品）</h3><span class="sp"></span>${can ? '<button class="btn pri sm" data-act="editItem" data-id="">＋ 登録</button>' : ''}</div>
     <div class="tbl-wrap"><table class="tbl"><thead><tr><th class="r">順</th><th>写真</th><th>品名</th><th class="r">初穂料</th><th class="r">段ボール</th><th class="r">1箱</th><th>レジ</th><th></th></tr></thead>
-    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td>${im[it.id] ? `<img class="it-thumb" src="${im[it.id]}" alt="">` : '<span class="it-thumb none"></span>'}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? 'TOP' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>
-  <div class="small muted" style="margin-top:8px">写真は「編集」から入れられます（白い紙の上で真上から撮れば、向き・大きさ・明るさは自動で整えます。紐は切れてもかまいません）。レジ端末には「出す」品が、順の小さい順に並びます。使わなくなった品は消さずに「レジに出さない」にすると、過去の集計が残ります。</div>`;
+    <tbody>${all.map(it => `<tr style="${it.active === false ? 'opacity:.45' : ''}"><td class="r num small muted">${it.ord ?? ''}</td><td>${im[it.id] ? `<img class="it-thumb" src="${im[it.id]}" alt="">` : '<span class="it-thumb none"></span>'}</td><td><b>${esc(it.name)}</b><div class="small muted">${esc(it.cat)}</div></td><td class="r num">${yen(it.price)}円</td><td class="r num">${it.perCase || '—'}箱</td><td class="r num">${it.perBox || '—'}体</td><td class="small">${it.active === false ? '出さない' : it.big ? 'TOP' : '出す'}</td><td>${can ? `<button class="btn sm" data-act="editItem" data-id="${it.id}">編集</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="muted">まだ登録されていません</td></tr>'}</tbody></table></div></div>`;
 }
 let ITEM_PHOTO, ITEM_FILE = null, ITEM_ROT = 0, ITEM_WHOLE = false, ITEM_SAVED = '';   // 選んだ写真の元ファイルと、手で回した角度
 function editItemModalProd(id) {
@@ -4761,7 +4774,6 @@ function vDiaryProd() {
       ${todays.map(h => `<div class="hv-item mine-day"><div class="row" style="gap:6px"><b class="small">${esc(staffById(h.by)?.name || '')}</b>${h.done ? `<span class="tag gray">対応済（${esc(staffById(h.doneBy)?.name || '')}）</span>` : ''}<span class="sp"></span>${h.by === S.me && !h.done ? `<button class="mini-btn" data-act="hvDel" data-id="${esc(h.id)}">取り消す</button>` : ''}</div><div style="white-space:pre-wrap;margin-top:2px">${esc(h.text)}</div></div>`).join('') || '<div class="small muted" style="margin-bottom:8px">この日の申し送りはまだありません</div>'}
       <textarea class="input" id="hvText" style="min-height:56px" placeholder="次の人に伝えること（1件ずつ追加できます）"></textarea>
       <div class="row" style="margin-top:6px"><label class="row small" style="gap:6px"><input type="checkbox" id="hvBoard"> 掲示板にも載せる</label><span class="sp"></span><button class="btn" data-act="hvAdd">＋ 申し送りを追加</button></div>
-      <div class="small muted" style="margin-top:6px">申し送りは、次の日から1週間、ホーム（今日の欄）と日報の上に出ます。「対応済」を押すと消えます。</div>
     </section>
     <section>
       <div class="row" style="margin-bottom:12px"><h3 style="font-size:15px">過去の同じ時期</h3><span class="sp"></span>
@@ -5464,7 +5476,7 @@ if (PROD) {
    - 見られるのは宮司・職員・臨時職員（2026-11-12 本人）。助勤のログインには出さない
    ========================================================= */
 const SG_PAGE = PROD ? 'shogatsu.html' : 'shogatsu-demo.html';
-const SG_VER = '6b580b3ffe';   // 正月の画面の版（build.py が中身から作る）。URLに付けて、古い画面がブラウザに残らないようにする（2026-11-15）
+const SG_VER = '6028792931';   // 正月の画面の版（build.py が中身から作る）。URLに付けて、古い画面がブラウザに残らないようにする（2026-11-15）
 const sgFrame = () => document.getElementById('sgFrame');
 const SG_BOOK = { tok: undefined, d: null, p: null, cbs: [] };   // 正月の団体予約の読み込み（ログインごと）
 window.SG_HOST = {
